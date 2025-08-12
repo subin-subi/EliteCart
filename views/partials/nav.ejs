@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELITECART</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-100">
+
+    <!-- Navbar -->
+    <div class="fixed z-50 top-0 w-screen h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 bg-white text-black backdrop-blur-sm border-b border-gray-700">
+
+        <!-- Left Side: Logo -->
+        <div class="flex items-center">
+            <img src="/images/log.png" alt="logo" class="h-6 sm:h-10 md:h-12 lg:h-14 w-auto object-contain transition-all duration-300" style="max-height: 3.5rem;">
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <div class="lg:hidden">
+            <button id="menu-toggle" class="p-1.5 sm:p-2 rounded-lg text-white hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-bars text-xl sm:text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Links (Hidden in Mobile) -->
+        <nav class="hidden lg:flex items-center space-x-10">
+            <a href="/home" class="text-lg font-semibold text-black hover:text-gold transition-all duration-300 ease-in-out tracking-wide flex items-center space-x-3">
+                <img src="https://cdn-icons-png.flaticon.com/128/1946/1946488.png" alt="Home" class="w-6 h-6"> 
+                <span>Home</span>
+            </a>
+            <a href="/product" class="text-lg font-semibold text-black hover:text-gold transition-all duration-300 ease-in-out tracking-wide flex items-center space-x-3">
+                <img src="https://cdn-icons-png.flaticon.com/128/2331/2331970.png" alt="Products" class="w-6 h-6">
+                <span>Products</span>
+            </a>
+            <a href="/shop" class="text-lg font-semibold text-black hover:text-gold transition-all duration-300 ease-in-out tracking-wide flex items-center space-x-3">
+                <img src="https://cdn-icons-png.flaticon.com/128/3081/3081648.png" alt="Shop" class="w-6 h-6">
+                <span>Shop</span>
+            </a>
+            <a href="/contact" class="text-lg font-semibold text-black hover:text-gold transition-all duration-300 ease-in-out tracking-wide flex items-center space-x-3">
+                <img src="https://cdn-icons-png.flaticon.com/128/3059/3059475.png" alt="Contact" class="w-6 h-6">
+                <span>Contact</span>
+            </a>
+            <a href="/about" class="text-lg font-semibold text-black hover:text-gold transition-all duration-300 ease-in-out tracking-wide flex items-center space-x-3">
+                <img src="https://cdn-icons-png.flaticon.com/128/3176/3176366.png" alt="About" class="w-6 h-6">
+                <span>About</span>
+            </a>
+        </nav>
+
+        <!-- Authentication and User Icons -->
+        <div class="flex items-center justify-end" id="loginButtons">
+            <!-- Auth Buttons -->
+            <div class="flex items-center space-x-3" id="authButtons">
+                <a href="/login" class="text-sm font-semibold text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 px-4 py-2 rounded-lg shadow-md transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-sign-in-alt"></i>
+                    <span>Login</span>
+                </a>
+                <a href="/signup" class="text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-600 hover:to-emerald-800 px-4 py-2 rounded-lg shadow-lg transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Sign Up</span>
+                </a>
+            </div>
+
+           <!-- Logout Button (shown only when logged in) -->
+    <button id="logoutButton" class="hidden flex items-center space-x-2 text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Logout</span>
+    </button>
+
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden lg:hidden z-40">
+        <div class="fixed top-14 left-0 w-full max-w-sm bg-white border-r border-gray-200 h-screen p-4 transform transition-transform">
+            <nav class="flex flex-col space-y-2">
+                <a href="/home" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-home mr-2"></i>Home</a>
+                <a href="/shop" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-store mr-2"></i>Shop</a>
+                <a href="/contact" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-envelope mr-2"></i>Contact</a>
+                <a href="/about" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-info-circle mr-2"></i>About</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+     document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        const response = await fetch('/check-session');
+        const data = await response.json();
+
+        if (data.isLoggedIn) {
+            document.getElementById("authButtons").style.display = "none";
+            document.getElementById("logoutButton").style.display = "flex";
+        } else {
+            document.getElementById("authButtons").style.display = "flex";
+            document.getElementById("logoutButton").style.display = "none";
+        }
+    } catch (error) {
+        console.error("Session check error:", error);
+    }
+
+    // Handle logout click
+    const logoutBtn = document.getElementById("logoutButton");
+    logoutBtn.addEventListener("click", async () => {
+        try {
+            await fetch('/logout', { method: 'POST' }); // or GET, depending on your server
+            window.location.reload(); // or redirect to login
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    });
+});
+
+        // Mobile Menu Toggle
+        const menuToggle = document.getElementById("menu-toggle");
+        const mobileMenu = document.getElementById("mobile-menu");
+
+        mobileMenu.addEventListener("click", (event) => {
+            if (event.target === mobileMenu) {
+                mobileMenu.classList.add("hidden");
+            }
+        });
+    </script>
+
+</body>
+
+</html>

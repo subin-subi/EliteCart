@@ -1,0 +1,96 @@
+<!-- Sidebar -->
+<aside class="fixed top-0 left-0 w-64 h-full bg-zinc-900 p-5 shadow-lg">
+  <!-- Logo -->
+  <div class="flex items-center justify-center mb-8">
+    <h1 class="admin-logo text-white font-bold text-2xl" style="font-family: 'Joan', serif;">
+      ELITECART
+    </h1>
+  </div>
+
+  <!-- Navigation Links -->
+  <nav class="space-y-2">
+    <% const currentPath = typeof path !== 'undefined' ? path : ''; %>
+    <a href="/admin/dashboard" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/dashboard' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">dashboard</span>
+      <span>Dashboard</span>
+      <% if (currentPath === '/admin/dashboard') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/products" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/products' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">inventory_2</span>
+      <span>Products</span>
+      <% if (currentPath === '/admin/product') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/UserList" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/UserList' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">people</span>
+      <span>Customers</span>
+      <% if (currentPath === '/admin/UserList') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/Orders" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/Orders' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">shopping_cart</span>
+      <span>Orders</span>
+      <% if (currentPath === '/admin/Orders') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/category" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/category' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">category</span>
+      <span>Category</span>
+      <% if (currentPath === '/admin/category') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/brant" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/brant' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">business</span>
+      <span>Brant</span>
+      <% if (currentPath === '/admin/brant') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/offer" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/offer' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">local_offer</span>
+      <span>Offers</span>
+      <% if (currentPath === '/admin/offer') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/coupon" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/coupon' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">card_giftcard</span>
+      <span>Coupon</span>
+      <% if (currentPath === '/admin/coupon') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+
+    <a href="/admin/salesreport" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/salesreport' ? 'bg-zinc-800 text-white' : '' %>">
+      <span class="material-icons">assessment</span>
+      <span>Sales Report</span>
+      <% if (currentPath === '/admin/salesreport') { %>
+        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
+      <% } %>
+    </a>
+    
+ 
+
+    <!-- Logout Button -->
+    <form action="/admin/logout" method="GET" class="mt-8">
+      <button type="submit"
+        class="flex items-center justify-center space-x-2 px-4 py-3 w-full bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-400 transition group">
+        <span class="material-icons">logout</span>
+        <span>Logout</span>
+      </button>
+    </form>
+  </nav>
+</aside>

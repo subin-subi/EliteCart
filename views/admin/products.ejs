@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <link rel="stylesheet" href="/css/output.css">
+</head>
+<body>
+    <main class="flex-1 ml-64 p-6 bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Product Management</h1>
+        <a href="/admin/products/add" 
+           class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 flex items-center gap-2">
+            <span>+</span> Add New Product
+        </a>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="flex items-center gap-4 mb-4">
+        <div class="flex items-center border rounded-lg px-3 py-2 bg-white w-full max-w-md">
+            <input type="text" placeholder="Search products..." class="flex-1 outline-none" />
+            <button class="p-1">
+                🔍
+            </button>
+        </div>
+        <select class="border px-3 py-2 rounded-lg bg-white">
+            <option>All Status</option>
+            <option>Active</option>
+            <option>Pending</option>
+            <option>Blocked</option>
+        </select>
+    </div>
+
+    <!-- Main Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full border-collapse text-sm">
+            <thead>
+                <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                    <th class="p-3">ID</th>
+                    <th class="p-3">Product Name</th>
+                    <th class="p-3">Category</th>
+                    <th class="p-3">Brand</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% products.forEach((product, index) => { %>
+                <!-- Row -->
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3"><%= index + 1 %></td>
+                    <td class="p-3"><%= product.name %></td>
+                    <td class="p-3"><%= product.categoryId?.name %></td>
+                    <td class="p-3"><%= product.brandId?.name %></td>
+                    <td class="p-3">
+                        <% if(product.status === 'Active'){ %>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                        <% } else if(product.status === 'Pending'){ %>
+                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Pending</span>
+                        <% } else { %>
+                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Blocked</span>
+                        <% } %>
+                    </td>
+                    <td class="p-3 flex gap-3">
+                        <a href="/admin/products/edit/<%= product._id %>" class="text-blue-500 hover:underline">Edit</a>
+                        <% if(product.status === 'Blocked'){ %>
+                            <a href="/admin/products/unblock/<%= product._id %>" class="text-green-500 hover:underline">Unblock</a>
+                        <% } else { %>
+                            <a href="/admin/products/block/<%= product._id %>" class="text-red-500 hover:underline">Block</a>
+                        <% } %>
+                        <button onclick="toggleDetails('<%= product._id %>')" class="ml-auto text-gray-500">▼</button>
+                    </td>
+                </tr>
+
+                <!-- Collapsible Details -->
+                <tr id="details-<%= product._id %>" class="hidden bg-gray-50">
+                    <td colspan="6" class="p-4">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-2">Image</th>
+                                    <th class="p-2">Product Name</th>
+                                    <th class="p-2">Category</th>
+                                    <th class="p-2">Brand</th>
+                                    <th class="p-2">Price</th>
+                                    <th class="p-2">Discount Price</th>
+                                    <th class="p-2">Color</th>
+                                    <th class="p-2">Quantity</th>
+                                    <th class="p-2">Status</th>
+                                    <th class="p-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="p-2">
+                                        <% if(product.image && product.image.length > 0){ %>
+                                            <img src="/uploads/<%= product.image[0] %>" class="w-12 h-12 object-cover rounded" />
+                                        <% } %>
+                                    </td>
+                                    <td class="p-2"><%= product.name %></td>
+                                    <td class="p-2"><%= product.categoryId?.name %></td>
+                                    <td class="p-2"><%= product.brandId?.name %></td>
+                                    <td class="p-2">₹<%= product.price %></td>
+                                    <td class="p-2 text-green-600">₹<%= product.discount %></td>
+                                    <td class="p-2"><%= product.color %></td>
+                                    <td class="p-2"><%= product.quantity %></td>
+                                    <td class="p-2">
+                                        <% if(product.status === 'Active'){ %>
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                                        <% } else if(product.status === 'Pending'){ %>
+                                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Pending</span>
+                                        <% } else { %>
+                                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Blocked</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="p-2 flex gap-3">
+                                        <a href="/admin/products/edit/<%= product._id %>" class="text-blue-500 hover:underline">Edit</a>
+                                        <% if(product.status === 'Blocked'){ %>
+                                            <a href="/admin/products/unblock/<%= product._id %>" class="text-green-500 hover:underline">Unblock</a>
+                                        <% } else { %>
+                                            <a href="/admin/products/block/<%= product._id %>" class="text-red-500 hover:underline">Block</a>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+function toggleDetails(id) {
+    const detailsRow = document.getElementById(`details-${id}`);
+    detailsRow.classList.toggle('hidden');
+}
+</script>
+
+</body>
+</html>

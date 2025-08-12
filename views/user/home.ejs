@@ -1,0 +1,79 @@
+<%- include("../../views/partials/nav") %>
+
+<main class="w-full">
+
+<section class="flex flex-col md:flex-row items-center justify-center px-8 pt-12 pb-12 bg-white">
+  <!-- Left Text -->
+  <div class="md:w-auto flex items-center">
+    <p class="text-3xl md:text-4xl font-semibold leading-snug text-gray-900 m-0">
+      "Wear the mystery.<br>Reveal the magic."
+    </p>
+  </div>
+  <!-- Right Image -->
+  <div class="md:w-auto flex items-center" style="margin-left:100px;">
+    <img src="/images/img.webp" alt="Hero Mask" 
+         class="w-72 md:w-80 h-auto rounded-3xl shadow-lg">
+  </div>
+</section>
+
+
+
+  <!-- Most Highlights -->
+  <section class="py-12">
+    <h2 class="text-center text-sm font-semibold mb-6 tracking-widest text-gray-900">MOST HIGHLIGHTS</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 max-w-6xl mx-auto">
+      <% const highlights = [
+        { img: "wearers.webp", title: "Exquisite Styles Collection" },
+        { img: "ii.jpg", title: "New Arrivals" },
+        { img: "six.webp", title: "Exclusive Items" },
+        { img: "four.jpg", title: "Classic Masks" }
+      ]; %>
+      <% highlights.forEach(item => { %>
+        <div class="relative overflow-hidden rounded-lg">
+          <img src="/images/<%= item.img %>" alt="<%= item.title %>" class="w-full h-72 object-cover">
+          <span class="absolute inset-0 flex items-center justify-center text-white text-lg font-semibold bg-black/40">
+            <%= item.title %>
+          </span>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+
+  <!-- Popular Section -->
+  <section class="py-12">
+    <h2 class="text-center text-sm font-semibold mb-6 tracking-widest text-gray-900">POPULAR AT ALL TIME</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 max-w-6xl mx-auto">
+      <% const popular = [
+        { img: "imag.webp", title: "Venetian Mask" },
+        { img: "one.webp", title: "Feather Mask" },
+        { img: "five.webp", title: "Gold Mask" },
+        { img: "four.jpg", title: "Butterfly Mask" }
+      ]; %>
+      <% popular.forEach(item => { %>
+        <div class="text-center">
+          <img src="/images/<%= item.img %>" alt="<%= item.title %>" class="w-full h-56 object-cover rounded-lg mx-auto mb-2">
+          <p class="text-xs text-gray-700"><%= item.title %></p>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+
+  <!-- Why Shop Section -->
+  <section class="py-12 px-6 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+    <div>
+      <h3 class="font-bold text-lg mb-2">Fast Shipping</h3>
+      <p class="text-sm text-gray-600">Get your masks delivered quickly worldwide.</p>
+    </div>
+    <div>
+      <h3 class="font-bold text-lg mb-2">Great Prices</h3>
+      <p class="text-sm text-gray-600">Stylish masks at unbeatable prices.</p>
+    </div>
+    <div>
+      <h3 class="font-bold text-lg mb-2">Customer Service</h3>
+      <p class="text-sm text-gray-600">24/7 support for all your queries.</p>
+    </div>
+  </section>
+
+</main>
+
+<%- include("../../views/partials/footer") %>
