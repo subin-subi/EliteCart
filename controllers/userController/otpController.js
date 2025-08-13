@@ -55,7 +55,7 @@ const validateOTP = async (req, res) => {
     const storedOTP = String(user.otp).trim();
     const inputOTP = String(userOtp).trim();
     
-    
+    w
     
 
     if (storedOTP === inputOTP) {  

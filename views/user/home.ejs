@@ -2,6 +2,7 @@
 
 <main class="w-full">
 
+<!-- Hero Section -->
 <section class="flex flex-col md:flex-row items-center justify-center px-8 pt-12 pb-12 bg-white">
   <!-- Left Text -->
   <div class="md:w-auto flex items-center">
@@ -10,69 +11,98 @@
     </p>
   </div>
   <!-- Right Image -->
-  <div class="md:w-auto flex items-center" style="margin-left:100px;">
+  <div class="md:w-auto flex items-center ml-16">
     <img src="/images/img.webp" alt="Hero Mask" 
-         class="w-72 md:w-80 h-auto rounded-3xl shadow-lg">
+         class="w-64 md:w-72 h-auto rounded-3xl shadow-lg">
   </div>
 </section>
 
+<!-- Most Highlights -->
+<section class="py-10">
+  <h2 class="text-center text-2xl md:text-3xl font-bold mb-6 tracking-widest text-gray-900">
+    MOST HIGHLIGHTS
+  </h2>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 px-6 max-w-5xl mx-auto">
+    
+    <!-- Left Large Image -->
+    <div class="relative overflow-hidden rounded-lg border-2 border-blue-500">
+      <img src="/images/two.webp" alt="Exclusive Mask" class="w-full h-64 object-cover">
+      <span class="absolute inset-0 flex items-center justify-center text-white text-xl font-semibold bg-black/40">
+        Exclusive MASK
+      </span>
+    </div>
 
+    <!-- Right Grid -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="relative overflow-hidden rounded-lg">
+        <img src="/images/three.webp" alt="Exquisite Styles & Collections" class="w-full h-32 object-cover">
+        <span class="absolute inset-0 flex items-center justify-center text-white text-lg font-semibold text-center px-2 bg-black/40">
+          Exquisite Styles & <br> Collections
+        </span>
+      </div>
+      <div class="relative overflow-hidden rounded-lg">
+        <img src="/images/one.webp" alt="New Arrivals" class="w-full h-32 object-cover">
+        <span class="absolute inset-0 flex items-center justify-center text-white text-lg font-semibold bg-black/40">
+          New Arrivals
+        </span>
+      </div>
+      <div class="relative overflow-hidden rounded-lg col-span-2">
+        <img src="/images/ban.jpg" alt="Exclusive Items" class="w-full h-40 object-cover">
+        <span class="absolute inset-0 flex items-center justify-center text-white text-lg font-semibold bg-black/40">
+          Exclusive Items
+        </span>
+      </div>
+    </div>
 
-  <!-- Most Highlights -->
-  <section class="py-12">
-    <h2 class="text-center text-sm font-semibold mb-6 tracking-widest text-gray-900">MOST HIGHLIGHTS</h2>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 max-w-6xl mx-auto">
-      <% const highlights = [
-        { img: "wearers.webp", title: "Exquisite Styles Collection" },
-        { img: "ii.jpg", title: "New Arrivals" },
-        { img: "six.webp", title: "Exclusive Items" },
-        { img: "four.jpg", title: "Classic Masks" }
-      ]; %>
-      <% highlights.forEach(item => { %>
-        <div class="relative overflow-hidden rounded-lg">
-          <img src="/images/<%= item.img %>" alt="<%= item.title %>" class="w-full h-72 object-cover">
-          <span class="absolute inset-0 flex items-center justify-center text-white text-lg font-semibold bg-black/40">
-            <%= item.title %>
-          </span>
-        </div>
-      <% }) %>
-    </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Popular Section -->
-  <section class="py-12">
-    <h2 class="text-center text-sm font-semibold mb-6 tracking-widest text-gray-900">POPULAR AT ALL TIME</h2>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 max-w-6xl mx-auto">
-      <% const popular = [
-        { img: "imag.webp", title: "Venetian Mask" },
-        { img: "one.webp", title: "Feather Mask" },
-        { img: "five.webp", title: "Gold Mask" },
-        { img: "four.jpg", title: "Butterfly Mask" }
-      ]; %>
-      <% popular.forEach(item => { %>
-        <div class="text-center">
-          <img src="/images/<%= item.img %>" alt="<%= item.title %>" class="w-full h-56 object-cover rounded-lg mx-auto mb-2">
-          <p class="text-xs text-gray-700"><%= item.title %></p>
-        </div>
-      <% }) %>
-    </div>
-  </section>
+<!-- Popular Section -->
+<section class="py-10">
+  <h2 class="text-center text-2xl md:text-3xl font-bold mb-6 tracking-widest text-gray-900">
+    POPULAR AT ALL TIME
+  </h2>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 max-w-5xl mx-auto">
+    <% const popular = [
+      { img: "imag.webp", title: "Venetian Mask" },
+      { img: "one.webp", title: "Feather Mask" },
+      { img: "five.webp", title: "Gold Mask" },
+      { img: "four.jpg", title: "Butterfly Mask" }
+    ]; %>
+    <% popular.forEach(item => { %>
+      <div class="text-center">
+        <img src="/images/<%= item.img %>" alt="<%= item.title %>" class="w-full h-48 object-cover rounded-lg mx-auto mb-2">
+        <p class="text-xs text-gray-700"><%= item.title %></p>
+      </div>
+    <% }) %>
+  </div>
+</section>
 
-  <!-- Why Shop Section -->
-  <section class="py-12 px-6 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-    <div>
-      <h3 class="font-bold text-lg mb-2">Fast Shipping</h3>
-      <p class="text-sm text-gray-600">Get your masks delivered quickly worldwide.</p>
-    </div>
-    <div>
-      <h3 class="font-bold text-lg mb-2">Great Prices</h3>
-      <p class="text-sm text-gray-600">Stylish masks at unbeatable prices.</p>
-    </div>
-    <div>
-      <h3 class="font-bold text-lg mb-2">Customer Service</h3>
-      <p class="text-sm text-gray-600">24/7 support for all your queries.</p>
-    </div>
-  </section>
+<!-- Why Shop Section -->
+<section class="py-12 px-6 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+  <div>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto mb-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m0 0v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8m18 0L12 3 3 8"/>
+    </svg>
+    <h3 class="font-bold text-lg mb-2">Fast Shipping</h3>
+    <p class="text-sm text-gray-600">Get your masks delivered quickly worldwide.</p>
+  </div>
+  <div>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto mb-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.104 0-2-.896-2-2 0-1.103.896-2 2-2s2 .897 2 2c0 1.104-.896 2-2 2zm0 2c1.104 0 2 .896 2 2v6h-4v-6c0-1.104.896-2 2-2z"/>
+    </svg>
+    <h3 class="font-bold text-lg mb-2">Great Prices</h3>
+    <p class="text-sm text-gray-600">Stylish masks at unbeatable prices.</p>
+  </div>
+  <div>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto mb-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728"/>
+    </svg>
+    <h3 class="font-bold text-lg mb-2">Customer Service</h3>
+    <p class="text-sm text-gray-600">24/7 support for all your queries.</p>
+  </div>
+</section>
 
 </main>
 

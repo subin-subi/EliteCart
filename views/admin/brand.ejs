@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Management | Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Joan&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <%- include('../partials/sidebar', { path: '/admin/brand' }) %>
+    
+    <div class="ml-64 p-8">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Brand Management</h1>
+            <p class="text-gray-600 mt-1">Manage product brands and their status</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <span class="material-icons text-blue-600">business</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Brands</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= pagination ? pagination.totalBrands || 0 : 0 %></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <span class="material-icons text-green-600">check_circle</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Brands</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= brands ? brands.filter(b => b.isActive).length : 0 %></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <span class="material-icons text-yellow-600">search</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Search Results</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= brands ? brands.length : 0 %></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <!-- Header with Search and Add Button -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-800">Brand List</h2>
+                    <button onclick="openModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
+                        <span class="material-icons mr-2">add</span>
+                        Add Brand
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="relative flex-1 max-w-md">
+                        <input 
+                            type="text" 
+                            id="searchBrand" 
+                            placeholder="Search brands..." 
+                            value="<%= search || '' %>"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <span class="material-icons absolute left-3 top-2.5 text-gray-400">search</span>
+                    </div>
+                    <button 
+                        onclick="performSearch()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                        Search
+                    </button>
+                    <% if (search) { %>
+                        <button 
+                            onclick="clearSearch()" 
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                        >
+                            Clear
+                        </button>
+                    <% } %>
+                </div>
+            </div>
+            
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <% if (brands && brands.length > 0) { %>
+                            <% brands.forEach((brand, index) => { %>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <%= (pagination ? (pagination.currentPage - 1) * 10 : 0) + index + 1 %>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900"><%= brand.name %></div>
+                                        <!-- <div class="text-sm text-gray-500">ID: <%= brand._id.toString().slice(-8) %></div> -->
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full <%= brand.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                                            <%= brand.isActive ? 'Active' : 'Blocked' %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-2">
+                                            <button 
+                                                onclick="editBrand('<%= brand._id %>')" 
+                                                class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition text-sm"
+                                            >
+                                                <span class="material-icons text-sm mr-1">edit</span>
+                                                Edit
+                                            </button>
+                                            <button 
+                                                onclick="toggleBlockBrand('<%= brand._id %>', <%= brand.isActive %>)" 
+                                                class="px-3 py-1 rounded-md text-white text-sm transition <%= brand.isActive ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' %>"
+                                            >
+                                                <span class="material-icons text-sm mr-1"><%= brand.isActive ? 'block' : 'check_circle' %></span>
+                                                <%= brand.isActive ? 'Block' : 'Unblock' %>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr> 
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <span class="material-icons text-gray-400 text-4xl mb-2">business_outlined</span>
+                                        <p class="text-gray-500 text-lg">No brands found</p>
+                                        <% if (search) { %>
+                                            <p class="text-gray-400 text-sm mt-1">Try adjusting your search terms</p>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (pagination && pagination.totalPages > 1) { %>
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <% if (pagination.hasPrevPage) { %>
+                                <a href="/admin/brand?page=<%= pagination.prevPage %><%= search ? '&search=' + search : '' %>" 
+                                   class="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                                    Previous
+                                </a>
+                            <% } %>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">
+                                Page <%= pagination.currentPage %> of <%= pagination.totalPages %>
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <% if (pagination.hasNextPage) { %>
+                                <a href="/admin/brand?page=<%= pagination.nextPage %><%= search ? '&search=' + search : '' %>" 
+                                   class="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                                    Next
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Add Modal -->
+    <div id="brandModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-700">Add New Brand</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            
+            <label class="block text-gray-600 mb-2">Brand Name</label>
+            <input type="text" id="brandName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Enter brand name">
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Cancel</button>
+                <button onclick="saveBrand()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editBrandModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-700">Edit Brand</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <label class="block text-gray-600 mb-2">Brand Name</label>
+            <input type="text" id="editBrandName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Enter new brand name">
+
+            <input type="hidden" id="editBrandId">
+
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Cancel</button>
+                <button onclick="updateBrand()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+
+        // Debounced search function
+        function debouncedSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, 500);
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchBrand').value.trim();
+            const currentUrl = new URL(window.location);
+            
+            if (searchTerm) {
+                currentUrl.searchParams.set('search', searchTerm);
+            } else {
+                currentUrl.searchParams.delete('search');
+            }
+            
+            currentUrl.searchParams.delete('page'); // Reset to first page
+            window.location.href = currentUrl.toString();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchBrand').value = '';
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.delete('search');
+            currentUrl.searchParams.delete('page');
+            window.location.href = currentUrl.toString();
+        }
+
+        // Setup search input listener
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchBrand');
+            if (searchInput) {
+                searchInput.addEventListener('input', debouncedSearch);
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+        });
+
+        function openModal() {
+            document.getElementById("brandModal").classList.remove("hidden");
+            document.getElementById("brandName").value = "";
+        }
+
+        function closeModal() {
+            document.getElementById("brandModal").classList.add("hidden");
+        }
+
+        function saveBrand() {
+            const nameInput = document.getElementById("brandName");
+            if (!nameInput) return Swal.fire("Error", "Brand name input not found.", "error");
+
+            const name = nameInput.value.trim();
+            if (!name) return Swal.fire("Warning", "Brand name cannot be empty!", "warning");
+            if (!/^[A-Za-z]+$/.test(name)) return Swal.fire("Warning", "Brand name can only contain alphabets.", "warning");
+            if (name.length > 10) return Swal.fire("Warning", "Brand name must not exceed 10 characters.", "warning");
+
+            const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
+            fetch("/admin/add-brand", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brandName: formattedName, isActive: true })
+            })
+            .then(response => response.json().catch(() => null))
+            .then(data => {
+                if (!data || !data.success) throw new Error(data?.message || "Unexpected error occurred");
+                Swal.fire("Success", "Brand added successfully!", "success").then(() => {
+                    closeModal();
+                    window.location.reload();
+                });
+            })
+            .catch(error => Swal.fire("Error", "Failed to add brand: " + error.message, "error"));
+        }
+
+        function editBrand(id) {
+            fetch(`/admin/brand/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.brand) {
+                        document.getElementById("editBrandId").value = data.brand._id;
+                        document.getElementById("editBrandName").value = data.brand.name;
+                        document.getElementById("editBrandModal").classList.remove("hidden");
+                    } else {
+                        Swal.fire("Error", data.message || "Failed to load brand", "error");
+                    }
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    Swal.fire("Error", "Something went wrong", "error");
+                });
+        }
+
+        function closeEditModal() {
+            document.getElementById("editBrandModal").classList.add("hidden");
+        }
+
+        function updateBrand() {
+            const id = document.getElementById("editBrandId").value;
+            const name = document.getElementById("editBrandName").value.trim();
+
+            if (!name) return Swal.fire("Warning", "Brand name cannot be empty!", "warning");
+            if (!/^[A-Za-z]+$/.test(name)) return Swal.fire("Warning", "Only alphabets allowed", "warning");
+            if (name.length > 10) return Swal.fire("Warning", "Max 10 characters allowed", "warning");
+
+            const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
+            fetch(`/admin/edit-brand/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brandName: formattedName }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire("Success", "Brand updated!", "success").then(() => {
+                        closeEditModal();
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire("Error", data.message || "Failed to update", "error");
+                }
+            })
+            .catch(err => {
+                console.error("Update error:", err);
+                Swal.fire("Error", "Something went wrong", "error");
+            });
+        }
+
+        function toggleBlockBrand(brandId, isActive) {
+            const action = isActive ? "block" : "unblock";
+            Swal.fire({
+                title: `Are you sure you want to ${action} this brand?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: isActive ? "#d33" : "#28a745",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: `Yes, ${action} it!`
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/${action}-brand/${brandId}`, { method: "PATCH" })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire("Success", `Brand ${isActive ? 'blocked' : 'unblocked'} successfully!`, "success")
+                                    .then(() => window.location.reload());
+                            } else {
+                                Swal.fire("Error", data.message || `Failed to ${action} brand`, "error");
+                            }
+                        })
+                        .catch(() => Swal.fire("Error", `Error trying to ${action} brand`, "error"));
+                }
+            });
+        }
+    </script>
+</body>
+</html>
