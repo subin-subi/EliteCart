@@ -23,10 +23,7 @@ const getBrand = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        console.log('Brands found:', brands.length, 'brands');
-        console.log('Search query:', search);
-        console.log('Page:', page, 'of', totalPages);
-
+       
         if (req.xhr) {
             return res.render('admin/brand', {
                 brands,

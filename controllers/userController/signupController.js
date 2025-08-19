@@ -416,7 +416,7 @@ const postSignup = async (req, res) => {
             }
             
             // Clear any cookies
-            res.clearCookie('connect.sid');
+            res.clearCookie('sessionId');
             
             // Redirect to signup page
             res.redirect('/signup');

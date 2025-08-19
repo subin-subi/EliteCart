@@ -34,16 +34,30 @@ const postAdmin = async (req, res) => {
       return res.redirect('/admin/login?error=server');
     }
   };
-  
 const getLogout = (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            console.error("Error destroying session:", err);
-            return res.status(500).send("Logout failed. Please try again.");
-        }
-        res.redirect('/admin/login');
-    });
-};
+  req.session.destroy((err) => {
+    if (err) {
+      console.log("Session destroy err:", err);
+      return res.status(500).send("Session destroy err");
+    }
 
+    // Clear the session cookie
+    res.clearCookie('connect.sid', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production'
+    });
+
+    // Set no-cache headers
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+
+    // Redirect to login page
+    res.redirect('/admin/login');
+  });
+};
 
 export default { getAdmin, postAdmin, getLogout }

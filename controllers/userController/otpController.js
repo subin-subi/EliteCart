@@ -1,16 +1,13 @@
 import {generateOTP, sendOTPEmail} from "../../utils/sendOTP.js"
 import userSchema from "../../models/userModel.js"; 
 
-
-
-
 const validateOTP = async (req, res) => {
   try {
     const { userOtp, email } = req.body;
-    console.log('User OTP:', userOtp);
-    
+   
     
     if (!userOtp || !email) {
+      console.log('Missing required fields');
       return res.status(400).json({ 
         success: false, 
         error: "OTP and email are required" 
@@ -18,18 +15,28 @@ const validateOTP = async (req, res) => {
     }
 
     const user = await userSchema.findOne({ email: email.toLowerCase() });
-    if (user) {
-      
-    }
-
+    console.log('User found:', !!user);
+    
     if (!user) {
       return res.status(400).json({ 
         success: false, 
-        error: "Invalid OTP" 
+        error: "User not found" 
       });
     }
 
+    console.log('User details:', {
+      id: user._id,
+      email: user.email,
+      isverified: user.isverified,
+      otp: user.otp,
+      otpType: typeof user.otp,
+      otpExpiresAt: user.otpExpiresAt,
+      otpAttempts: user.otpAttempts,
+      currentTime: Date.now()
+    });
+
     if (user.isverified) {
+      console.log('User already verified');
       return res.status(400).json({
         success: false,
         error: "User is already verified",
@@ -37,6 +44,7 @@ const validateOTP = async (req, res) => {
     }
 
     if (user.otpAttempts >= 3) {
+      console.log('Too many OTP attempts');
       return res.status(400).json({ 
         success: false,
         error: "Too many attempts. Please signup again."
@@ -44,18 +52,24 @@ const validateOTP = async (req, res) => {
     }
 
     if (!user.otpExpiresAt || Date.now() > user.otpExpiresAt) {
+
       return res.status(400).json({ 
         success: false,
         error: "OTP Expired" 
       });
     }
 
+    if (!user.otp) {
+      console.log('No OTP found in user record');
+      return res.status(400).json({ 
+        success: false,
+        error: "No OTP found. Please request a new OTP." 
+      });
+    }
     
     // Trim whitespace and ensure both are strings
     const storedOTP = String(user.otp).trim();
     const inputOTP = String(userOtp).trim();
-    
-    w
     
 
     if (storedOTP === inputOTP) {  
@@ -97,7 +111,14 @@ const resendOTP = async (req, res) => {
     try {
         const { email } = req.body;
         
-        const user = await userSchema.findOne({ email });
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
+        }
+        
+        const user = await userSchema.findOne({ email: email.toLowerCase() });
         
         if (!user) {
             return res.status(400).json({
@@ -187,19 +208,14 @@ const sendForgotPasswordOTP = async (req, res) => {
         user.otpAttempts = 0;
         await user.save();
         
-        console.log('✅ User updated with OTP');
-        console.log('Stored OTP:', user.otp);
-        console.log('OTP Expires At:', user.otpExpiresAt);
-        console.log('Current Time:', Date.now());
-        console.log('Time Until Expiry:', user.otpExpiresAt - Date.now());
-
+        
         // Send OTP email
         await sendOTPEmail(email, otp);
-        console.log('✅ OTP email sent successfully');
+      
         
         res.status(200).json({ message: 'OTP sent successfully' });
     } catch (error) {
-        console.error('❌ Send forgot password OTP error:', error);
+        console.error(' Send forgot password OTP error:', error);
         res.status(500).json({ message: 'Failed to send OTP' });
     }
 };
@@ -248,29 +264,22 @@ const verifyForgotPasswordOTP = async (req, res) => {
         user.otpAttempts += 1;
         await user.save();
 
-        console.log('=== OTP Comparison ===');
-        console.log('Stored OTP:', user.otp);
-        console.log('Input OTP:', otp);
-        console.log('Stored OTP Type:', typeof user.otp);
-        console.log('Input OTP Type:', typeof otp);
+        
         
         // Trim whitespace and ensure both are strings
         const storedOTP = String(user.otp).trim();
         const inputOTP = String(otp).trim();
         
-        console.log('Trimmed Stored OTP:', storedOTP);
-        console.log('Trimmed Input OTP:', inputOTP);
-        console.log('OTP Match:', storedOTP === inputOTP);
-
+        
         if (storedOTP === inputOTP) {
-            console.log('✅ Forgot password OTP verified successfully');
+          
             res.status(200).json({ message: 'OTP verified successfully' });
         } else {
-            console.log('❌ Invalid OTP, attempts incremented');
+           
             res.status(400).json({ message: 'Invalid OTP' });
         }
     } catch (error) {
-        console.error('❌ Verify forgot password OTP error:', error);
+        
         res.status(500).json({ message: 'Failed to verify OTP' });
     }
 };
@@ -329,11 +338,47 @@ const testOTP = async (req, res) => {
   }
 };
 
+const debugOTP = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        userId: user._id,
+        email: user.email,
+        otp: user.otp,
+        otpType: typeof user.otp,
+        otpExpiresAt: user.otpExpiresAt,
+        otpAttempts: user.otpAttempts,
+        isverified: user.isverified,
+        currentTime: Date.now(),
+        isExpired: user.otpExpiresAt
+          ? Date.now() > user.otpExpiresAt
+          : true,
+        timeUntilExpiry: user.otpExpiresAt
+          ? user.otpExpiresAt - Date.now()
+          : null,
+      },
+    });
+  } catch (error) {
+    console.error("Debug OTP error:", error);
+    res.status(500).json({ success: false, message: "Debug failed" });
+  }
+}
+
 export default {
     validateOTP,
     resendOTP,
     sendForgotPasswordOTP,
     verifyForgotPasswordOTP,
     aboutPage,
-    testOTP
+    testOTP,
+    debugOTP
 }

@@ -13,5 +13,16 @@ const isLogin = (req, res, next) => {
         next()
     }
 }
+function checkBlocked(req, res, next) {
+    if (req.session.user && req.session.user.blocked) {
+        req.session.destroy(() => {
+            res.clearCookie("sessionId");
+            return res.redirect("/login?blocked=true");
+        });
+    } else {
+        next();
+    }
+}
 
-export default { checkSession, isLogin }
+
+export default { checkSession, isLogin, checkBlocked }

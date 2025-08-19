@@ -23,10 +23,6 @@ const getCategory = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        console.log('Categories found:', categories.length, 'categories');
-        console.log('Search query:', search);
-        console.log('Page:', page, 'of', totalPages);
-
         if (req.xhr) {
             return res.render('admin/category', {
                 categories,

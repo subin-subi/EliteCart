@@ -4,9 +4,8 @@ import authController from "../controllers/adminController/signupController.js";
 import dashboardController from "../controllers/adminController/dashboardController.js";
 import brandController from "../controllers/adminController/brandController.js";
 import categoryController from "../controllers/adminController/categoryController.js";
-import productController from "../controllers/adminController/productController.js";
 import userController from "../controllers/adminController/userController.js";
-import { uploadProductImages, handleUploadError } from "../middleware/uploadMiddleware.js";
+import productController from "../controllers/adminController/productController.js";
 
 const router = express.Router();
 
@@ -35,18 +34,17 @@ router.put("/edit-category", categoryController.editCategory);
 router.patch("/block-category/:id", categoryController.blockCategory);
 router.patch("/unblock-category/:id", categoryController.unblockCategory);
 
-// Product Management
-router.get("/products", productController.getProduct);
-router.post("/add-product", uploadProductImages, handleUploadError, productController.addProduct);
-router.get("/product/:id", productController.getProductById);
-router.put("/edit-product/:id", uploadProductImages, handleUploadError, productController.updateProduct);
-router.patch("/toggle-product-status/:id", productController.toggleProductStatus);
-router.delete("/delete-product/:id", productController.deleteProduct);
-router.post("/upload-product-images", uploadProductImages, handleUploadError, productController.uploadProductImages);
-router.get("/api/products", productController.getProductsAPI);
-
 // User management
-router.get("/userlist", userController.getUserList);
-router.post("/toggle-block", userController.getToggle);
+router.get("/userlist", adminMiddleware.checkSession, userController.getUserList);
+router.patch("/block-user/:id", adminMiddleware.checkSession, userController.blockUser);
+router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.unblockUser);
+
+// fro product
+
+router.get("/products", productController.getProduct);
+
+
+
+
 
 export default router;

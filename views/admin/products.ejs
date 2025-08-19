@@ -6,10 +6,12 @@
     <title>Product Management | Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Joan&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+
 </head>
 <body class="bg-gray-100">
     <div class="flex min-h-screen">
@@ -24,35 +26,68 @@
                 <p class="text-gray-600 mt-1">Manage product inventory and status</p>
             </div>
 
-            <!-- Search and Filter Section -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <div class="flex items-center space-x-4">
-                <div class="flex-1">
-                        <input type="text" 
-                               placeholder="Search products..." 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               id="searchProduct">
-                </div>
-                    <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option>All Status</option>
-                    <option>active</option>
-                    <option>blocked</option>
-                </select>
-                    <button class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition flex items-center">
-                        <span class="material-icons mr-2">search</span>
-                        Search
-                    </button>
-                    <button onclick="openAddProductModal()" class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition flex items-center">
-                        <span class="material-icons mr-2">add</span>
-                        Add New Product
+<!-- Search and Filter Section -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <form id="searchFilterForm" method="GET" action="/admin/products">
+        <div class="flex items-center space-x-4">
+            
+            <!-- Search Input with X -->
+            <div class="relative flex-1">
+                <input type="text" 
+                       name="search"
+                       value="<%= typeof search !== 'undefined' ? search : '' %>"
+                       placeholder="Search products..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                       id="searchProduct">
+                
+                <!-- X button -->
+                <button type="button" 
+                        id="clearSearchBtn" 
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                    ✕
                 </button>
-                </div>
             </div>
+
+            <!-- Search Button (Moved Left) -->
+            <button type="submit" 
+                    class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition flex items-center">
+                <span class="material-icons mr-2">search</span>
+                Search
+            </button>
+
+            <!-- Status Dropdown (Now comes after Search button) -->
+            <select name="status" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">All Status</option>
+                <option value="active" <%= status === 'active' ? 'selected' : '' %>>active</option>
+                <option value="blocked" <%= status === 'blocked' ? 'selected' : '' %>>blocked</option>
+            </select>
+
+            <!-- Add Product Button -->
+            <button type="button" 
+                    onclick="openAddProductModal()" 
+                    class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition flex items-center">
+                <span class="material-icons mr-2">add</span>
+                Add New Product
+            </button>
+        </div>
+    </form>
+</div>
+
 
             <!-- Products Table -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-800">Product List</h2>
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-800">Product List</h2>
+                        <div class="text-sm text-gray-600">
+                            <% if (pagination) { %>
+                                Showing <%= ((pagination.currentPage - 1) * 10) + 1 %> - <%= Math.min(pagination.currentPage * 10, pagination.totalProducts) %> of <%= pagination.totalProducts %> products
+                            <% } else { %>
+                                No products available
+                            <% } %>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="overflow-x-auto">
@@ -74,9 +109,9 @@
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex-shrink-0 h-16 w-16">
-                                                <% if (product.mainImage) { %>
+                                                <% if (product.variants && product.variants[0] && product.variants[0].images && product.variants[0].images.length > 0) { %>
                                                     <img class="h-16 w-16 rounded-lg object-cover" 
-                                                         src="<%= product.mainImage %>" 
+                                                         src="<%= product.variants[0].images[0] %>" 
                                                          alt="<%= product.name %>">
                                 <% } else if (product.variants && product.variants[0] && product.variants[0].images && product.variants[0].images.length > 0) { %>
                                                     <img class="h-16 w-16 rounded-lg object-cover" 
@@ -104,7 +139,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">₹<%= product.price || '0' %></div>
+                                            <div class="text-sm text-gray-900">₹<%= product.variants && product.variants[0] && product.variants[0].price ? product.variants[0].price : '0' %></div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full <%= product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
@@ -136,9 +171,7 @@
                                                             <button onclick="viewProduct('<%= product._id %>')" class="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">
                                                                 View Details
                                                             </button>
-                                                            <button onclick="deleteProduct('<%= product._id %>')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                                                Delete
-                                                            </button>
+                                                            
                                                         </div>
                                                     </div>
                                                 </div>
@@ -151,16 +184,116 @@
                                     <td colspan="7" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center">
                                             <span class="material-icons text-gray-400 text-4xl mb-2">inventory_2</span>
-                                            <p class="text-gray-500 text-lg">No products found</p>
-                                            <p class="text-gray-400 text-sm mt-1">Add your first product to get started</p>
+                                            <% if (search || (status && status !== 'All Status')) { %>
+                                                <p class="text-gray-500 text-lg">No products found</p>
+                                                <p class="text-gray-400 text-sm mt-1">Try adjusting your search criteria or filters</p>
+                                                <button onclick="clearFilters()" class="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm">
+                                                    Clear Filters
+                                                </button>
+                                            <% } else if (pagination && pagination.totalProducts === 0) { %>
+                                                <p class="text-gray-500 text-lg">No products available</p>
+                                                <p class="text-gray-400 text-sm mt-1">Add your first product to get started</p>
+                                                <button onclick="openAddProductModal()" class="mt-3 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition text-sm">
+                                                    Add First Product
+                                                </button>
+                                            <% } else { %>
+                                                <p class="text-gray-500 text-lg">No products found</p>
+                                                <p class="text-gray-400 text-sm mt-1">Add your first product to get started</p>
+                                            <% } %>
                                         </div>
-                            </td>
-                        </tr>
+                                    </td>
+                                </tr>
                             <% } %>
                     </tbody>
                 </table>
             </div>
         </div>
+        
+        <!-- Pagination Info -->
+        <% if (pagination) { %>
+        <div class="bg-white px-6 py-3 border-t border-gray-200 bg-gray-50">
+            <div class="text-center text-sm text-gray-600">
+                Page <%= pagination.currentPage %> of <%= pagination.totalPages %> 
+                (<%= pagination.totalProducts %> total products)
+            </div>
+        </div>
+        <% } %>
+        
+        <!-- Pagination -->
+        <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="bg-white px-6 py-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <!-- Previous Button -->
+                <% if (pagination.hasPrevPage) { %>
+                <a href="/admin/products?page=<%= pagination.prevPage %><%= search ? '&search=' + encodeURIComponent(search) : '' %><%= status && status !== 'All Status' ? '&status=' + encodeURIComponent(status) : '' %>"
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 transition">
+                    <span class="material-icons text-sm mr-1">chevron_left</span>
+                    Previous
+                </a>
+                <% } else { %>
+                <button disabled class="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">
+                    <span class="material-icons text-sm mr-1">chevron_left</span>
+                    Previous
+                </button>
+                <% } %>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center space-x-1">
+                    <% 
+                    const startPage = Math.max(1, pagination.currentPage - 2);
+                    const endPage = Math.min(pagination.totalPages, pagination.currentPage + 2);
+                    
+                    // Show first page if not in range
+                    if (startPage > 1) { %>
+                        <a href="/admin/products?page=1<%= search ? '&search=' + encodeURIComponent(search) : '' %><%= status && status !== 'All Status' ? '&status=' + encodeURIComponent(status) : '' %>"
+                           class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 transition">
+                            1
+                        </a>
+                        <% if (startPage > 2) { %>
+                            <span class="px-2 py-2 text-sm text-gray-400">...</span>
+                        <% } %>
+                    <% } %>
+                    
+                    <% for (let i = startPage; i <= endPage; i++) { %>
+                        <% if (i === pagination.currentPage) { %>
+                            <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md">
+                                <%= i %>
+                            </span>
+                        <% } else { %>
+                            <a href="/admin/products?page=<%= i %><%= search ? '&search=' + encodeURIComponent(search) : '' %><%= status && status !== 'All Status' ? '&status=' + encodeURIComponent(status) : '' %>"
+                               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 transition">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                    <% } %>
+                    
+                    <% if (endPage < pagination.totalPages) { %>
+                        <% if (endPage < pagination.totalPages - 1) { %>
+                            <span class="px-2 py-2 text-sm text-gray-400">...</span>
+                        <% } %>
+                        <a href="/admin/products?page=<%= pagination.totalPages %><%= search ? '&search=' + encodeURIComponent(search) : '' %><%= status && status !== 'All Status' ? '&status=' + encodeURIComponent(status) : '' %>"
+                           class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 transition">
+                            <%= pagination.totalPages %>
+                        </a>
+                    <% } %>
+                </div>
+
+                <!-- Next Button -->
+                <% if (pagination.hasNextPage) { %>
+                <a href="/admin/products?page=<%= pagination.nextPage %><%= search ? '&search=' + encodeURIComponent(search) : '' %><%= status && status !== 'All Status' ? '&status=' + encodeURIComponent(status) : '' %>"
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 transition">
+                    Next
+                    <span class="material-icons text-sm ml-1">chevron_right</span>
+                </a>
+                <% } else { %>
+                <button disabled class="px-3 py-2 text-sm font-medium text-gray-300 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">
+                    Next
+                    <span class="material-icons text-sm ml-1">chevron_right</span>
+                </button>
+                <% } %>
+            </div>
+        </div>
+        <% } %>
     </div>
     </div>
 
@@ -174,22 +307,24 @@
                 </button>
             </div>
             
-            <form id="addProductForm">
+            <!-- <form id="addProductForm"> -->
+                <form id="addProductForm" action="/admin/addProduct" method="POST" enctype="multipart/form-data">
+<!-- /////////////////////////////////////////////////////////////////////////////////////////////// -->
                 <!-- Product Details Section -->
-                <div class="mb-6">
+                <!-- <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Product Details</h3>
                     
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-gray-600 mb-2">Product Name*</label>
-                            <input type="text" id="productName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter product name" >
+                            <input type="text" id="productName" name="name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter product name" required>
                            
                             <span id="mainImageError" style="font-size: 14px;"></span>
 
                         </div>
                         <div>
                             <label class="block text-gray-600 mb-2">Brand*</label>
-                            <select id="productBrand" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" >
+                            <select id="productBrand" name="brand" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
                                 <option value="">Select brand</option>
                                 <% if (brands && brands.length > 0) { %>
                                     <% brands.forEach(brand => { %>
@@ -203,7 +338,7 @@
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-gray-600 mb-2">Category*</label>
-                            <select id="productCategory" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" >
+                            <select id="productCategory" name="category" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
                                 <option value="">Select category</option>
                                 <% if (categories && categories.length > 0) { %>
                                     <% categories.forEach(category => { %>
@@ -212,94 +347,129 @@
                                 <% } %>
                             </select>
                         </div>
-                        <!-- <div>
-                            <label class="block text-gray-600 mb-2">Price*</label>
-                            <input type="number" id="productPrice" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" step="0.01" min="0" placeholder="Enter price" >
-                        </div> -->
+                        
                     </div>
 
                     <div class="mb-4">
                         <label class="block text-gray-600 mb-2">Product Description*</label>
-                        <textarea id="productDescription" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Enter product description..." ></textarea>
+                        <textarea id="productDescription" name="description" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Enter product description..." required></textarea>
                     </div>
-                </div>
+                </div> -->
+<!-- Product Form -->
+<div class="mb-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Product Details</h3>
+  
+    <!-- Name & Category -->
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-gray-600 mb-2">Product Name*</label>
+        <input type="text" id="productName" name="name"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+               placeholder="Enter product name" required>
+      </div>
+      <div>
+        <label class="block text-gray-600 mb-2">Category*</label>
+        <select id="productCategory" name="category"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Select category</option>
+          <% if (categories && categories.length > 0) { %>
+            <% categories.forEach(category => { %>
+              <option value="<%= category._id %>"><%= category.name %></option>
+            <% }); %>
+          <% } %>
+        </select>
+      </div>
+    </div>
+  
+    <!-- Brand & Color -->
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-gray-600 mb-2">Brand*</label>
+        <select id="productBrand" name="brand"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Select brand</option>
+          <% if (brands && brands.length > 0) { %>
+            <% brands.forEach(brand => { %>
+              <option value="<%= brand._id %>"><%= brand.name %></option>
+            <% }); %>
+          <% } %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-600 mb-2">Color*</label>
+        <input type="text" id="productColor" name="color"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+               placeholder="Enter color" required>
+      </div>
+    </div>
+  
+    <!-- Price & Stock -->
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-gray-600 mb-2">Price*</label>
+        <input type="number" id="productPrice" name="price"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+               placeholder="Enter price" required>
+      </div>
+      <div>
+        <label class="block text-gray-600 mb-2">Stock*</label>
+        <input type="number" id="productStock" name="stock"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+               placeholder="Enter stock quantity" required>
+      </div>
+    </div>
+  
+    <!-- Description -->
+    <div class="mb-4">
+      <label class="block text-gray-600 mb-2">Description*</label>
+      <textarea id="productDescription" name="description"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                rows="4" placeholder="Enter product description" required></textarea>
+    </div>
+  </div>
+  
+  <!-- Product Images -->
+  <div class="mt-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Product Images</h3>
+  
+    <!-- Main Image -->
+    <div class="mb-4">
+      <label class="block text-gray-600 mb-2">Main Image*</label>
+      <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer"
+           onclick="document.getElementById('mainImageInput').click()">
+        <div class="flex flex-col items-center">
+          <span class="material-icons text-gray-400 text-2xl mb-2">upload</span>
+          <p class="text-gray-600 text-sm">Click to upload main image</p>
+        </div>
+        <input type="file" id="mainImageInput" name="mainImage" class="hidden"
+               accept="image/*" onchange="handleMainImageChange(event)">
+      </div>
+      <div id="mainImagePreview" class="mt-2"></div>
+    </div>
+  
+    <!-- Sub Images -->
+    <div class="mb-4">
+      <label class="block text-gray-600 mb-2">Additional Images (Exactly 3 Required)*</label>
+      <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer"
+           onclick="document.getElementById('subImagesInput').click()">
+        <div class="flex flex-col items-center">
+          <span class="material-icons text-gray-400 text-2xl mb-2">upload</span>
+          <p class="text-gray-600 text-sm">Click to upload additional images</p>
+        </div>
+        <input type="file" id="subImagesInput" name="subImages" class="hidden"
+               multiple accept="image/*" onchange="handleSubImagesUpload(this)">
+      </div>
+      <div class="flex justify-between items-center mt-2">
+        <span class="text-xs text-gray-500">Current: <span id="currentImageCount">0</span>/3</span>
+        <button type="button" onclick="clearAllSubImages()" class="text-xs text-red-500">Clear All</button>
+      </div>
+      <div id="subImagesPreview" class="flex flex-wrap gap-2 mt-3"></div>
+    </div>
+  </div>
+  
+  
 
-                <!-- Images Section -->
-                <div class="mb-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Product Images</h3>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-600 mb-2">Main Image*</label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition cursor-pointer" onclick="document.getElementById('mainImageInput').click()">
-                            <div class="flex flex-col items-center">
-                                <span class="material-icons text-gray-400 text-2xl mb-2">upload</span>
-                                <p class="text-gray-600 text-sm">Click to upload main image</p>
-                                <p class="text-xs text-gray-400 mt-1">This will be the primary image for the product</p>
-                                <input type="file" id="mainImageInput" class="hidden" accept="image/*" onchange="handleMainImageUpload(this)">
-                            </div>
-                        </div>
-                        <div id="mainImagePreview" class="mt-2"></div>
-                        <div id="mainImageActions" class="mt-2 hidden">
-                            <button type="button" onclick="replaceMainImage()" class="text-xs text-blue-500 hover:text-blue-700 mr-2">Replace Image</button>
-                            <button type="button" onclick="clearMainImage()" class="text-xs text-red-500 hover:text-red-700">Clear Image</button>
-                        </div>
-                        <div id="addMainImageActions" class="mt-2">
-                            <button type="button" onclick="addMainImage()" class="text-xs text-blue-500 hover:text-blue-700">Add Main Image</button>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-gray-600 mb-2">Additional Images (Optional - Max 3)</label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition cursor-pointer" onclick="document.getElementById('subImagesInput').click()">
-                            <div class="flex flex-col items-center">
-                                <span class="material-icons text-gray-400 text-2xl mb-2">upload</span>
-                                <p class="text-gray-600 text-sm">Click to upload additional images</p>
-                                <p class="text-xs text-gray-400 mt-1">You can add up to 3 additional images</p>
-                                <input type="file" id="subImagesInput" class="hidden" multiple accept="image/*" onchange="handleSubImagesUpload(this)">
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="text-xs text-gray-500">Current: <span id="currentImageCount">0</span>/3</span>
-                            <button type="button" onclick="clearAllSubImages()" class="text-xs text-red-500 hover:text-red-700">Clear All</button>
-                        </div>
-                        <div id="subImagesPreview" class="flex flex-wrap gap-2 mt-3"></div>
-                    </div>
-                </div>
-
-                <!-- Variants Section -->
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800">Variants*</h3>
-                        <button type="button" onclick="addVariant()" class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm">
-                            + Add Variant
-                        </button>
-                    </div>
-                    
-                    <div id="variantsContainer">
-                        <div class="variant-item border border-gray-200 rounded-lg p-4 mb-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="text-md font-medium text-gray-700">Variant 1</h4>
-                                <button type="button" onclick="removeVariant(this)" class="text-red-500 hover:text-red-700">
-                                    <span class="material-icons text-sm">delete</span>
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-gray-600 mb-2">Color*</label>
-                                    <input type="text" class="variant-color w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter color" >
-                                </div>
-                                <div>
-                                    <label class="block text-gray-600 mb-2">Price*</label>
-                                    <input type="number" class="variant-price w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter price" step="0.01" >
-                                </div>
-                                <div>
-                                    <label class="block text-gray-600 mb-2">Quantity*</label>
-                                    <input type="number" class="variant-quantity w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter quantity" min="0" >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+             
 
                 <!-- Action Buttons -->
                 <div class="flex justify-end space-x-3">
@@ -310,34 +480,16 @@
                         Add Product
                     </button>
                 </div>
+               <% if (typeof error !== 'undefined' && error) { %>
+                   <div class="text-red-500 mb-2"><%= error %></div>
+               <% } %>
+
+
             </form>
         </div>
     </div>
 
-    <!-- Image Cropping Modal -->
-    <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-[800px] max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-gray-700">Crop Image</h3>
-                <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-600">
-                    <span class="material-icons">close</span>
-                </button>
-            </div>
-            <div class="mb-4">
-                <div id="cropContainer" class="max-h-96 overflow-hidden">
-                    <img id="cropImage" src="" alt="Crop preview" style="max-width: 100%; max-height: 100%;">
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3">
-                <button onclick="closeCropModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
-                    Cancel
-                </button>
-                <button onclick="applyCrop()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-                    Apply Crop
-                </button>
-            </div>
-        </div>
-    </div>
+    
 
     <script src="/javascript/admin/product.js"></script>
 </body>

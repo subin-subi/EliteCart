@@ -2,7 +2,7 @@ import { Router } from "express";
 import authController from "../controllers/userController/signupController.js"; 
 import otpController from "../controllers/userController/otpController.js"
 import userMiddleware from "../middleware/userMiddleware.js"
-
+// import productController from "../controllers/userController/productController.js";
 
 
 
@@ -20,6 +20,8 @@ route.post("/validate-otp", otpController.validateOTP);
 route.post("/resend-otp", otpController.resendOTP);
 
 route.get("/test-otp", otpController.testOTP);
+
+route.get("/debug-otp/:email", otpController.debugOTP)  
 
 route.get('/login', userMiddleware.isLogin, authController.getLogin)
 
@@ -46,5 +48,11 @@ route.get("/auth/google", authController.getGoogle)
 route.get('/auth/google/callback', authController.getGoogleCallback);
 
 route.post("/logout", authController.getLogout)
+
+////////////product Controller/////////////////////
+
+// route.get("/product",productController.getProductsPage)
+
+
 
 export default route;

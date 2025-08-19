@@ -11,12 +11,14 @@ const checkSession = async (req, res, next) => {
         const user = await userModel.findById(req.session.user).select('-password').lean();
         
         if (!user) {
-            req.session.destroy();
+            req.session.destroy(() => {});
+            res.clearCookie('sessionId');
             return res.redirect('/login?message=Invalid+session');
         }
 
         if (user.blocked) {
-            req.session.destroy();
+            req.session.destroy(() => {});
+            res.clearCookie('sessionId');
             return res.redirect('/login?message=Account+blocked');
         }
 

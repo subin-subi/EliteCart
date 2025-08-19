@@ -67,40 +67,72 @@ const getUserList = async (req, res) => {
     }
 };
 
-const getToggle = async (req, res) => {
-    try {
-        const { userId } = req.body;
-        if (!userId) {
-            return res.status(400).json({ 
-                success: false,
-                error: "User ID is required" 
-            });
-        }
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: "User not found" 
-            });
-        }
 
-        // Toggle block status
-        user.blocked = !user.blocked;
-        await user.save();
 
-        res.json({
-            success: true,
-            message: `User successfully ${user.blocked ? "blocked" : "unblocked"}`,
-            blocked: user.blocked
-        });
-    } catch (error) {
-        console.error('Error in getToggle:', error);
-        res.status(500).json({ 
-            success: false,
-            error: "Failed to update user status" 
-        });
+
+
+
+
+const blockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Update user to blocked
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { blocked: true },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.json({ success: false, message: "User not found" });
     }
+
+    // Check safely if session user exists and compare IDs
+    if (req.session?.user && req.session.user._id?.toString() === id) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+          return res.json({
+            success: false,
+            message: "Error logging out after blocking",
+          });
+        }
+        res.clearCookie("connect.sid"); // Default cookie name in express-session
+        return res.json({
+          success: true,
+          message: "User blocked and session destroyed",
+        });
+      });
+    } else {
+      return res.json({
+        success: true,
+        user: updatedUser,
+        message: "User blocked",
+      });
+    }
+  } catch (err) {
+    console.error("Error blocking user:", err);
+    res.json({ success: false, message: err.message });
+  }
 };
 
-export default { getUserList, getToggle };
+
+
+
+// Unblock User
+const unblockUser = async (req, res) => {
+  try {
+    const { id } = req.params;   // match with :id in route
+
+    await User.findByIdAndUpdate(id, { blocked: false });
+
+    res.json({ success: true, message: "User unblocked successfully" });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+};
+
+
+export default { getUserList,blockUser,unblockUser };

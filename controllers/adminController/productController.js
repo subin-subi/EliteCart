@@ -541,11 +541,5 @@ const getProductsAPI = async (req, res) => {
 
 export default {
   getProduct,
-  addProduct,
-  getProductById,
-  updateProduct,
-  toggleProductStatus,
-  deleteProduct,
-  uploadProductImages,
-  getProductsAPI
+
 };

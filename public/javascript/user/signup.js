@@ -93,8 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Real-time validation for name
   document.getElementById('name').addEventListener('input', function () {
     const value = this.value.trim();
-    if (value.length < 2 || value.length > 50) {
-      showError('nameError', 'Name must be between 2 and 50 characters');
+    if (value.length < 3 || value.length > 10) {
+      showError('nameError', 'Name must be between 3 and 10 characters');
     } else if (!/^[a-zA-Z\s]+$/.test(value)) {
       showError('nameError', 'Name can only contain letters and spaces');
     } else {
@@ -163,12 +163,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const icon = this.querySelector('i');
     if (input.type === 'password') {
       input.type = 'text';
-      icon.classList.remove('fa-eye');
-      icon.classList.add('fa-eye-slash');
-    } else {
-      input.type = 'password';
       icon.classList.remove('fa-eye-slash');
       icon.classList.add('fa-eye');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
     }
   });
 
@@ -203,8 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
-    if (!name || name.length < 2 || name.length > 50) {
-      showError('nameError', 'Name must be between 2 and 50 characters');
+    if (!name || name.length < 3 || name.length > 10) {
+      showError('nameError', 'Name must be between 3 and 10 characters');
       hasErrors = true;
     } else if (!/^[a-zA-Z\s]+$/.test(name)) {
       showError('nameError', 'Name can only contain letters and spaces');
@@ -309,6 +309,15 @@ document.addEventListener('DOMContentLoaded', () => {
         otpError.classList.remove('hidden');
         otpInputs.forEach(input => input.value = '');
         otpInputs[0].focus();
+        
+        // Debug: Check current OTP status
+        try {
+          const debugResponse = await fetch(`/debug-otp/${encodeURIComponent(email)}`);
+          const debugData = await debugResponse.json();
+          console.log('Debug OTP status:', debugData);
+        } catch (debugError) {
+          console.error('Debug request failed:', debugError);
+        }
       }
     } catch (error) {
       otpLoadingSpinner.classList.add('hidden');
