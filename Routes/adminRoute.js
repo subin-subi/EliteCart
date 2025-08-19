@@ -39,6 +39,10 @@ router.get("/userlist", adminMiddleware.checkSession, userController.getUserList
 router.patch("/block-user/:id", adminMiddleware.checkSession, userController.blockUser);
 router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.unblockUser);
 
+
+
+
+
 // fro product
 
 router.get("/products", productController.getProduct);
