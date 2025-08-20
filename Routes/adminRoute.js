@@ -6,6 +6,7 @@ import brandController from "../controllers/adminController/brandController.js";
 import categoryController from "../controllers/adminController/categoryController.js";
 import userController from "../controllers/adminController/userController.js";
 import productController from "../controllers/adminController/productController.js";
+import { upload, handleMulterError } from "../utils/multer.js";
 
 const router = express.Router();
 
@@ -46,7 +47,15 @@ router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.u
 // fro product
 
 router.get("/products", productController.getProduct);
-
+router.post(
+  "/addProduct",
+  upload.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "subImages", maxCount: 3 }
+  ]),
+  handleMulterError,
+  productController.addProduct
+)
 
 
 

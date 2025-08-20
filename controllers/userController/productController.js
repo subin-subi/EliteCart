@@ -1,8 +1,6 @@
 import Product from "../../models/productModel.js";
 import Brand from "../../models/brandModel.js";
 import Category from "../../models/categoryModel.js";
-import { upload, storage, handleMulterError } from "../../utils/multer.js";
-import fs from 'fs';
 
 
 
@@ -67,12 +65,21 @@ const getProductsPage = async (req, res) => {
   }
 };
 
-export default { getProductsPage,
-  getProductById,
-  getProductByCategory,
-  getProductByBrand,
-  getProductByPrice,
-  getProductByStock,
-  getProductByColor,
-  getProductBySize,
- };
+// Live search by product name (case-insensitive)
+const searchProductsByName = async (req, res) => {
+  try {
+    const q = (req.query.q || "").trim();
+    if (!q) return res.json({ success: true, results: [] });
+    const results = await Product.find({ name: { $regex: q, $options: 'i' } })
+      .select('name _id')
+      .limit(10);
+    res.json({ success: true, results });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Search failed' });
+  }
+};
+
+export default {
+  getProductsPage,
+  searchProductsByName,
+};

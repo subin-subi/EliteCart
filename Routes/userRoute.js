@@ -2,7 +2,7 @@ import { Router } from "express";
 import authController from "../controllers/userController/signupController.js"; 
 import otpController from "../controllers/userController/otpController.js"
 import userMiddleware from "../middleware/userMiddleware.js"
-// import productController from "../controllers/userController/productController.js";
+import productController from "../controllers/userController/productController.js";
 
 
 
@@ -50,8 +50,6 @@ route.get('/auth/google/callback', authController.getGoogleCallback);
 route.post("/logout", authController.getLogout)
 
 ////////////product Controller/////////////////////
-
-// route.get("/product",productController.getProductsPage)
 
 
 

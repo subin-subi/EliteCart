@@ -3,6 +3,10 @@
 import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
+import dotenv from 'dotenv';
+
+// Ensure env vars are loaded even if this module is imported before server.js config
+dotenv.config();
 
 // Configure Cloudinary
 cloudinary.config({
@@ -13,29 +17,33 @@ cloudinary.config({
 
 // Configure Multer with Cloudinary Storage
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'products',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
-    transformation: [{ width: 500, height: 500, crop: 'limit' }],
+  cloudinary,
+  params: async (req, file) => {
+    // Keep params minimal to prevent signature mismatches
+    return {
+      folder: 'products',
+      public_id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      resource_type: 'image',
+      use_filename: true,
+      unique_filename: true,
+      overwrite: false,
+    };
   },
 });
- 
 
-
-const upload = multer({ 
-  storage: storage,
+// Multer middleware
+const upload = multer({
+  storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Accept only image files
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
       cb(new Error('Only image files are allowed!'), false);
     }
-  }
+  },
 });
 
 // Error handling middleware
@@ -51,4 +59,4 @@ const handleMulterError = (err, req, res, next) => {
   next();
 };
 
-export { upload, storage,  handleMulterError };  // Named exports
+export { upload, storage, handleMulterError };

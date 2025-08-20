@@ -64,123 +64,81 @@ const getProduct = async (req, res) => {
   }
 };
 
-// Add new product
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add Product - expects Cloudinary URLs populated by multer-storage-cloudinary
 const addProduct = async (req, res) => {
   try {
-
-    const {
-      name,
-      brand,
-      category,
-      description,
-      price,
-      variants
-    } = req.body;
-
-    
+    const { name, category, brand, color, price, stock, description } = req.body;
 
     // Validate required fields
-    if (!name || !brand || !category || !description || !price) {
-      return res.status(400).json({
-        success: false,
-        message: 'All required fields must be provided'
-      });
+    if (!name || !category || !brand || !color || !price || !stock || !description) {
+      return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    // Validate main image
-    if (!req.files || req.files.length === 0) {
-      // Check if this is an edit operation with existing images
-      const keepExistingImages = req.body.keepExistingImages === 'true';
-      if (!keepExistingImages) {
-        return res.status(400).json({
-          success: false,
-          message: 'Main image is required'
-        });
+    // Handle images
+    let mainImage = "";
+    let subImages = [];
+    if (req.files) {
+      if (req.files.mainImage?.[0]) {
+        mainImage = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
+      }
+      if (Array.isArray(req.files.subImages)) {
+        subImages = req.files.subImages.map((file) => file.path || file.secure_url);
       }
     }
 
-    // Parse variants if they exist
-    let parsedVariants = [];
-    if (variants) {
-      try {
-        parsedVariants = JSON.parse(variants);
-      } catch (parseError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid variants data format'
-        });
-      }
+    if (!mainImage) {
+      return res.status(400).json({ success: false, message: "Main image is required" });
     }
 
-    // Validate variants
-    if (!Array.isArray(parsedVariants) || parsedVariants.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one variant is required'
-      });
-    }
-
-    // Validate each variant
-    for (let i = 0; i < parsedVariants.length; i++) {
-      const variant = parsedVariants[i];
-      if (!variant.color || !variant.price || variant.price <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Variant ${i + 1}: Color and price are required, price must be greater than 0`
-        });
-      }
-    }
-
-    // Process uploaded images
-    const uploadedFiles = req.files;
-    const mainImage = `/uploads/products/${uploadedFiles[0].filename}`;
-    
-    // Process sub images (files 2 onwards, max 3)
-    const subImages = [];
-    for (let i = 1; i < Math.min(uploadedFiles.length, 4); i++) {
-      subImages.push(`/uploads/products/${uploadedFiles[i].filename}`);
+    if (!Array.isArray(subImages) || subImages.length !== 3) {
+      return res.status(400).json({ success: false, message: "Exactly 3 sub images are required" });
     }
 
     // Create new product
     const newProduct = new Product({
-      name: name.trim(),
-      brand,
+      name,
       category,
-      price: parseFloat(price),
-      description: description.trim(),
+      brand,
+      color,
+      price: Number(price),
+      stock: Number(stock),
+      description,
       mainImage,
       subImages,
-      variants: parsedVariants,
-      status: 'active'
     });
 
     await newProduct.save();
 
-    res.status(201).json({
-      success: true,
-      message: 'Product added successfully',
-      product: newProduct
-    });
-  } catch (error) {
-    console.error('Error adding product:', error);
-    
-    // Handle validation errors
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: validationErrors
-      });
+    if (req.headers['x-requested-with'] !== 'XMLHttpRequest' && 
+        (!req.headers.accept || !req.headers.accept.includes('application/json'))) {
+      return res.redirect('/admin/products');
     }
 
-    res.status(500).json({
-      success: false,
-      message: 'Error adding product',
-      error: error.message
+    return res.status(201).json({
+      success: true,
+      message: "Product added successfully",
+      product: newProduct,
     });
+  } catch (error) {
+    console.error("Error adding product:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
+
 
 // Get product by ID
 const getProductById = async (req, res) => {
@@ -541,5 +499,6 @@ const getProductsAPI = async (req, res) => {
 
 export default {
   getProduct,
+  addProduct
 
 };

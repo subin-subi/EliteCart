@@ -38,14 +38,19 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
     mainImage: {
-      type: String, // store image URL or file path
+      type: String,
       required: [true, "Main image is required"],
+      trim: true,
     },
-    subImages: [
-      {
-        type: String, // multiple image URLs or paths
+    subImages: {
+      type: [String],
+      validate: {
+        validator: function (arr) {
+          return Array.isArray(arr) && arr.length === 3 && arr.every(Boolean);
+        },
+        message: "Exactly 3 sub images are required",
       },
-    ],
+    },
     status: {
       type: String,
       enum: ["active", "blocked"],
