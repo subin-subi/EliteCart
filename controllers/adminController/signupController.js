@@ -49,13 +49,13 @@ const getLogout = (req, res) => {
       secure: process.env.NODE_ENV === 'production'
     });
 
-    // Set no-cache headers
+  
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-    // Redirect to login page
+   
     res.redirect('/admin/login');
   });
 };

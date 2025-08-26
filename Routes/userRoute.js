@@ -51,6 +51,7 @@ route.post("/logout", authController.getLogout)
 
 ////////////product Controller/////////////////////
 
+route.get("/product",productController.getProductsPage)
 
 
 export default route;

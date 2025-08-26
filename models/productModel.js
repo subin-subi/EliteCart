@@ -56,6 +56,11 @@ const productSchema = new mongoose.Schema(
       enum: ["active", "blocked"],
       default: "active",
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

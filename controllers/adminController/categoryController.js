@@ -58,7 +58,6 @@ const getCategory = async (req, res) => {
     }
 };
 
-// Add new category
 const addCategory = async (req, res) => {
     try {
         if (!req.body || !req.body.categoryName) {
@@ -122,7 +121,7 @@ const addCategory = async (req, res) => {
     }
 };
 
-// Edit category
+
 const editCategory = async (req, res) => {
     try {
         const { categoryId, categoryName } = req.body;
@@ -159,7 +158,7 @@ const editCategory = async (req, res) => {
     }
 };
 
-// Get category by ID
+
 const getCategoryById = async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
@@ -172,7 +171,7 @@ const getCategoryById = async (req, res) => {
     }
 };
 
-// Update category
+
 const updateCategory = async (req, res) => {
     try {
         const { categoryName: name } = req.body;
@@ -193,7 +192,7 @@ const updateCategory = async (req, res) => {
     }
 };
 
-// Block category
+
 const blockCategory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -204,7 +203,6 @@ const blockCategory = async (req, res) => {
     }
 };
 
-// Unblock category
 const unblockCategory = async (req, res) => {
     try {
         const { id } = req.params;

@@ -7,61 +7,84 @@ import Category from "../../models/categoryModel.js";
 
 const getProductsPage = async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, stock } = req.query;
-    
-    // Build filter object
-    let filter = {};
-    
-    // Category filter
+    const { category, brand, minPrice, maxPrice, stock, search, page } = req.query;
+
+    const filter = { isBlocked: { $ne: true } };
+
     if (category && category !== 'all') {
       filter.category = category;
     }
-    
-    // Price range filter
+
     if (minPrice || maxPrice) {
-      filter['variants.price'] = {};
-      if (minPrice) filter['variants.price'].$gte = parseFloat(minPrice);
-      if (maxPrice) filter['variants.price'].$lte = parseFloat(maxPrice);
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
-    
-    // Stock filter
+
     if (stock === 'inStock') {
-      filter['variants.stock'] = { $gt: 0 };
+      filter.stock = { $gt: 0 };
     } else if (stock === 'outOfStock') {
-      filter['variants.stock'] = { $lte: 0 };
+      filter.stock = { $lte: 0 };
     }
 
-    // Fetch products with filters and populate variants
-    const products = await Product.find(filter)
-      .populate({
-        path: "variants",
-        match: { isBlocked: false } // Only show non-blocked variants
-      })
-      .populate("category")
-      .sort({ createdAt: -1 });
+    if (brand && brand !== 'all') {
+      filter.brand = brand;
+    }
 
-    // Filter out products with no variants
-    const filteredProducts = products.filter(product => 
-      product.variants && product.variants.length > 0
-    );
+    if (search && search.trim()) {
+      filter.name = { $regex: search.trim(), $options: 'i' };
+    }
+    const currentPage = Math.max(parseInt(page || '1', 10), 1);
+    const limit = 12;
+    const skip = (currentPage - 1) * limit;
 
-    // Fetch all categories for filter dropdown - with error handling
+    const [products, totalProducts] = await Promise.all([
+      Product.find(filter)
+        .populate('category')
+        .populate('brand')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Product.countDocuments(filter),
+    ]);
+
     let categories = [];
+    let brands = [];
     try {
-      categories = await Category.find({ status: "active" }).sort({ name: 1 });
+      categories = await Category.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean();
     } catch (categoryError) {
-      console.error("Error fetching categories:", categoryError);
-      categories = []; // Set empty array if categories fail to load
+      console.error('Error fetching categories:', categoryError);
+      categories = [];
+    }
+    try {
+      brands = await Brand.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean();
+    } catch (brandError) {
+      console.error('Error fetching brands:', brandError);
+      brands = [];
     }
 
-    res.render("user/product", { 
-      products: filteredProducts, 
+    res.render('user/product', {
+      products,
       categories,
-      filters: { category, minPrice, maxPrice, stock }
+      brands,
+      filters: { 
+        category: category || '',
+        brand: brand || '',
+        minPrice: minPrice || '',
+        maxPrice: maxPrice || '',
+        stock: stock || '',
+        search: search || '',
+      },
+      pagination: {
+        currentPage,
+        totalPages: Math.max(Math.ceil(totalProducts / limit), 1),
+        totalProducts,
+      }
     });
   } catch (error) {
-    console.error("Error loading products page:", error);
-    res.status(500).send("Server Error");
+    console.error('Error loading products page:', error);
+    res.status(500).send('Server Error');
   }
 };
 

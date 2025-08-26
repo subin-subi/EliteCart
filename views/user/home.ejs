@@ -1,133 +1,113 @@
 <%- include("../../views/partials/nav") %>
 
-<main class="w-full">
-
 <!-- Hero Section -->
-<section class="flex flex-col md:flex-row items-center justify-center px-8 pt-12 pb-12 bg-white">
-  <!-- Left Text -->
-  <div class="md:w-1/2 flex items-center justify-center md:justify-end pr-8">
-    <p class="text-3xl md:text-4xl font-semibold leading-snug text-gray-900 m-0 text-center md:text-left">
-      "Wear the mystery.<br>Reveal the magic."
+<div class="w-full h-[400px] md:h-[500px] lg:h-[600px] bg-cover bg-center flex justify-start items-center shadow-lg text-white" style="background-image: url('/images/banner.jpg')">
+  <header class="text-left max-w-4xl px-4 md:px-8">
+      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[90px] text-white font-playfair font-bold tracking-widest uppercase drop-shadow-[4px_4px_15px_rgba(255,204,0,0.8)]">
+          ELITECART
+      </h1>
+      <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-[30px] font-medium mt-4 md:mt-6 leading-relaxed tracking-wide text-white drop-shadow-[2px_2px_12px_rgba(255,165,0,0.8)] font-playfair italic">
+        "Behind every mask lies a story,<br class="hidden sm:block"> a mystery waiting to shine through the light..."
+      </p>
+  </header>
+</div>
+
+<!-- Best Selling Section -->
+<section class="flex flex-col lg:flex-row justify-between items-center px-6 md:px-[10%] py-12 md:py-16 bg-white">
+  <div class="max-w-xs md:max-w-sm text-center lg:text-left mb-8 lg:mb-0">
+    <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 font-playfair">
+        Reveal Your Style<br><span>With Elegance</span>
+    </h2>
+    <p class="text-gray-600 text-sm md:text-base leading-relaxed mb-4">
+        Unveil beauty and tradition with our unique mask collection—crafted to inspire, protect, and decorate your space with cultural charm. 🎭
     </p>
+    <a href="#" class="inline-block mt-2 px-4 py-2 md:px-5 md:py-3 rounded-lg font-bold text-gray-800 bg-gradient-to-r from-orange-300 to-orange-500 transition hover:opacity-90">
+        Explore Masks →
+    </a>
   </div>
-  <!-- Right Image -->
-  <div class="md:w-1/2 flex items-center justify-center md:justify-start pl-8 mt-8 md:mt-0">
-    <img src="/images/img.webp" alt="Hero Mask" 
-         class="w-64 md:w-72 h-auto rounded-3xl shadow-lg">
+
+  <div class="flex gap-4 md:gap-6 flex-wrap justify-center">
+    <!-- Card -->
+    <div class="bg-gradient-to-r from-orange-300 to-orange-500 p-4 md:p-5 rounded-xl text-center transform transition hover:-translate-y-1 w-40 sm:w-52 md:w-64">
+      <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
+        <img src="/images/one.webp" alt="Premium" class="h-full w-full object-cover rounded-md">
+      </div>
+      <p class="text-base md:text-lg font-bold text-gray-800 mt-2">Premium</p>
+    </div>
+
+    <div class="bg-gradient-to-r from-orange-300 to-orange-500 p-4 md:p-5 rounded-xl text-center transform transition hover:-translate-y-1 w-40 sm:w-52 md:w-64">
+      <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
+        <img src="/images/ban.jpg" alt="Limited" class="h-full w-full object-cover rounded-md">
+      </div>
+      <p class="text-base md:text-lg font-bold text-gray-800 mt-2">Limited</p>
+    </div>
+
+    <div class="bg-gradient-to-r from-orange-300 to-orange-500 p-4 md:p-5 rounded-xl text-center transform transition hover:-translate-y-1 w-40 sm:w-52 md:w-64">
+      <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
+        <img src="/images/GoldMens.webp" alt="Elite" class="h-full w-full object-cover rounded-md">
+      </div>
+      <p class="text-base md:text-lg font-bold text-gray-800 mt-2">Elite</p>
+    </div>
   </div>
 </section>
 
-<!-- Most Highlights -->
-<section class="py-10 bg-gray-50">
-  <h2 class="text-center text-2xl md:text-3xl font-bold mb-8 tracking-widest text-gray-900">
-    MOST HIGHLIGHTS
-  </h2>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 max-w-6xl mx-auto">
-    
-    <!-- Left Large Image -->
-    <div class="relative overflow-hidden rounded-lg">
-      <img src="/images/two.webp" alt="Exclusive Mask" class="w-full h-80 object-cover">
-      <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-        <span class="text-white text-2xl font-semibold text-center">
-          Exquisite Styles &<br>Collect
-        </span>
-      </div>
-    </div>
+<!-- Categories -->
+<section class="py-12 md:py-16 px-6 md:px-[10%] bg-white text-center flex flex-col items-center">
+  <h2 class="text-2xl md:text-3xl font-bold text-gray-800 font-playfair mb-2">Categories</h2>
+  <p class="text-gray-500 mb-8 text-sm md:text-base">Find what you are looking for</p>
 
-    <!-- Right Grid -->
-    <div class="grid grid-cols-2 gap-4">
-      <div class="relative overflow-hidden rounded-lg">
-        <img src="/images/three.webp" alt="Exquisite Styles & Collections" class="w-full h-36 object-cover">
-        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-          <span class="text-white text-lg font-semibold text-center px-2">
-            Exquisite Styles & <br> Collections
-          </span>
-        </div>
-      </div>
-      <div class="relative overflow-hidden rounded-lg">
-        <img src="/images/one.webp" alt="New Arrivals" class="w-full h-36 object-cover">
-        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-          <span class="text-white text-lg font-semibold text-center">
-            New Arrivals
-          </span>
-        </div>
-      </div>
-      <div class="relative overflow-hidden rounded-lg col-span-2">
-        <img src="/images/ban.jpg" alt="Exclusive Items" class="w-full h-44 object-cover">
-        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-          <span class="text-white text-lg font-semibold text-center">
-            Exclusive Items
-          </span>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- Popular Section -->
-<section class="py-10 bg-white">
-  <h2 class="text-center text-2xl md:text-3xl font-bold mb-8 tracking-widest text-gray-900">
-    POPULAR AT ALL TIME
-  </h2>
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 max-w-6xl mx-auto">
-    <% const popular = [
-      { img: "imag.webp", title: "Venetian Mask" },
-      { img: "one.webp", title: "Feather Mask" },
-      { img: "five.webp", title: "Gold Mask" },
-      { img: "four.jpg", title: "Butterfly Mask" }
-    ]; %>
-    <% popular.forEach(item => { %>
+  <div class="flex flex-wrap justify-center gap-6 sm:gap-10 p-6 md:p-10 rounded-lg bg-gradient-to-r from-orange-300 to-orange-500">
+      <!-- Category Card -->
       <div class="text-center">
-        <div class="w-full h-48 rounded-lg overflow-hidden mb-3">
-          <img src="/images/<%= item.img %>" alt="<%= item.title %>" class="w-full h-full object-cover">
-        </div>
-        <p class="text-sm text-gray-700 font-medium"><%= item.title %></p>
+          <div class="bg-white p-3 md:p-4 rounded-xl shadow-md transition transform hover:-translate-y-1 w-40 sm:w-52 md:w-[220px] h-52 sm:h-60 md:h-[260px] flex items-center justify-center">
+              <img src="/images/two.webp" alt="Men" class="w-full h-[180px] sm:h-[200px] object-cover rounded-lg">
+          </div>
+          <p class="mt-2 font-bold text-gray-800 text-sm md:text-base">Men</p>
       </div>
-    <% }) %>
+
+      <div class="text-center">
+          <div class="bg-white p-3 md:p-4 rounded-xl shadow-md transition transform hover:-translate-y-1 w-40 sm:w-52 md:w-[220px] h-52 sm:h-60 md:h-[260px] flex items-center justify-center">
+              <img src="/images/co.webp" alt="Couple" class="w-full h-[180px] sm:h-[200px] object-cover rounded-lg">
+          </div>
+          <p class="mt-2 font-bold text-gray-800 text-sm md:text-base">Couples  </p>
+      </div>
+
+      <div class="text-center">
+          <div class="bg-white p-3 md:p-4 rounded-xl shadow-md transition transform hover:-translate-y-1 w-40 sm:w-52 md:w-[220px] h-52 sm:h-60 md:h-[260px] flex items-center justify-center">
+              <img src="/images/w.jpg" alt="Women" class="w-full h-[180px] sm:h-[200px] object-cover rounded-lg">
+          </div>
+          <p class="mt-2 font-bold text-gray-800 text-sm md:text-base">Women</p>
+      </div>
   </div>
 </section>
 
-<!-- Why Shop Section -->
-<section class="py-16 px-6 max-w-6xl mx-auto bg-gray-50">
-  <div class="text-center mb-12">
-    <h2 class="text-2xl font-bold text-gray-900 mb-4">Why you'll love to shop on our website</h2>
-  </div>
-  
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-    <div class="flex flex-col items-center">
-      <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-        </svg>
+<!-- About Us -->
+<section class="py-12 md:py-16 px-6 md:px-[10%] bg-white text-center">
+  <h2 class="text-xl md:text-2xl font-bold text-gray-800 font-playfair">About Us</h2>
+  <p class="text-gray-500 mb-8 text-sm md:text-base">Order now and appreciate the beauty of nature</p>
+
+  <div class="flex flex-col md:flex-row justify-center items-center gap-12 md:gap-20">
+      <!-- Card -->
+      <div class="flex flex-col items-center text-center max-w-xs">
+          <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-orange-300 to-orange-500 rounded-full flex items-center justify-center mb-4 md:mb-6">
+              <i class="fas fa-box text-lg md:text-2xl text-gray-800"></i>
+          </div>
+          <h3 class="text-base md:text-lg font-bold text-gray-800 mb-2">Fast & Free Shipping</h3>
+          <p class="text-xs md:text-sm text-gray-600 leading-relaxed">
+              4-day or less delivery time, free shipping and an expedited delivery option.
+          </p>
       </div>
-      <h3 class="font-bold text-lg mb-2">Easy Returns</h3>
-      <p class="text-sm text-gray-600">Hassle-free returns and exchanges</p>
-    </div>
-    
-    <div class="flex flex-col items-center">
-      <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-        </svg>
+
+      <div class="flex flex-col items-center text-center max-w-xs">
+          <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-orange-300 to-orange-500 rounded-full flex items-center justify-center mb-4 md:mb-6">
+              <i class="fas fa-phone text-lg md:text-2xl text-gray-800"></i>
+          </div>
+          <h3 class="text-base md:text-lg font-bold text-gray-800 mb-2">24/7 Support</h3>
+          <p class="text-xs md:text-sm text-gray-600 leading-relaxed">
+              Answers to any business-related inquiry 24/7 and in real-time.
+          </p>
       </div>
-      <h3 class="font-bold text-lg mb-2">Customer Support</h3>
-      <p class="text-sm text-gray-600">24/7 support for all your queries</p>
-    </div>
-    
-    <div class="flex flex-col items-center">
-      <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-        </svg>
-      </div>
-      <h3 class="font-bold text-lg mb-2">Contact Us</h3>
-      <p class="text-sm text-gray-600">Get in touch anytime</p>
-    </div>
   </div>
 </section>
-
-</main>
 
 <%- include("../../views/partials/footer") %>

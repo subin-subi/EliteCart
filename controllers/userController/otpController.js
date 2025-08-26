@@ -24,16 +24,7 @@ const validateOTP = async (req, res) => {
       });
     }
 
-    console.log('User details:', {
-      id: user._id,
-      email: user.email,
-      isverified: user.isverified,
-      otp: user.otp,
-      otpType: typeof user.otp,
-      otpExpiresAt: user.otpExpiresAt,
-      otpAttempts: user.otpAttempts,
-      currentTime: Date.now()
-    });
+
 
     if (user.isverified) {
       console.log('User already verified');
@@ -67,7 +58,7 @@ const validateOTP = async (req, res) => {
       });
     }
     
-    // Trim whitespace and ensure both are strings
+  
     const storedOTP = String(user.otp).trim();
     const inputOTP = String(userOtp).trim();
     
@@ -224,10 +215,7 @@ const verifyForgotPasswordOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
         
-        console.log('=== Forgot Password OTP Verification ===');
-        console.log('Email:', email);
-        console.log('OTP:', otp);
-        
+      
         if (!email || !otp) {
             return res.status(400).json({ message: 'Email and OTP are required' });
         }
@@ -342,7 +330,7 @@ const debugOTP = async (req, res) => {
   try {
     const { email } = req.params;
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await userSchema.findOne({ email: email.toLowerCase() });
 
     if (!user) {
       return res.json({ success: false, message: "User not found" });

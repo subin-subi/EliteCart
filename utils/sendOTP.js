@@ -18,12 +18,8 @@ export const generateOTP = () => {
 // Send OTP via email
 export const sendOTPEmail = async (email, otp) => {
     try {
-        console.log('Attempting to send OTP email to:', email);
-        console.log('Email configuration:', {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS ? '***' : 'NOT SET'
-        });
-
+    
+      
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
             throw new Error('Email configuration not set. Please check EMAIL_USER and EMAIL_PASS environment variables.');
         }

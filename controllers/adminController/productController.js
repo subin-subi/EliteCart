@@ -3,6 +3,7 @@ import Brand from "../../models/brandModel.js";
 import Product from "../../models/productModel.js";
 import fs from 'fs';
 import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
 
 // Get all products with pagination and search
 const getProduct = async (req, res) => {
@@ -26,11 +27,11 @@ const getProduct = async (req, res) => {
       searchQuery.status = status;
     }
 
-    // Get total count for pagination
+   
     const totalProducts = await Product.countDocuments(searchQuery);
     const totalPages = Math.ceil(totalProducts / limit);
 
-    // Get products with populated category and brand
+    
     const products = await Product.find(searchQuery)
       .populate('category', 'name')
       .populate('brand', 'name')
@@ -38,7 +39,7 @@ const getProduct = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Get categories and brands for the form
+    
     const categories = await Category.find({ isActive: true });
     const brands = await Brand.find({ isActive: true });
 
@@ -66,28 +67,16 @@ const getProduct = async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-// Add Product - expects Cloudinary URLs populated by multer-storage-cloudinary
 const addProduct = async (req, res) => {
   try {
     const { name, category, brand, color, price, stock, description } = req.body;
 
-    // Validate required fields
+    
     if (!name || !category || !brand || !color || !price || !stock || !description) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    // Handle images
+    
     let mainImage = "";
     let subImages = [];
     if (req.files) {
@@ -107,7 +96,6 @@ const addProduct = async (req, res) => {
       return res.status(400).json({ success: false, message: "Exactly 3 sub images are required" });
     }
 
-    // Create new product
     const newProduct = new Product({
       name,
       category,
@@ -137,92 +125,42 @@ const addProduct = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+////////////////////////////////////////////////edit//////////////////////////////////////////////////////////////
 
-
-
-// Get product by ID
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate('category', 'name')
-      .populate('brand', 'name');
+      .populate("category")
+      .populate("brand");
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      return res.json({ success: false, message: "Product not found" });
     }
 
-    res.json({
-      success: true,
-      product
-    });
-  } catch (error) {
-    console.error('Error getting product:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving product',
-      error: error.message
-    });
+    res.json({ success: true, data: product });
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false, message: "Server error" });
   }
 };
 
-// Update product
+
+
+
 const updateProduct = async (req, res) => {
   try {
-    const {
-      name,
-      brand,
-      category,
-      description,
-      price,
-      variants
-    } = req.body;
+    const { name, brand, category, description, price, stock } = req.body;
 
     const productId = req.params.id;
 
-    // Validate required fields
-    if (!name || !brand || !category || !description || !price) {
+    if (!name || !brand || !category || !description || !price || stock === undefined) {
       return res.status(400).json({
         success: false,
         message: 'All required fields must be provided'
       });
     }
 
-    // Parse variants
-    let parsedVariants = [];
-    if (variants) {
-      try {
-        parsedVariants = JSON.parse(variants);
-      } catch (parseError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid variants data format'
-        });
-      }
-    }
 
-    // Validate variants
-    if (!Array.isArray(parsedVariants) || parsedVariants.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one variant is required'
-      });
-    }
-
-    // Validate each variant
-    for (let i = 0; i < parsedVariants.length; i++) {
-      const variant = parsedVariants[i];
-      if (!variant.color || !variant.price || variant.price <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Variant ${i + 1}: Color and price are required, price must be greater than 0`
-        });
-      }
-    }
-
-    // Get existing product to preserve images if no new ones uploaded
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({
@@ -231,69 +169,49 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    // Process uploaded images
+    
     let mainImage = existingProduct.mainImage;
     let subImages = [...existingProduct.subImages];
 
-    // Check if we should keep existing images
-    const keepExistingImages = req.body.keepExistingImages === 'true';
     
-    // Check for removed existing images
     let removedExistingImages = [];
-    if (req.body.removedExistingImages) {
+    if (req.body.removedImages) {
       try {
-        removedExistingImages = JSON.parse(req.body.removedExistingImages);
+        removedExistingImages = JSON.parse(req.body.removedImages);
       } catch (parseError) {
         console.error('Error parsing removed existing images:', parseError);
       }
     }
 
-    if (req.files && req.files.length > 0) {
-      // New main image uploaded
-      mainImage = `/uploads/products/${req.files[0].filename}`;
-      
-      // Delete old main image if it exists
-      if (existingProduct.mainImage) {
-        const oldMainImagePath = path.join(process.cwd(), 'public', existingProduct.mainImage);
-        if (fs.existsSync(oldMainImagePath)) {
-          fs.unlinkSync(oldMainImagePath);
+    // Handle main image replacement
+    if (req.files?.mainImage?.[0]) {
+      const oldPublicId = extractPublicIdFromUrl(existingProduct.mainImage || "");
+      if (oldPublicId) {
+        try { await cloudinary.uploader.destroy(oldPublicId); } catch (e) { console.warn('Failed to destroy old main image:', e?.message); }
+      }
+      mainImage = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
+    }
+
+    // Remove any existing sub images that were marked for removal
+    if (removedExistingImages.length > 0) {
+      for (const url of removedExistingImages) {
+        const pubId = extractPublicIdFromUrl(url);
+        if (pubId) {
+          try { await cloudinary.uploader.destroy(pubId); } catch (e) { console.warn('Failed to destroy sub image:', e?.message); }
         }
       }
+      subImages = subImages.filter(url => !removedExistingImages.includes(url));
+    }
 
-      // Process new sub images
-      const newSubImages = [];
-      for (let i = 1; i < Math.min(req.files.length, 4); i++) {
-        newSubImages.push(`/uploads/products/${req.files[i].filename}`);
-      }
+    // Add new sub images if uploaded
+    if (Array.isArray(req.files?.subImages) && req.files.subImages.length > 0) {
+      const newUrls = req.files.subImages.map(f => f.path || f.secure_url);
+      subImages = [...subImages, ...newUrls];
+    }
 
-      // If new sub images uploaded, replace old ones
-      if (newSubImages.length > 0) {
-        // Delete old sub images
-        existingProduct.subImages.forEach(imagePath => {
-          const fullPath = path.join(process.cwd(), 'public', imagePath);
-          if (fs.existsSync(fullPath)) {
-            fs.unlinkSync(fullPath);
-          }
-        });
-        subImages = newSubImages;
-      }
-    } else if (keepExistingImages) {
-      // Keep existing images - no changes needed
-      mainImage = existingProduct.mainImage;
-      subImages = existingProduct.subImages;
-      
-      // Remove any images that were marked for removal
-      if (removedExistingImages.length > 0) {
-        subImages = subImages.filter(img => !removedExistingImages.includes(img));
-        
-        // Delete removed images from filesystem
-        removedExistingImages.forEach(imagePath => {
-          const fullPath = path.join(process.cwd(), 'public', imagePath);
-          if (fs.existsSync(fullPath)) {
-            fs.unlinkSync(fullPath);
-          }
-        });
-      }
+    // Enforce exactly 3 sub images after edit
+    if (subImages.length !== 3) {
+      return res.status(400).json({ success: false, message: 'Exactly 3 sub images are required after update' });
     }
 
     // Update product
@@ -304,10 +222,10 @@ const updateProduct = async (req, res) => {
         brand,
         category,
         price: parseFloat(price),
+        stock: Number(stock),
         description: description.trim(),
         mainImage,
         subImages,
-        variants: parsedVariants
       },
       { new: true, runValidators: true }
     ).populate('category', 'name').populate('brand', 'name');
@@ -338,7 +256,13 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// Toggle product status (block/unblock)
+
+
+
+
+
+////////////////////////////////////////////////block/unblock//////////////////////////////////////////////////////////////
+// Toggle product isBlocked (block/unblock)
 const toggleProductStatus = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -351,15 +275,13 @@ const toggleProductStatus = async (req, res) => {
       });
     }
 
-    // Toggle status
-    const newStatus = product.status === 'active' ? 'blocked' : 'active';
-    product.status = newStatus;
+    product.isBlocked = !product.isBlocked;
     await product.save();
 
     res.json({
       success: true,
-      message: `Product ${newStatus} successfully`,
-      status: newStatus
+      message: `Product ${product.isBlocked ? 'blocked' : 'unblocked'} successfully`,
+      isBlocked: product.isBlocked
     });
   } catch (error) {
     console.error('Error toggling product status:', error);
@@ -371,81 +293,9 @@ const toggleProductStatus = async (req, res) => {
   }
 };
 
-// Delete product
-const deleteProduct = async (req, res) => {
-  try {
-    const productId = req.params.id;
-    const product = await Product.findById(productId);
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
-    }
+////////////////////////////////////////////////searching//////////////////////////////////////////////////////////////
 
-    // Delete associated images
-    if (product.mainImage) {
-      const mainImagePath = path.join(process.cwd(), 'public', product.mainImage);
-      if (fs.existsSync(mainImagePath)) {
-        fs.unlinkSync(mainImagePath);
-      }
-    }
-
-    if (product.subImages && product.subImages.length > 0) {
-      product.subImages.forEach(imagePath => {
-        const fullPath = path.join(process.cwd(), 'public', imagePath);
-        if (fs.existsSync(fullPath)) {
-          fs.unlinkSync(fullPath);
-        }
-      });
-    }
-
-    // Delete product
-    await Product.findByIdAndDelete(productId);
-
-    res.json({
-      success: true,
-      message: 'Product deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting product',
-      error: error.message
-    });
-  }
-};
-
-// Upload product images
-const uploadProductImages = async (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No images uploaded'
-      });
-    }
-
-    const imageUrls = req.files.map(file => `/uploads/products/${file.filename}`);
-
-    res.json({
-      success: true,
-      message: 'Images uploaded successfully',
-      images: imageUrls
-    });
-  } catch (error) {
-    console.error('Error uploading images:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error uploading images',
-      error: error.message
-    });
-  }
-};
-
-// Get products for API (JSON response)
 const getProductsAPI = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -461,14 +311,11 @@ const getProductsAPI = async (req, res) => {
         { description: { $regex: search, $options: 'i' } }
       ];
     }
-
     if (status && status !== 'All Status') {
       searchQuery.status = status;
     }
 
     const totalProducts = await Product.countDocuments(searchQuery);
-    const totalPages = Math.ceil(totalProducts / limit);
-
     const products = await Product.find(searchQuery)
       .populate('category', 'name')
       .populate('brand', 'name')
@@ -476,29 +323,21 @@ const getProductsAPI = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    res.json({
-      success: true,
-      products,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalProducts,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
-      }
-    });
+    res.json({ success: true, products, totalProducts });
   } catch (error) {
     console.error('Error getting products API:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving products',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error retrieving products' });
   }
 };
 
+////////////////////////////////////////////////edit//////////////////////////////////////////////////////////////
+
+
 export default {
   getProduct,
-  addProduct
-
+  addProduct,
+  updateProduct,
+  toggleProductStatus,
+  getProductsAPI,
+  getProductById,
 };

@@ -1,0 +1,106 @@
+<div class="sidebar">
+    <!-- Sorting Section -->
+    <div class="mb-6">
+    <label for="sortFilter">Sort By</label>
+    <select id="sortFilter">
+            <option value="default">Default</option>
+            <option value="priceLowToHigh">Price: Low to High</option>
+            <option value="priceHighToLow">Price: High to Low</option>
+            <option value="newArrivals">New Arrivals</option>
+        </select>
+    </div>
+    <!-- Filter Section -->
+        <div>
+    <label for="category">Category</label>
+    <select id="category">
+                <option value="">All</option>
+                <% if (categories && categories.length > 0) { %>
+                    <% categories.forEach(function(category) { %>
+                <option value="<%= category._id %>"><%= category.name %></option>
+                    <% }); %>
+                <% } else { %>
+                    <option value="" disabled>No categories available</option>
+                <% } %>
+            </select>
+        </div>
+        <div>
+    <label for="type">Type</label>
+    <select id="type">
+                <option value="">All</option>
+                <option value="ruled">Ruled</option>
+                <option value="unruled">Unruled</option>
+            </select>
+        </div>
+<div>
+    <label>Price Range</label>
+        <div>
+        <input type="number" id="minPrice" placeholder="Min" />
+        <input type="number" id="maxPrice" placeholder="Max" />
+            </div>
+        </div>
+        <div>
+    <label for="stockFilter">Stock Status</label>
+    <select id="stockFilter">
+                <option value="">All Products</option>
+                <option value="inStock">In Stock</option>
+                <option value="outOfStock">Out of Stock</option>
+            </select>
+        </div>
+<div>
+    <button type="button" id="filterButton">Filter</button>
+    <button id="resetButton">Reset Filters</button>
+</div>
+          </div>
+<div class="sidebar">
+    <!-- Sorting Section -->
+    <div class="mb-6">
+    <label for="sortFilter">Sort By</label>
+    <select id="sortFilter">
+            <option value="default">Default</option>
+            <option value="priceLowToHigh">Price: Low to High</option>
+            <option value="priceHighToLow">Price: High to Low</option>
+            <option value="newArrivals">New Arrivals</option>
+        </select>
+    </div>
+    <!-- Filter Section -->
+        <div>
+    <label for="category">Category</label>
+    <select id="category">
+                <option value="">All</option>
+                <% if (categories && categories.length > 0) { %>
+                    <% categories.forEach(function(category) { %>
+                <option value="<%= category._id %>"><%= category.name %></option>
+                    <% }); %>
+                <% } else { %>
+                    <option value="" disabled>No categories available</option>
+                <% } %>
+            </select>
+        </div>
+        <div>
+    <label for="type">Type</label>
+    <select id="type">
+                <option value="">All</option>
+                <option value="ruled">Ruled</option>
+                <option value="unruled">Unruled</option>
+            </select>
+        </div>
+<div>
+    <label>Price Range</label>
+        <div>
+        <input type="number" id="minPrice" placeholder="Min" />
+        <input type="number" id="maxPrice" placeholder="Max" />
+            </div>
+        </div>
+        <div>
+    <label for="stockFilter">Stock Status</label>
+    <select id="stockFilter">
+                <option value="">All Products</option>
+                <option value="inStock">In Stock</option>
+                <option value="outOfStock">Out of Stock</option>
+            </select>
+        </div>
+<div>
+    <button type="button" id="filterButton">Filter</button>
+    <button id="resetButton">Reset Filters</button>
+</div>
+</div>

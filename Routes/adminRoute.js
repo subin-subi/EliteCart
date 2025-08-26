@@ -44,20 +44,25 @@ router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.u
 
 
 
-// fro product
+
 
 router.get("/products", productController.getProduct);
-router.post(
-  "/addProduct",
-  upload.fields([
+router.post("/addProduct",upload.fields([
     { name: "mainImage", maxCount: 1 },
     { name: "subImages", maxCount: 3 }
   ]),
-  handleMulterError,
-  productController.addProduct
-)
+  handleMulterError, productController.addProduct)
+router.patch("/products/:id/toggle-block", productController.toggleProductStatus);
+router.get("/product/:id", productController.getProductById);
 
 
+router.put("/products/:id", upload.fields([
+  { name: "mainImage", maxCount: 1 },
+  { name: "subImages", maxCount: 3 }
+]), handleMulterError, productController.updateProduct);
+
+
+router.get("/api/products", productController.getProductsAPI);
 
 
 export default router;

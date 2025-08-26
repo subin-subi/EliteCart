@@ -183,7 +183,7 @@ const updateBrand = async (req, res) => {
     }
 };
 
-// controllers/brandController.js
+
 const blockBrand = async (req, res) => {
     try {
         const { id } = req.params;
