@@ -16,7 +16,7 @@ passport.use(new GoogleStrategy({
         email: profile.emails[0].value
       };
       
-      return done(null, userProfile);
+      return done(null, userProfil8e);
     } catch (error) {
       done(error, null);
     }

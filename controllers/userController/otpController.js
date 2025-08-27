@@ -76,7 +76,7 @@ const validateOTP = async (req, res) => {
       return res.json({
         success: true,
         message: "OTP verified successfully",
-        redirectUrl: "/home"
+        redirectUrl: "/"
       });
     } else {
     
@@ -224,12 +224,7 @@ const verifyForgotPasswordOTP = async (req, res) => {
         
         console.log('User found:', !!user);
         if (user) {
-            console.log('User OTP:', user.otp);
-            console.log('User OTP Type:', typeof user.otp);
-            console.log('OTP Expires At:', user.otpExpiresAt);
-            console.log('OTP Attempts:', user.otpAttempts);
-            console.log('Current Time:', Date.now());
-            console.log('OTP Expired:', user.otpExpiresAt ? Date.now() > user.otpExpiresAt : 'No expiry set');
+           
         }
 
         if (!user) {

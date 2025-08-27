@@ -216,7 +216,7 @@ const postSignup = async (req, res) => {
             return res.json({
                 success: true,
                 message: 'Login successful',
-                redirectUrl: '/home'
+                redirectUrl: '/'
             });
     
         } catch (error) {
@@ -284,70 +284,7 @@ const postSignup = async (req, res) => {
         }
     };
 
-    const getChangePassword = async (req, res) => {
-        try {
-            // Get user from session
-            const userId = req.session.user;
-            const user = await userSchema.findById(userId);
     
-            if (!user) {
-                return res.redirect('/login');
-            }
-    
-            // Check if user has a password (not Google login)
-            if (!user.password) {
-                return res.redirect('/profile');
-            }
-    
-            // Pass the user object to the view
-            res.render('user/changePassword', { user });
-    
-        } catch (error) {
-            console.error('Get change password error:', error);
-            res.status(500).render('error', { 
-                message: 'Error loading change password page',
-                error: error.message 
-            });
-        }
-    };
-
-
-    const postChangePassword = async (req, res) => {
-        try {
-            const { currentPassword, newPassword } = req.body;
-            const userId = req.session.user;
-    
-            const user = await userSchema.findById(userId);
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-    
-            // Verify current password
-            const isMatch = await bcrypt.compare(currentPassword, user.password);
-            if (!isMatch) {
-                return res.status(400).json({ message: 'Current password is incorrect' });
-            }
-    
-            // Validate new password
-            const passwordValidation = validatePassword(newPassword);
-            if (!passwordValidation.isValid) {
-                return res.status(400).json({ message: passwordValidation.message });
-            }
-    
-            // Hash new password
-            const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-            
-            // Update password
-            await userSchema.findByIdAndUpdate(userId, {
-                password: hashedPassword
-            });
-    
-            res.status(200).json({ message: 'Password updated successfully' });
-        } catch (error) {
-            console.error('Change password error:', error);
-            res.status(500).json({ message: 'Failed to update password' });
-        }
-    };
     
     const getGoogle = (req, res) => {
         // Store the trigger in session before redirecting to Google
@@ -382,7 +319,7 @@ const postSignup = async (req, res) => {
                     });
                     
                     req.session.user = existingUser._id;
-                    return res.redirect("/home");
+                    return res.redirect("/");
                 }
     
                 // If user doesn't exist, create new account
@@ -398,7 +335,7 @@ const postSignup = async (req, res) => {
                 });
                 
                 req.session.user = newUser._id;
-                return res.redirect("/home");
+                return res.redirect("/");
     
             } catch (error) {
                 console.error("Google authentication error:", error);
@@ -415,10 +352,7 @@ const postSignup = async (req, res) => {
                 return res.status(500).send("Error logging out");
             }
             
-            // Clear any cookies
             res.clearCookie('sessionId');
-            
-            // Redirect to signup page
             res.redirect('/signup');
         });
     };
@@ -439,11 +373,11 @@ export default{
     
     getLogin,
     postLogin,
+
     getForgotPassword,
-   
     resetPassword,
-    getChangePassword,
-    postChangePassword,
+
+
     getGoogle,
     getGoogleCallback,
     getLogout,

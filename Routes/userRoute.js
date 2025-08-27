@@ -27,7 +27,7 @@ route.get('/login', userMiddleware.isLogin, authController.getLogin)
 
 route.post("/login",authController.postLogin)
 
-route.get("/home",  authController.homepage)
+route.get("/",userMiddleware.checkSession, authController.homepage)
 
 route.get("/about", otpController.aboutPage)
 
@@ -39,10 +39,6 @@ route.post("/forgot-password/verify-otp", otpController.verifyForgotPasswordOTP)
 
 route.post("/forgot-password/reset-password",authController.resetPassword)
 
-route.get("/change-password", userMiddleware.checkSession, authController.getChangePassword)
-
-route.post("/change-password", userMiddleware.checkSession, authController.postChangePassword)
-
 route.get("/auth/google", authController.getGoogle)
 
 route.get('/auth/google/callback', authController.getGoogleCallback);
@@ -51,7 +47,7 @@ route.post("/logout", authController.getLogout)
 
 ////////////product Controller/////////////////////
 
-route.get("/product",productController.getProductsPage)
+route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
 
 
 export default route;

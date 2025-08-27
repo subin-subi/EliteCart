@@ -28,7 +28,7 @@ app.use(
       resave: false,
       saveUninitialized: false,
       store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI, // your MongoDB Atlas/local URI
+        mongoUrl: process.env.MONGO_URI, 
         collectionName: "sessions",
       }),
       cookie: {

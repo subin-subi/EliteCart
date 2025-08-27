@@ -2,117 +2,144 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELITECART</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELITECART</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="bg-gray-100">
-<!-- Navbar -->
-<div class="fixed z-50 top-0 w-screen h-14 sm:h-16 flex items-center justify-between px-6 bg-white border-b-2 border-blue-500">
-    
+  <!-- Navbar -->
+  <div
+    class="fixed z-50 top-0 w-screen h-14 sm:h-16 flex items-center justify-between px-6 bg-white border-b-2 border-blue-500">
+
     <!-- Left: Logo/Brand -->
     <div class="flex items-center space-x-2">
-        <span class="text-2xl font-bold font-serif">Elite Cart</span>
+      <span class="text-2xl font-bold font-serif">Elite Cart</span>
     </div>
 
-    <!-- Center: Nav Links + Live Search -->
+    <!-- Center: Nav Links -->
     <nav class="hidden md:flex items-center space-x-6 text-sm text-gray-800 font-medium">
-        <a href="/home" class="hover:text-gray-500 transition">Home</a>
-        <a href="/product" class="hover:text-gray-500 transition">Shop</a>
-        <a href="/contact" class="hover:text-gray-500 transition">Contact us</a>
-        <a href="/about" class="hover:text-gray-500 transition">About</a>
-      
+      <a href="/" class="hover:text-gray-500 transition">Home</a>
+      <a href="/product" class="hover:text-gray-500 transition">Shop</a>
+      <a href="/contact" class="hover:text-gray-500 transition">Contact us</a>
+      <a href="/about" class="hover:text-gray-500 transition">About</a>
     </nav>
 
-    <!-- Right: Icons + Auth Buttons -->
+    <!-- Right: Icons + Profile Dropdown -->
     <div class="flex items-center space-x-6">
-        <!-- Icons (Clickable, linked) -->
-        <div class="hidden sm:flex items-center space-x-6 text-gray-700 text-lg">
-            <a href="/wishlist" class="hover:text-gray-500">
-                <i class="fa-regular fa-heart"></i>
-            </a>
-            <a href="/profile" class="hover:text-gray-500">
-                <i class="fa-regular fa-user"></i>
-            </a>
-            <a href="/cart" class="hover:text-gray-500">
-                <i class="fa-solid fa-cart-shopping"></i>
-            </a>
-        </div>
+      <!-- Icons -->
+      <div class="hidden sm:flex items-center space-x-6 text-gray-700 text-lg">
+        <a href="/wishlist" class="hover:text-gray-500">
+          <i class="fa-regular fa-heart"></i>
+        </a>
+        <a href="/cart" class="hover:text-gray-500">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </a>
+      </div>
 
-        <!-- Auth Buttons (unchanged) -->
-        <div class="flex items-center space-x-3" id="authButtons">
-            <a href="/login" class="text-sm font-semibold text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 px-4 py-2 rounded-lg shadow-md transition-all flex items-center space-x-2">
-                <i class="fa-solid fa-sign-in-alt"></i>
-                <span>Login</span>
-            </a>
-            <a href="/signup" class="text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-600 hover:to-emerald-800 px-4 py-2 rounded-lg shadow-lg transition-all flex items-center space-x-2">
-                <i class="fa-solid fa-user-plus"></i>
-                <span>Sign Up</span>
-            </a>
+      <!-- Profile Dropdown -->
+      <div class="relative">
+        <button id="profileButton" class="hover:text-gray-500 focus:outline-none">
+          <i class="fa-regular fa-user text-lg"></i>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="profileMenu"
+          class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+
+          <!-- When not logged in -->
+          <div id="guestMenu" class="p-4 border-b">
+            <span class="text-sm text-gray-600">Welcome!</span>
+            <div class="mt-2 flex gap-2">
+              <a href="/login"
+                class="text-sm font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded hover:bg-gray-200">Login</a>
+              <a href="/signup"
+                class="text-sm font-semibold text-white bg-emerald-600 px-3 py-1 rounded hover:bg-emerald-700">Sign
+                Up</a>
+            </div>
+          </div>
+
+          <!-- When logged in -->
+          <ul id="userMenu" class="hidden py-2 text-sm text-gray-700">
+            <li>
+              <a href="/profile" class="flex items-center px-4 py-2 hover:bg-gray-100">
+                <i class="fa-regular fa-user mr-2"></i> My Profile
+              </a>
+            </li>
+            <li>
+              <a href="/orders" class="flex items-center px-4 py-2 hover:bg-gray-100">
+                <i class="fa-solid fa-box mr-2"></i> Orders
+              </a>
+            </li>
+            <li>
+              <a href="/wishlist" class="flex items-center px-4 py-2 hover:bg-gray-100">
+                <i class="fa-regular fa-heart mr-2"></i> Wishlist
+              </a>
+            </li>
+            <li>
+              <button id="logoutButton"
+                class="w-full text-left flex items-center px-4 py-2 hover:bg-gray-100">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+              </button>
+            </li>
+          </ul>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
+  <script>
+    const profileBtn = document.getElementById("profileButton");
+    const profileMenu = document.getElementById("profileMenu");
+    const guestMenu = document.getElementById("guestMenu");
+    const userMenu = document.getElementById("userMenu");
+    const logoutBtn = document.getElementById("logoutButton");
 
-    <!-- Mobile Menu -->
-    <div id="mobile-menu" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden lg:hidden z-40">
-        <div class="fixed top-14 left-0 w-full max-w-sm bg-white border-r border-gray-200 h-screen p-4 transform transition-transform">
-            <nav class="flex flex-col space-y-2">
-                <a href="/home" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-home mr-2"></i>Home</a>
-                <a href="/shop" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-store mr-2"></i>Shop</a>
-                <a href="/contact" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-envelope mr-2"></i>Contact</a>
-                <a href="/about" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"><i class="fa-solid fa-info-circle mr-2"></i>About</a>
-            </nav>
-        </div>
-    </div>
+    // Toggle dropdown
+    profileBtn.addEventListener("click", () => {
+      profileMenu.classList.toggle("hidden");
+    });
 
-    <!-- Script -->
-    <script>
-     document.addEventListener("DOMContentLoaded", async function () {
-    try {
+    // Close if clicked outside
+    document.addEventListener("click", (e) => {
+      if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+        profileMenu.classList.add("hidden");
+      }
+    });
+
+    // Session check
+    document.addEventListener("DOMContentLoaded", async function () {
+      try {
         const response = await fetch('/check-session');
         const data = await response.json();
 
         if (data.isLoggedIn) {
-            document.getElementById("authButtons").style.display = "none";
-            document.getElementById("logoutButton").style.display = "flex";
+          guestMenu.classList.add("hidden");
+          userMenu.classList.remove("hidden");
         } else {
-            document.getElementById("authButtons").style.display = "flex";
-            document.getElementById("logoutButton").style.display = "none";
+          guestMenu.classList.remove("hidden");
+          userMenu.classList.add("hidden");
         }
-    } catch (error) {
+      } catch (error) {
         console.error("Session check error:", error);
-    }
-
-    // Handle logout click
-    const logoutBtn = document.getElementById("logoutButton");
-    logoutBtn.addEventListener("click", async () => {
-        try {
-            await fetch('/logout', { method: 'POST' }); // or GET, depending on your server
-            window.location.reload(); // or redirect to login
-        } catch (error) {
-            console.error("Logout failed:", error);
-        }
+      }
     });
-});
 
-        // Mobile Menu Toggle
-        const menuToggle = document.getElementById("menu-toggle");
-        const mobileMenu = document.getElementById("mobile-menu");
-
-        mobileMenu.addEventListener("click", (event) => {
-            if (event.target === mobileMenu) {
-                mobileMenu.classList.add("hidden");
-            }
-        });
-    </script>
-
-        
-
+    // Logout
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          await fetch('/logout', { method: 'POST' });
+          window.location.reload();
+        } catch (error) {
+          console.error("Logout failed:", error);
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>

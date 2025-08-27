@@ -1,6 +1,5 @@
 import User from "../../models/userModel.js";
 
-//Get the list of users with pagination and search
 const getUserList = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -73,12 +72,11 @@ const getUserList = async (req, res) => {
 
 
 
-
+// Block User
 const blockUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Update user to blocked
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { blocked: true },
@@ -89,29 +87,7 @@ const blockUser = async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    // Check safely if session user exists and compare IDs
-    if (req.session?.user && req.session.user._id?.toString() === id) {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error("Error destroying session:", err);
-          return res.json({
-            success: false,
-            message: "Error logging out after blocking",
-          });
-        }
-        res.clearCookie("connect.sid"); // Default cookie name in express-session
-        return res.json({
-          success: true,
-          message: "User blocked and session destroyed",
-        });
-      });
-    } else {
-      return res.json({
-        success: true,
-        user: updatedUser,
-        message: "User blocked",
-      });
-    }
+    res.json({ success: true, message: "User blocked successfully" });
   } catch (err) {
     console.error("Error blocking user:", err);
     res.json({ success: false, message: err.message });
@@ -119,12 +95,10 @@ const blockUser = async (req, res) => {
 };
 
 
-
-
 // Unblock User
 const unblockUser = async (req, res) => {
   try {
-    const { id } = req.params;   // match with :id in route
+    const { id } = req.params;   
 
     await User.findByIdAndUpdate(id, { blocked: false });
 

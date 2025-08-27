@@ -2,27 +2,23 @@ import userModel from "../models/userModel.js"
 
 const checkSession = async (req, res, next) => {
     try {
-        console.log('Checking session:', req.session); // Debugging session data
-
         if (!req.session || !req.session.user) {
-            return res.redirect('/login?message=Session+expired');
+            return next(); // If no session, just move forward
         }
 
         const user = await userModel.findById(req.session.user).select('-password').lean();
-        
-        if (!user) {
-            req.session.destroy(() => {});
-            res.clearCookie('sessionId');
-            return res.redirect('/login?message=Invalid+session');
+
+        // If user is blocked → redirect
+        if (user && user.blocked) {
+    req.session.destroy(() => {});
+    return res.redirect('/login?message=Account+blocked');
+}
+
+        // Attach user if not blocked
+        if (user) {
+            req.user = user;
         }
 
-        if (user.blocked) {
-            req.session.destroy(() => {});
-            res.clearCookie('sessionId');
-            return res.redirect('/login?message=Account+blocked');
-        }
-
-        req.user = user;
         next();
     } catch (error) {
         console.error('Session Check Error:', error);
