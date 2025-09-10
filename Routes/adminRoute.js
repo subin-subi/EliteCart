@@ -56,7 +56,7 @@ router.patch("/products/:id/toggle-block", productController.toggleProductStatus
 router.get("/product/:id", productController.getProductById);
 
 
-router.put("/products/:id", upload.fields([
+router.post("/products/:id", upload.fields([
   { name: "mainImage", maxCount: 1 },
   { name: "subImages", maxCount: 3 }
 ]), handleMulterError, productController.updateProduct);

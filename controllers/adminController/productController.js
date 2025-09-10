@@ -127,11 +127,145 @@ const addProduct = async (req, res) => {
 };
 ////////////////////////////////////////////////edit//////////////////////////////////////////////////////////////
 
+// const getProductById = async (req, res) => {
+//   try {
+//     const product = await Product.findById(req.params.id)
+//       .populate("category")
+//       .populate("brand");
+
+//     if (!product) {
+//       return res.json({ success: false, message: "Product not found" });
+//     }
+
+//     res.json({ success: true, data: product });
+//   } catch (err) {
+//     console.error(err);
+//     res.json({ success: false, message: "Server error" });
+//   }
+// };
+
+
+
+
+// const updateProduct = async (req, res) => {
+//   try {
+//     const { name, brand, category, description, price, stock } = req.body;
+
+//     const productId = req.params.id;
+//     console.log("req.params:", productId);
+// console.log("req.body:", req.body);
+
+
+//     if (!name || !brand || !category || !description || !price || stock === undefined) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'All required fields must be provided'
+//       });
+//     }
+
+
+//     const existingProduct = await Product.findById(productId);
+//     if (!existingProduct) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Product not found'
+//       });
+//     }
+
+    
+//     let mainImage = existingProduct.mainImage;
+//     let subImages = [...existingProduct.subImages];
+
+    
+//     let removedExistingImages = [];
+//     if (req.body.removedImages) {
+//       try {
+//         removedExistingImages = JSON.parse(req.body.removedImages);
+//       } catch (parseError) {
+//         console.error('Error parsing removed existing images:', parseError);
+//       }
+//     }
+
+//     // Handle main image replacement
+//     if (req.files?.mainImage?.[0]) {
+//       const oldPublicId = extractPublicIdFromUrl(existingProduct.mainImage || "");
+//       if (oldPublicId) {
+//         try { await cloudinary.uploader.destroy(oldPublicId); } catch (e) { console.warn('Failed to destroy old main image:', e?.message); }
+//       }
+//       mainImage = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
+//     }
+
+//     // Remove any existing sub images that were marked for removal
+//     if (removedExistingImages.length > 0) {
+//       for (const url of removedExistingImages) {
+//         const pubId = extractPublicIdFromUrl(url);
+//         if (pubId) {
+//           try { await cloudinary.uploader.destroy(pubId); } catch (e) { console.warn('Failed to destroy sub image:', e?.message); }
+//         }
+//       }
+//       subImages = subImages.filter(url => !removedExistingImages.includes(url));
+//     }
+
+//     // Add new sub images if uploaded
+//     if (Array.isArray(req.files?.subImages) && req.files.subImages.length > 0) {
+//       const newUrls = req.files.subImages.map(f => f.path || f.secure_url);
+//       subImages = [...subImages, ...newUrls];
+//     }
+
+//     // Enforce exactly 3 sub images after edit
+//     if (subImages.length !== 3) {
+//       return res.status(400).json({ success: false, message: 'Exactly 3 sub images are required after update' });
+//     }
+
+//     // Update product
+//     const updatedProduct = await Product.findByIdAndUpdate(
+//       productId,
+//       {
+//         name: name.trim(),
+//         brand,
+//         category,
+//         price: parseFloat(price),
+//         stock: Number(stock),
+//         description: description.trim(),
+//         mainImage,
+//         subImages,
+//       },
+//       { new: true, runValidators: true }
+//     ).populate('category', 'name').populate('brand', 'name');
+
+//     res.json({
+//       success: true,
+//       message: 'Product updated successfully',
+//       product: updatedProduct
+//     });
+//   } catch (error) {
+//     console.error('Error updating product:', error);
+    
+//     // Handle validation errors
+//     if (error.name === 'ValidationError') {
+//       const validationErrors = Object.values(error.errors).map(err => err.message);
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Validation failed',
+//         errors: validationErrors
+//       });
+//     }
+
+//     res.status(500).json({
+//       success: false,
+//       message: 'Error updating product',
+//       error: error.message
+//     });
+//   }
+// };
+
+
+
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category")
-      .populate("brand");
+      .populate("category", "name")
+      .populate("brand", "name");
 
     if (!product) {
       return res.json({ success: false, message: "Product not found" });
@@ -140,125 +274,63 @@ const getProductById = async (req, res) => {
     res.json({ success: true, data: product });
   } catch (err) {
     console.error(err);
-    res.json({ success: false, message: "Server error" });
+    res.json({ success: false, message: "Error fetching product" });
   }
 };
 
-
-
-
-const updateProduct = async (req, res) => {
+// Update product
+ const updateProduct = async (req, res) => {
   try {
-    const { name, brand, category, description, price, stock } = req.body;
-
-    const productId = req.params.id;
-
-    if (!name || !brand || !category || !description || !price || stock === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'All required fields must be provided'
-      });
-    }
-
+    const productId = req.params.id; 
+    const { name, brand, category, color, price, stock, description } = req.body;
 
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    
     let mainImage = existingProduct.mainImage;
     let subImages = [...existingProduct.subImages];
 
-    
-    let removedExistingImages = [];
-    if (req.body.removedImages) {
-      try {
-        removedExistingImages = JSON.parse(req.body.removedImages);
-      } catch (parseError) {
-        console.error('Error parsing removed existing images:', parseError);
-      }
-    }
-
-    // Handle main image replacement
+    // Replace main image if uploaded
     if (req.files?.mainImage?.[0]) {
-      const oldPublicId = extractPublicIdFromUrl(existingProduct.mainImage || "");
-      if (oldPublicId) {
-        try { await cloudinary.uploader.destroy(oldPublicId); } catch (e) { console.warn('Failed to destroy old main image:', e?.message); }
-      }
-      mainImage = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
+      mainImage = req.files.mainImage[0].path;
     }
 
-    // Remove any existing sub images that were marked for removal
-    if (removedExistingImages.length > 0) {
-      for (const url of removedExistingImages) {
-        const pubId = extractPublicIdFromUrl(url);
-        if (pubId) {
-          try { await cloudinary.uploader.destroy(pubId); } catch (e) { console.warn('Failed to destroy sub image:', e?.message); }
-        }
-      }
-      subImages = subImages.filter(url => !removedExistingImages.includes(url));
+    // Replace/add sub images if uploaded
+    if (req.files?.subImages?.length > 0) {
+      subImages = req.files.subImages.map(f => f.path);
     }
 
-    // Add new sub images if uploaded
-    if (Array.isArray(req.files?.subImages) && req.files.subImages.length > 0) {
-      const newUrls = req.files.subImages.map(f => f.path || f.secure_url);
-      subImages = [...subImages, ...newUrls];
-    }
-
-    // Enforce exactly 3 sub images after edit
+    // Ensure exactly 3 subImages
     if (subImages.length !== 3) {
-      return res.status(400).json({ success: false, message: 'Exactly 3 sub images are required after update' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Exactly 3 sub images are required" });
     }
 
-    // Update product
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
       {
-        name: name.trim(),
+        name,
         brand,
         category,
-        price: parseFloat(price),
-        stock: Number(stock),
-        description: description.trim(),
+        color,
+        price,
+        stock,
+        description,
         mainImage,
         subImages,
       },
       { new: true, runValidators: true }
-    ).populate('category', 'name').populate('brand', 'name');
+    );
 
-    res.json({
-      success: true,
-      message: 'Product updated successfully',
-      product: updatedProduct
-    });
+    res.json({ success: true, message: "Product updated successfully", product: updatedProduct });
   } catch (error) {
-    console.error('Error updating product:', error);
-    
-    // Handle validation errors
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: validationErrors
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Error updating product',
-      error: error.message
-    });
+    console.error("Error updating product:", error);
+    res.status(500).json({ success: false, message: "Error updating product" });
   }
 };
-
-
-
-
 
 
 ////////////////////////////////////////////////block/unblock//////////////////////////////////////////////////////////////

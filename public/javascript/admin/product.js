@@ -222,7 +222,7 @@ window.confirmToggleBlock = confirmToggleBlock;
  
 
 //////////////////////////////////////searching////////////////////////////////////////////////
-  // live search typing without reload
+  
   const searchInput = document.getElementById('searchProduct');
   const tableBody = document.querySelector('table tbody');
   let debounceTimer;
@@ -275,51 +275,59 @@ window.confirmToggleBlock = confirmToggleBlock;
  
  
  
-  async function editProduct(productId) {
-    try {
-      const res = await fetch(`/admin/product/${productId}`);
-      const product = await res.json();
+  // async function editProduct(productId) {
+  //   try {
+  //     const res = await fetch(`/admin/product/${productId}`);
+  //     const product = await res.json();
+  //     console.log(product);
+      
   
-      if (!product.success) {
-        return Swal.fire("Error", "Product not found", "error");
-      }
+  //     if (!product.success) {
+  //       return Swal.fire("Error", "Product not found", "error");
+  //     }
+      
   
-      const data = product.data;
+  //     const data = product.data;
+  //     console.log("Product data:", data);
+
   
-      // Fill form
-      document.getElementById("editProductId").value = data._id;
-      document.getElementById("editProductName").value = data.name;
-      document.getElementById("editProductCategory").value = data.category?._id || "";
-      document.getElementById("editProductBrand").value = data.brand?._id || "";      
-      document.getElementById("editProductColor").value = data.color || "";
-      document.getElementById("editProductPrice").value = data.price || "";
-      document.getElementById("editProductStock").value = data.stock || "";
-      document.getElementById("editProductDescription").value = data.description || "";
+  //     // Fill form
+  //     document.getElementById("editProductId").value = data._id;
+  //     document.getElementById("editProductName").value = data.name;
+  //     document.getElementById("editProductCategory").value = data.category?._id || "";
+  //     document.getElementById("editProductBrand").value = data.brand?._id || "";      
+  //     document.getElementById("editProductColor").value = data.color || "";
+  //     document.getElementById("editProductPrice").value = data.price || "";
+  //     document.getElementById("editProductStock").value = data.stock || "";
+  //     document.getElementById("editProductDescription").value = data.description || "";
+
+  //     document.getElementById("editProductForm").action = `/admin/products/${data._id}`;
+
   
-      // Images
-      document.getElementById("editMainImagePreview").src = data.mainImage || "";
+  //     // Images
+  //     document.getElementById("editMainImagePreview").src = data.mainImage || "";
   
-      const subImagesPreview = document.getElementById("editSubImagesPreview");
-      subImagesPreview.innerHTML = "";
-      if (data.subImages && data.subImages.length > 0) {
-        data.subImages.forEach(img => {
-          const imgEl = document.createElement("img");
-          imgEl.src = img;
-          imgEl.className = "h-20 w-20 object-cover rounded-lg border";
-          subImagesPreview.appendChild(imgEl);
-        });
-      }
+  //     const subImagesPreview = document.getElementById("editSubImagesPreview");
+  //     subImagesPreview.innerHTML = "";
+  //     if (data.subImages && data.subImages.length > 0) {
+  //       data.subImages.forEach(img => {
+  //         const imgEl = document.createElement("img");
+  //         imgEl.src = img;
+  //         imgEl.className = "h-20 w-20 object-cover rounded-lg border";
+  //         subImagesPreview.appendChild(imgEl);
+  //       });
+  //     }
   
-      // Show modal
-      const editModal = document.getElementById("editProductModal");
-      editModal.classList.remove("hidden");
-      editModal.classList.add("flex");
+  //     // Show modal
+  //     const editModal = document.getElementById("editProductModal");
+  //     editModal.classList.remove("hidden");
+  //     editModal.classList.add("flex");
   
-    } catch (err) {
-      console.error(err);
-      Swal.fire("Error", "Something went wrong", "error");
-    }
-  }
+  //   } catch (err) {
+  //     console.error(err);
+  //     Swal.fire("Error", "Something went wrong", "error");
+  //   }
+  // }
   
   function closeEditProductModal() {
     const editModal = document.getElementById("editProductModal");
@@ -329,4 +337,109 @@ window.confirmToggleBlock = confirmToggleBlock;
   
 
 
-  
+
+  async function editProduct(productId) {
+  try {
+    const res = await fetch(`/admin/product/${productId}`);
+    const product = await res.json();
+
+    if (!product.success) {
+      return Swal.fire("Error", "Product not found", "error");
+    }
+
+    const data = product.data;
+
+    // Fill form
+    document.getElementById("editProductId").value = data._id;
+    document.getElementById("editProductName").value = data.name;
+    document.getElementById("editProductCategory").value = data.category?._id || "";
+    document.getElementById("editProductBrand").value = data.brand?._id || "";
+    document.getElementById("editProductColor").value = data.color || "";
+    document.getElementById("editProductPrice").value = data.price || "";
+    document.getElementById("editProductStock").value = data.stock || "";
+    document.getElementById("editProductDescription").value = data.description || "";
+
+    // Set form action
+    document.getElementById("editProductForm").action = `/admin/products/${data._id}`;
+
+    // Images
+    document.getElementById("editMainImagePreview").src = data.mainImage || "";
+    const subImagesPreview = document.getElementById("editSubImagesPreview");
+    subImagesPreview.innerHTML = "";
+    if (data.subImages && data.subImages.length > 0) {
+      data.subImages.forEach(img => {
+        const imgEl = document.createElement("img");
+        imgEl.src = img;
+        imgEl.className = "h-20 w-20 object-cover rounded-lg border";
+        subImagesPreview.appendChild(imgEl);
+      });
+    }
+
+    // Show modal
+    const editModal = document.getElementById("editProductModal");
+    editModal.classList.remove("hidden");
+    editModal.classList.add("flex");
+  } catch (err) {
+    console.error(err);
+    Swal.fire("Error", "Something went wrong", "error");
+  }
+}
+
+function closeEditProductModal() {
+  const editModal = document.getElementById("editProductModal");
+  editModal.classList.add("hidden");
+  editModal.classList.remove("flex");
+}
+
+const editForm = document.getElementById("editProductForm");
+
+editForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(editForm);
+  const productId = document.getElementById("editProductId").value;
+
+  try {
+    const res = await fetch(`/admin/products/${productId}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    console.log("Update response:", data);
+
+    if (data.success) {
+      Swal.fire({
+        title: "Success!",
+        text: data.message,
+        icon: "success",
+        confirmButtonColor: "#3085d6",
+      }).then(() => {
+        // Close the modal
+        document.getElementById("editProductModal").classList.add("hidden");
+        document.getElementById("editProductModal").classList.remove("flex");
+
+        // Update the product row in the table dynamically
+        const updated = data.product;
+        const row = document.querySelector(`#product-row-${updated._id}`);
+
+        if (row) {
+          row.querySelector(".product-name").textContent = updated.name;
+          row.querySelector(".product-price").textContent = updated.price;
+          row.querySelector(".product-category").textContent = updated.category;
+          row.querySelector(".product-stock").textContent = updated.stock;
+
+          if (updated.imageUrl) {
+            row.querySelector(".product-image").src = updated.imageUrl;
+          }
+        }
+      });
+      window.location.reload()
+    } else {
+      Swal.fire("Error", data.message || "Failed to update product", "error");
+    }
+  } catch (err) {
+    console.error("Update error:", err);
+    Swal.fire("Error", "Something went wrong!", "error");
+  }
+});

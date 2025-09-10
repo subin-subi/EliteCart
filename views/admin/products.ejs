@@ -127,7 +127,7 @@
                         <!-- Name -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-900"><%= product.name %></div>
-                            <div class="text-sm text-gray-500">ID: <%= product._id.toString().slice(-8) %></div>
+                          
                         </td>
 
                         <!-- Category -->
@@ -490,10 +490,10 @@
  <!-- Edit Product Modal -->
  <div id="editProductModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center overflow-auto">
     <div class="bg-white rounded-lg shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
-      <h2 class="text-xl font-bold mb-4">Edit Product</h2
-      <form id="editProductForm">
+      <h2 class="text-xl font-bold mb-4">Edit Product</h2>
+        <form id="editProductForm"  method="POST" enctype="multipart/form-data">
         <!-- Hidden field for Product ID -->
-        <input type="hidden" id="editProductId" name="productId">
+        <input type="hidden" id="editProductId"   name="productId">
   
         <!-- Name -->
         <label class="block font-medium">Name</label>
@@ -556,7 +556,7 @@
                   class="bg-gray-500 text-white px-3 py-1 rounded">
             Cancel
           </button>
-          <button type="submit"
+          <button type="submit" 
                   class="bg-green-600 text-white px-3 py-1 rounded">
             Save Changes
           </button>
