@@ -17,39 +17,22 @@ const productSchema = new mongoose.Schema(
       ref: "Brand",
       required: [true, "Brand is required"],
     },
-    color: {
-      type: String,
-      required: [true, "Color is required"],
-      trim: true,
-    },
-    price: {
-      type: Number,
-      required: [true, "Price is required"],
-      min: 0,
-    },
-    stock: {
-      type: Number,
-      required: [true, "Stock is required"],
-      min: 0,
-    },
+   variants: [
+  {
+    volume: { type: Number, required: true },
+    stock: { type: Number, required: true },
+    price: { type: Number, required: true },
+    discountPrice: { type: Number, default: null },
+    isBlocked: { type: Boolean, default: false },
+    mainImage: { type: String },
+    subImages: [{ type: String }]
+  }
+]
+, 
     description: {
       type: String,
       required: [true, "Product description is required"],
       trim: true,
-    },
-    mainImage: {
-      type: String,
-      required: [true, "Main image is required"],
-      trim: true,
-    },
-    subImages: {
-      type: [String],
-      validate: {
-        validator: function (arr) {
-          return Array.isArray(arr) && arr.length === 3 && arr.every(Boolean);
-        },
-        message: "Exactly 3 sub images are required",
-      },
     },
     status: {
       type: String,

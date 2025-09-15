@@ -1,6 +1,6 @@
 import { log } from "console";
 import Brand from "../../models/brandModel.js"; 
-
+import HTTP_STATUS  from "../../utils/responseHandler.js"
 const getBrand = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -55,14 +55,14 @@ const getBrand = async (req, res) => {
         });
     } catch (error) {
         console.error("Error fetching brands:", error);
-        res.status(500).send("Internal Server Error");
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
     }
 };
 
 const addBrand = async (req, res) => {
     try {
         if (!req.body || !req.body.brandName) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Brand name is required'
             });
@@ -72,14 +72,14 @@ const addBrand = async (req, res) => {
         const trimmedBrandName = brandName.trim();
 
         if (!/^[A-Za-z]+$/.test(trimmedBrandName)) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Brand name can only contain alphabets.'
             });
         }
 
         if (trimmedBrandName.length > 10) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Brand name must not exceed 10 characters.'
             });
@@ -93,7 +93,7 @@ const addBrand = async (req, res) => {
         });
 
         if (existingBrand) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Brand name already exists.'
             });
@@ -106,14 +106,14 @@ const addBrand = async (req, res) => {
 
         await newBrand.save();
 
-        return res.status(201).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Brand added successfully',
             brand: newBrand
         });
     } catch (error) {
         console.error('Error adding brand:', error);
-        return res.status(500).json({
+        return res.status(HTTP_STATUS. INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Error adding brand.',
             error: error.message
@@ -127,10 +127,10 @@ const editBrand = async (req, res) => {
         const trimmedBrandName = brandName.trim();
 
         if (!/^[A-Za-z]+$/.test(trimmedBrandName)) {
-            return res.status(400).send('Brand name can only contain alphabets.');
+            return res.status(HTTP_STATUS.BAD_REQUEST).send('Brand name can only contain alphabets.');
         }
         if (trimmedBrandName.length > 10) {
-            return res.status(400).send('Brand name must not exceed 10 characters.');
+            return res.status(HTTP_STATUS.BAD_REQUEST).send('Brand name must not exceed 10 characters.');
         }
 
         const formattedBrandName = trimmedBrandName.charAt(0).toUpperCase() + 
@@ -142,7 +142,7 @@ const editBrand = async (req, res) => {
         });
 
         if (existingBrand) {
-            return res.status(400).send('Brand name already exists.');
+            return res.status(HTTP_STATUS.BAD_REQUEST).send('Brand name already exists.');
         }
 
         await Brand.findByIdAndUpdate(brandId, {
@@ -152,7 +152,7 @@ const editBrand = async (req, res) => {
         res.redirect('/admin/brand');
     } catch (error) {
         console.error('Error editing brand:', error);
-        res.status(500).send('Error editing brand.');
+        res.status(HTTP_STATUS. INTERNAL_SERVER_ERROR).send('Error editing brand.');
     }
 };
 
@@ -160,11 +160,11 @@ const getBrandById = async (req, res) => {
     try {
         const brand = await Brand.findById(req.params.id);
         if (!brand) {
-            return res.status(404).json({ success: false, message: "Brand not found" });
+            return res.status(HTTP_STATUS. NOT_FOUND).json({ success: false, message: "Brand not found" });
         }
         res.json({ success: true, brand });
     } catch (err) {
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(HTTP_STATUS. INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
 };
 
@@ -174,12 +174,12 @@ const updateBrand = async (req, res) => {
         const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
         const brand = await Brand.findByIdAndUpdate(req.params.id, { name: formattedName }, { new: true });
 
-        if (!brand) return res.status(404).json({ success: false, message: "Brand not found" });
+        if (!brand) return res.status(HTTP_STATUS. NOT_FOUND).json({ success: false, message: "Brand not found" });
 
         res.json({ success: true, message: "Brand updated successfully", brand });
     } catch (error) {
         console.error("Update error:", error);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(HTTP_STATUS. INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
 };
 

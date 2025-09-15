@@ -6,7 +6,8 @@ import brandController from "../controllers/adminController/brandController.js";
 import categoryController from "../controllers/adminController/categoryController.js";
 import userController from "../controllers/adminController/userController.js";
 import productController from "../controllers/adminController/productController.js";
-import { upload, handleMulterError } from "../utils/multer.js";
+import  upload  from "../utils/multer.js";
+import addproductController from "../controllers/adminController/addproductController.js";
 
 const router = express.Router();
 
@@ -46,12 +47,8 @@ router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.u
 
 
 
-router.get("/products", productController.getProduct);
-router.post("/addProduct",upload.fields([
-    { name: "mainImage", maxCount: 1 },
-    { name: "subImages", maxCount: 3 }
-  ]),
-  handleMulterError, productController.addProduct)
+ router.get("/products", productController.getProduct);
+
 router.patch("/products/:id/toggle-block", productController.toggleProductStatus);
 router.get("/product/:id", productController.getProductById);
 
@@ -59,10 +56,14 @@ router.get("/product/:id", productController.getProductById);
 router.post("/products/:id", upload.fields([
   { name: "mainImage", maxCount: 1 },
   { name: "subImages", maxCount: 3 }
-]), handleMulterError, productController.updateProduct);
+]),  productController.updateProduct);
 
 
 router.get("/api/products", productController.getProductsAPI);
 
 
+
+
+router.get("/addProduct",addproductController.getaddProductPage)
+router.post("/addProduct", addproductController.addProduct)
 export default router;
