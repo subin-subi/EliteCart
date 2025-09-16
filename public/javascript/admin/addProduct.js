@@ -194,9 +194,6 @@ form.addEventListener("submit", async function (e) {
   if (!name) {
     document.getElementById("errorName").textContent = "Name is required";
     isValid = false;
-  } else if (!/^[A-Za-z\s]+$/.test(name)) {
-    document.getElementById("errorName").textContent = "Name can only contain letters";
-    isValid = false;
   } else if (name.length < 3) {
     document.getElementById("errorName").textContent = "Name must be at least 3 letters";
     isValid = false;
@@ -283,21 +280,22 @@ form.addEventListener("submit", async function (e) {
     formData.append("subImages", file);
   });
 
-  try {
-    const res = await axios.post("/admin/addproduct", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
-    });
-
-    if (res.data.success) {
-      alert("Product added successfully");
-      window.location.reload();
-    } else {
-      alert("Error: " + res.data.message);
+ try {
+  const res = await axios.post("/admin/addproduct", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error adding product");
+  });
+
+  if (res.data.success) {
+    alert("Product added successfully");
+    window.location.href = "/admin/products"; // fixed typo
+  } else {
+    alert("Error: " + res.data.message);
   }
+} catch (err) {
+  console.error(err);
+  alert("Error adding product");
+}
+
 });

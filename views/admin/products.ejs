@@ -39,6 +39,7 @@
           value="<%= typeof search !== 'undefined' ? search : '' %>"
           placeholder="Search products..."
           id="searchProduct"
+          autocomplete="off"
           class="w-full px-4 py-2 border border-gray-300 rounded-lg 
                  focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10
                  text-sm md:text-base"
@@ -66,15 +67,16 @@
 
       <!-- Status Dropdown -->
       <select 
-        name="status" 
-        class="px-4 py-2 border border-gray-300 rounded-lg 
-               focus:ring-2 focus:ring-blue-500 focus:border-transparent
-               text-sm md:text-base w-full md:w-auto"
-      >
-        <option value="">All Status</option>
-        <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
-        <option value="blocked" <%= status === 'blocked' ? 'selected' : '' %>>Blocked</option>
-      </select>
+  name="isBlocked" 
+  class="px-4 py-2 border border-gray-300 rounded-lg 
+         focus:ring-2 focus:ring-blue-500 focus:border-transparent
+         text-sm md:text-base w-full md:w-auto"
+>
+  <option value="">All Status</option>
+  <option value="false" <%= isBlocked === 'false' ? 'selected' : '' %>>Active</option>
+  <option value="true"  <%= isBlocked === 'true'  ? 'selected' : '' %>>Blocked</option>
+</select>
+
 
       <!-- Add Product Button -->
      <a href="/admin/addProduct" 
@@ -199,24 +201,8 @@
                                         class="text-red-500 hover:text-red-700 hover:underline text-sm">
                                     <%= product.isBlocked ? 'Unblock' : 'Block' %>
                                 </button>
-                                <div class="relative">
-                                    <!-- <button onclick="toggleDropdown('<%= product._id %>')" class="text-gray-400 hover:text-gray-600">
-                                        <span class="material-icons">more_vert</span>
-                                    </button> -->
-                                    <div id="dropdown-<%= product._id %>" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                                        <div class="py-1">
-                                            <button onclick="editProduct('<%= product._id %>')" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100">
-                                                Edit
-                                            </button>
-                                            <button onclick="confirmToggleBlock('<%= product._id %>', <      !!product.isBlocked %>)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                                <%= product.isBlocked ? 'Unblock' : 'Block' %>
-                                            </button>
-                                            <button onclick="viewProduct('<%= product._id %>')" class="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">
-                                                View Details
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                              
+
                             </div>
                         </td>
                     </tr>
@@ -260,7 +246,7 @@
     </table>
 </div>
 </div>
-
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
         <!-- Pagination Info -->
         <% if (pagination) { %>
         <div class="bg-white px-6 py-3 border-t border-gray-200">
@@ -349,10 +335,9 @@
     </div>
     </div>
 
-
-
+<!-- ////////////////////////////////////////////////////////Crop Modal ///////////////////////////////////////////////////////////////// -->
    
-     <!-- Crop Modal -->
+     
   <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center hidden z-50">
     <div class="bg-gray-900 p-6 rounded-2xl max-w-xl w-full border border-gray-800">
       <div class="flex justify-between items-center mb-4">
@@ -368,86 +353,89 @@
     </div>
   </div>
 
-<!-- //////////////////////////////////////////////////////////////////////////////////////////////////////// -->
- <!-- Edit Product Modal -->
+<!-- ////////////////////////////////////////////Edit Product Modal //////////////////////////////////////////////////////////// -->
+ 
  <div id="editProductModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center overflow-auto">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
-      <h2 class="text-xl font-bold mb-4">Edit Product</h2>
-        <form id="editProductForm"  method="POST" enctype="multipart/form-data">
-        <!-- Hidden field for Product ID -->
-        <input type="hidden" id="editProductId"   name="productId">
-  
-        <!-- Name -->
-        <label class="block font-medium">Name</label>
-        <input type="text" id="editProductName" name="name"
-               class="w-full border p-2 rounded mb-3">
-  <!-- Category -->
-<label class="block font-medium">Category</label>
-<select id="editProductCategory" name="category"
-        class="w-full border p-2 rounded mb-3">
-  <% categories.forEach(cat => { %>
-    <option value="<%= cat._id %>"><%= cat.name %></option>
-  <% }) %>
-</select>
+  <div class="bg-white rounded-lg shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
+    <h2 class="text-xl font-bold mb-4">Edit Product</h2>
 
-<!-- Brand -->
-<label class="block font-medium">Brand</label>
-<select id="editProductBrand" name="brand"
-        class="w-full border p-2 rounded mb-3">
-  <% brands.forEach(brand => { %>
-    <option value="<%= brand._id %>"><%= brand.name %></option>
-  <% }) %>
-</select>
+    <form id="editProductForm" method="POST" enctype="multipart/form-data">
+      <!-- Hidden field for Product ID -->
+      <input type="hidden" id="editProductId" name="productId">
 
-  
-        <!-- Color -->
-        <label class="block font-medium">Color</label>
-        <input type="text" id="editProductColor" name="color"
-               class="w-full border p-2 rounded mb-3">
-  
-        <!-- Price -->
-        <label class="block font-medium">Price</label>
-        <input type="number" id="editProductPrice" name="price"
-               class="w-full border p-2 rounded mb-3">
-  
-        <!-- Stock -->
-        <label class="block font-medium">Stock</label>
-        <input type="number" id="editProductStock" name="stock"
-               class="w-full border p-2 rounded mb-3">
-  
-        <!-- Description -->
-        <label class="block font-medium">Description</label>
-        <textarea id="editProductDescription" name="description"
-                  class="w-full border p-2 rounded mb-3"></textarea>
-  
-        <!-- Main Image -->
-        <label class="block font-medium">Main Image</label>
-        <input type="file" id="editMainImage" name="mainImage"
-               accept="image/*" class="mb-3">
-        <img id="editMainImagePreview" class="h-24 mb-3 rounded">
-  
-        <!-- Sub Images -->
-        <label class="block font-medium">Sub Images</label>
-        <input type="file" id="editSubImages" name="subImages" multiple
-               accept="image/*" class="mb-3">
-        <div id="editSubImagesPreview" class="flex gap-2 flex-wrap mb-3"></div>
-  
-        <!-- Buttons -->
-        <div class="flex justify-end gap-2">
-          <button type="button" onclick="closeEditProductModal()"
-                  class="bg-gray-500 text-white px-3 py-1 rounded">
-            Cancel
-          </button>
-          <button type="submit" 
-                  class="bg-green-600 text-white px-3 py-1 rounded">
-            Save Changes
-          </button>
-        </div>
-      </form>
-    </div>
+      <!-- Name -->
+      <label class="block font-medium">Name</label>
+      <input type="text" id="editProductName" name="name"
+             class="w-full border p-2 rounded mb-3">
+
+      <!-- Category -->
+      <label class="block font-medium">Category</label>
+      <select id="editProductCategory" name="category"
+              class="w-full border p-2 rounded mb-3">
+        <% categories.forEach(cat => { %>
+          <option value="<%= cat._id %>"><%= cat.name %></option>
+        <% }) %>
+      </select>
+
+      <!-- Brand -->
+      <label class="block font-medium">Brand</label>
+      <select id="editProductBrand" name="brand"
+              class="w-full border p-2 rounded mb-3">
+        <% brands.forEach(brand => { %>
+          <option value="<%= brand._id %>"><%= brand.name %></option>
+        <% }) %>
+      </select>
+
+      <!-- Description -->
+     
+<label class="block font-medium">Description</label>
+<textarea id="editProductDescription" name="description"
+          class="w-full border p-2 rounded mb-3"></textarea>
+
+      <!-- === VARIANT FIELDS (first variant only for editing) === -->
+      <h3 class="text-lg font-semibold mb-2">Variant</h3>
+
+      <label class="block font-medium">Volume (ml)</label>
+      <input type="number" id="editProductVolume" name="variants[0][volume]"
+             class="w-full border p-2 rounded mb-3">
+
+      <label class="block font-medium">Stock</label>
+      <input type="number" id="editProductStock" name="variants[0][stock]"
+             class="w-full border p-2 rounded mb-3">
+
+      <label class="block font-medium">Price</label>
+      <input type="number" id="editProductPrice" name="variants[0][price]"
+             class="w-full border p-2 rounded mb-3">
+
+      
+
+      <!-- Main Image -->
+      <label class="block font-medium">Main Image</label>
+      <input type="file" id="editMainImage" name="mainImage"
+             accept="image/*" class="mb-3">
+      <img id="editMainImagePreview" class="h-24 mb-3 rounded">
+
+      <!-- Sub Images -->
+      <label class="block font-medium">Sub Images</label>
+      <input type="file" id="editSubImages" name="subImages" multiple
+             accept="image/*" class="mb-3">
+      <div id="editSubImagesPreview" class="flex gap-2 flex-wrap mb-3"></div>
+
+      <!-- Buttons -->
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeEditProductModal()"
+                class="bg-gray-500 text-white px-3 py-1 rounded">
+          Cancel
+        </button>
+        <button type="submit" 
+                class="bg-green-600 text-white px-3 py-1 rounded">
+          Save Changes
+        </button>
+      </div>
+    </form>
   </div>
-  
-  
+</div>
+
     <script src="/javascript/admin/product.js"></script>
    
     

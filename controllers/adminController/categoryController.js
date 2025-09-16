@@ -11,7 +11,7 @@ const getCategory = async (req, res) => {
         // Build search query
         let searchQuery = { isHidden: false };
         if (search) {
-            searchQuery.name = { $regex: search, $options: 'i' }; // Case-insensitive search
+           searchQuery.name = { $regex: `^${search}`, $options: 'i' }; 
         }
 
         // Get total count for pagination

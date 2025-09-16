@@ -51,9 +51,12 @@ window.confirmToggleBlock = confirmToggleBlock;
         const rows = (data.products || []).map(p => `
           <tr class="hover:bg-gray-50 transition">
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex-shrink-0 h-16 w-16">
-                ${p.mainImage ? `<img class="h-16 w-16 rounded-lg object-cover" src="${p.mainImage}" alt="${p.name}">` : `<div class="h-16 w-16 rounded-lg bg-gray-200"></div>`}
-              </div>
+             <div class="flex-shrink-0 h-16 w-16">
+              ${p.variants && p.variants.length > 0 && p.variants[0].mainImage
+                ? `<img class="h-16 w-16 rounded-lg object-cover" src="${p.variants[0].mainImage}" alt="${p.name}">`
+                : `<div class="h-16 w-16 rounded-lg bg-gray-200"></div>`}
+            </div>
+
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="text-sm font-medium text-gray-900">${p.name}</div>
@@ -82,6 +85,11 @@ window.confirmToggleBlock = confirmToggleBlock;
         tableBody.innerHTML = rows || '';
       } catch (_) {}
     }, 200);
+    window.addEventListener("load", () => {
+  const searchInput = document.getElementById("searchProduct");
+  if (searchInput) searchInput.value = "";  // clear on reload
+});
+
   });
 
 
@@ -143,6 +151,10 @@ window.confirmToggleBlock = confirmToggleBlock;
   //   }
   // }
   
+
+
+
+
   function closeEditProductModal() {
     const editModal = document.getElementById("editProductModal");
     editModal.classList.add("hidden");
@@ -151,8 +163,7 @@ window.confirmToggleBlock = confirmToggleBlock;
   
 
 
-
-  async function editProduct(productId) {
+async function editProduct(productId) {
   try {
     const res = await fetch(`/admin/product/${productId}`);
     const product = await res.json();
@@ -168,25 +179,28 @@ window.confirmToggleBlock = confirmToggleBlock;
     document.getElementById("editProductName").value = data.name;
     document.getElementById("editProductCategory").value = data.category?._id || "";
     document.getElementById("editProductBrand").value = data.brand?._id || "";
-    document.getElementById("editProductColor").value = data.color || "";
-    document.getElementById("editProductPrice").value = data.price || "";
-    document.getElementById("editProductStock").value = data.stock || "";
     document.getElementById("editProductDescription").value = data.description || "";
 
-    // Set form action
-    document.getElementById("editProductForm").action = `/admin/products/${data._id}`;
+    // Handle first variant (if exists)
+    if (data.variants && data.variants.length > 0) {
+      const variant = data.variants[0];
+      document.getElementById("editProductVolume").value = variant.volume || "";
+      document.getElementById("editProductStock").value = variant.stock || "";
+      document.getElementById("editProductPrice").value = variant.price || "";
+      
 
-    // Images
-    document.getElementById("editMainImagePreview").src = data.mainImage || "";
-    const subImagesPreview = document.getElementById("editSubImagesPreview");
-    subImagesPreview.innerHTML = "";
-    if (data.subImages && data.subImages.length > 0) {
-      data.subImages.forEach(img => {
-        const imgEl = document.createElement("img");
-        imgEl.src = img;
-        imgEl.className = "h-20 w-20 object-cover rounded-lg border";
-        subImagesPreview.appendChild(imgEl);
-      });
+      // Images
+      document.getElementById("editMainImagePreview").src = variant.mainImage || "";
+      const subImagesPreview = document.getElementById("editSubImagesPreview");
+      subImagesPreview.innerHTML = "";
+      if (variant.subImages && variant.subImages.length > 0) {
+        variant.subImages.forEach(img => {
+          const imgEl = document.createElement("img");
+          imgEl.src = img;
+          imgEl.className = "h-20 w-20 object-cover rounded-lg border";
+          subImagesPreview.appendChild(imgEl);
+        });
+      }
     }
 
     // Show modal
@@ -198,6 +212,7 @@ window.confirmToggleBlock = confirmToggleBlock;
     Swal.fire("Error", "Something went wrong", "error");
   }
 }
+
 
 function closeEditProductModal() {
   const editModal = document.getElementById("editProductModal");

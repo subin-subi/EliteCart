@@ -5,59 +5,57 @@ import fs from 'fs';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
 
-// Get all products with pagination and search
+
 const getProduct = async (req, res) => {
   try {
+    // Pagination
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const search = req.query.search || '';
-    const status = req.query.status || '';
 
-    // Build search query
+    // Filters
+    const search = req.query.search?.trim() || "";
+    const isBlocked = req.query.isBlocked?.trim() || ""; // 👈 use isBlocked now
+
     let searchQuery = {};
+
+    // Search by name
     if (search) {
-      searchQuery.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+      searchQuery.name = { $regex: `^${search}`, $options: "i" };
     }
 
-    if (status && status !== 'All Status') {
-      searchQuery.status = status;
-    }
+    if (req.query.isBlocked) {
+  searchQuery.isBlocked = req.query.isBlocked === "true"; 
+}
 
-   
     const totalProducts = await Product.countDocuments(searchQuery);
-    const totalPages = Math.ceil(totalProducts / limit);
+    const totalPages = Math.ceil(totalProducts / limit) || 1;
 
-    
     const products = await Product.find(searchQuery)
-  .populate('category', 'name')
-  .populate('brand', 'name')
-  .sort({ createdAt: -1 })
-  .skip(skip)
-  .limit(limit);
+      .populate("category", "name")
+      .populate("brand", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    
-    const categories = await Category.find({ isActive: true });
-    const brands = await Brand.find({ isActive: true });
+    const categories = await Category.find({ isActive: true }).select("name");
+    const brands = await Brand.find({ isActive: true }).select("name");
 
-    res.render('admin/products', {
+    res.render("admin/products", {
       products,
       categories,
       brands,
       search,
-      status,
+      isBlocked, 
       pagination: {
         currentPage: page,
         totalPages,
         totalProducts,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
-        nextPage: page + 1,
-        prevPage: page - 1
-      }
+        nextPage: page < totalPages ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null,
+      },
     });
   } catch (error) {
     console.error("Error loading product page:", error);
@@ -67,64 +65,7 @@ const getProduct = async (req, res) => {
 
 
 
-const addProduct = async (req, res) => {
-  try {
-    const { name, category, brand, color, price, stock, description } = req.body;
 
-    
-    if (!name || !category || !brand || !color || !price || !stock || !description) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
-    }
-
-    
-    let mainImage = "";
-    let subImages = [];
-    if (req.files) {
-      if (req.files.mainImage?.[0]) {
-        mainImage = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
-      }
-      if (Array.isArray(req.files.subImages)) {
-        subImages = req.files.subImages.map((file) => file.path || file.secure_url);
-      }
-    }
-
-    if (!mainImage) {
-      return res.status(400).json({ success: false, message: "Main image is required" });
-    }
-
-    if (!Array.isArray(subImages) || subImages.length !== 3) {
-      return res.status(400).json({ success: false, message: "Exactly 3 sub images are required" });
-    }
-
-    const newProduct = new Product({
-      name,
-      category,
-      brand,
-      color,
-      price: Number(price),
-      stock: Number(stock),
-      description,
-      mainImage,
-      subImages,
-    });
-
-    await newProduct.save();
-
-    if (req.headers['x-requested-with'] !== 'XMLHttpRequest' && 
-        (!req.headers.accept || !req.headers.accept.includes('application/json'))) {
-      return res.redirect('/admin/products');
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: "Product added successfully",
-      product: newProduct,
-    });
-  } catch (error) {
-    console.error("Error adding product:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
-  }
-};
 
 const getProductById = async (req, res) => {
   try {
@@ -231,7 +172,12 @@ const toggleProductStatus = async (req, res) => {
 };
 
 
-////////////////////////////////////////////////searching//////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////searching//////////////////////////////////////////////////////////////
+function escapeRegex(text = "") {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+
 
 const getProductsAPI = async (req, res) => {
   try {
@@ -243,11 +189,11 @@ const getProductsAPI = async (req, res) => {
 
     let searchQuery = {};
     if (search) {
-      searchQuery.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+      const safeSearch = escapeRegex(search); 
+      searchQuery.name = { $regex: `^${safeSearch}`, $options: 'i' };
     }
+
+
     if (status && status !== 'All Status') {
       searchQuery.status = status;
     }
@@ -272,7 +218,6 @@ const getProductsAPI = async (req, res) => {
 
 export default {
   getProduct,
-  addProduct,
   updateProduct,
   toggleProductStatus,
   getProductsAPI,

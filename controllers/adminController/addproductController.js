@@ -66,12 +66,8 @@ const addProduct = [
 
       await product.save();
 
-     const products = await Product.find({}).populate("brand category").lean();
-return res.render("admin/products", { 
-  products, 
-  successMessage: "Product added successfully!",
-  status: "" // or "active" / "blocked" if you want a default
-});
+await product.save();
+return res.json({ success: true, message: "Product added successfully!" });
 
     } catch (error) {
       console.error("from add product", error);
