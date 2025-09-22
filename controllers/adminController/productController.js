@@ -15,7 +15,7 @@ const getProduct = async (req, res) => {
 
     // Filters
     const search = req.query.search?.trim() || "";
-    const isBlocked = req.query.isBlocked?.trim() || ""; // 👈 use isBlocked now
+    const isBlocked = req.query.isBlocked?.trim() || ""; 
 
     let searchQuery = {};
 
@@ -70,73 +70,90 @@ const getProduct = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category", "name")
-      .populate("brand", "name");
+      .populate("category")
+      .populate("brand")
+      .lean();
 
-    if (!product) {
-      return res.json({ success: false, message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
     res.json({ success: true, data: product });
   } catch (err) {
     console.error(err);
-    res.json({ success: false, message: "Error fetching product" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+
+
 
 // Update product
  const updateProduct = async (req, res) => {
   try {
     const productId = req.params.id; 
-    const { name, brand, category, color, price, stock, description } = req.body;
-
+    const { name, brand, category, description , variants } = req.body;
+  
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    let mainImage = existingProduct.mainImage;
-    let subImages = [...existingProduct.subImages];
-
-    // Replace main image if uploaded
-    if (req.files?.mainImage?.[0]) {
-      mainImage = req.files.mainImage[0].path;
+   let incomingVariant = null;
+    if (variants) {
+      if (typeof variants === "string") {
+        // If frontend sends JSON string
+        incomingVariant = JSON.parse(variants)[0];
+      } else if (Array.isArray(variants)) {
+        incomingVariant = variants[0];
+      }
     }
 
-    // Replace/add sub images if uploaded
-    if (req.files?.subImages?.length > 0) {
-      subImages = req.files.subImages.map(f => f.path);
+    let updatedVariant = existingProduct.variants[0] || {}
+
+
+    if(variants && variants[0]){
+      updatedVariant.volume = variants.volume || updatedVariant.volume;
+      updatedVariant.stock = variants.stock || updatedVariant.stock;
+      updatedVariant.price = variants.price || updatedVariant.price;
     }
 
-    // Ensure exactly 3 subImages
-    if (subImages.length !== 3) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Exactly 3 sub images are required" });
-    }
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      {
-        name,
-        brand,
-        category,
-        color,
-        price,
-        stock,
-        description,
-        mainImage,
-        subImages,
-      },
-      { new: true, runValidators: true }
-    );
+if(req.files?.mainImage?.[0]){
+  updatedVariant.mainImage = req.files.mainImage[0].path;
+}
 
-    res.json({ success: true, message: "Product updated successfully", product: updatedProduct });
+if(req.files?.subImages?.length > 0){
+  updatedVariant.subImages = req.files.subImages.map(f => f.path)
+}
+
+if(updatedVariant.subImages.length !== 3){
+  return res.status(400).json({
+    success : false,
+    message : "Exactly 3 sub images are required"
+  })
+}
+
+existingProduct.name = name || existingProduct.name;
+existingProduct.brand = brand || existingProduct.brand;
+existingProduct.category = category || existingProduct.category;
+existingProduct.description = description || existingProduct.description
+
+existingProduct.variants[0] = updatedVariant;
+const updatedProduct = await existingProduct.save()
+
+
+    res.json({ 
+      success: true,
+       message: "Product updated successfully",
+        product: updatedProduct 
+      });
   } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({ success: false, message: "Error updating product" });
   }
 };
+
+
+
 
 
 ////////////////////////////////////////////////block/unblock//////////////////////////////////////////////////////////////

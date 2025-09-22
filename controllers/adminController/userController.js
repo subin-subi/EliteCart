@@ -8,32 +8,18 @@ const getUserList = async (req, res) => {
         const rawSearch = req.query.search || '';
         const search = String(rawSearch).trim();
 
-        // Build search query across name, email, and mobileNo (as string)
-        let searchQuery = {};
+       
+           let searchQuery = { };
         if (search) {
-            const isNumeric = /^\d+$/.test(search);
-            const regex = new RegExp(search, 'i');
-
-            const orConditions = [
-                { name: { $regex: regex } },
-                { email: { $regex: regex } },
-            ];
-
-            if (isNumeric) {
-                // Match mobileNo by substring (treat number as string)
-                orConditions.push({
-                    $expr: { $regexMatch: { input: { $toString: "$mobileNo" }, regex: search } }
-                });
-            }
-
-            searchQuery = { $or: orConditions };
+           searchQuery.name = { $regex: `^${search}`, $options: 'i' }; 
         }
+
 
         // Get total count for pagination
         const totalUsers = await User.countDocuments(searchQuery);
         const totalPages = Math.max(1, Math.ceil(totalUsers / limit));
 
-        // Get total blocked and active users count from database
+        
         const totalBlockedUsers = await User.countDocuments({ ...searchQuery, blocked: true });
         const totalActiveUsers = await User.countDocuments({ ...searchQuery, blocked: false });
 

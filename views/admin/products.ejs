@@ -354,8 +354,7 @@
   </div>
 
 <!-- ////////////////////////////////////////////Edit Product Modal //////////////////////////////////////////////////////////// -->
- 
- <div id="editProductModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center overflow-auto">
+ <div id="editProductModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center overflow-auto">
   <div class="bg-white rounded-lg shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
     <h2 class="text-xl font-bold mb-4">Edit Product</h2>
 
@@ -387,12 +386,11 @@
       </select>
 
       <!-- Description -->
-     
-<label class="block font-medium">Description</label>
-<textarea id="editProductDescription" name="description"
-          class="w-full border p-2 rounded mb-3"></textarea>
+      <label class="block font-medium">Description</label>
+      <textarea id="editProductDescription" name="description"
+                class="w-full border p-2 rounded mb-3"></textarea>
 
-      <!-- === VARIANT FIELDS (first variant only for editing) === -->
+      <!-- Variant -->
       <h3 class="text-lg font-semibold mb-2">Variant</h3>
 
       <label class="block font-medium">Volume (ml)</label>
@@ -407,19 +405,16 @@
       <input type="number" id="editProductPrice" name="variants[0][price]"
              class="w-full border p-2 rounded mb-3">
 
-      
-
       <!-- Main Image -->
       <label class="block font-medium">Main Image</label>
-      <input type="file" id="editMainImage" name="mainImage"
-             accept="image/*" class="mb-3">
-      <img id="editMainImagePreview" class="h-24 mb-3 rounded">
+      <input type="file" id="editMainImage" name="mainImage" accept="image/*" class="mb-3">
+      <img id="editMainImagePreview" class="h-24 mb-3 rounded" src="">
 
       <!-- Sub Images -->
       <label class="block font-medium">Sub Images</label>
-      <input type="file" id="editSubImages" name="subImages" multiple
-             accept="image/*" class="mb-3">
-      <div id="editSubImagesPreview" class="flex gap-2 flex-wrap mb-3"></div>
+      <input type="file" id="editSubImages" name="subImages" multiple accept="image/*" class="mb-3">
+
+      <div id="editSubImagesPreview" class="flex gap-3 flex-wrap mb-3"></div>
 
       <!-- Buttons -->
       <div class="flex justify-end gap-2">
@@ -427,8 +422,7 @@
                 class="bg-gray-500 text-white px-3 py-1 rounded">
           Cancel
         </button>
-        <button type="submit" 
-                class="bg-green-600 text-white px-3 py-1 rounded">
+        <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded">
           Save Changes
         </button>
       </div>
@@ -436,6 +430,8 @@
   </div>
 </div>
 
+
+ 
     <script src="/javascript/admin/product.js"></script>
    
     
