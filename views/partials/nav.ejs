@@ -9,46 +9,45 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-
 <body class="bg-gray-100">
   <!-- Navbar -->
   <div
-    class="fixed z-50 top-0 w-screen h-14 sm:h-16 flex items-center justify-between px-6 bg-white border-b-2 border-blue-500">
+    class="fixed z-50 top-0 w-screen h-16 sm:h-20 flex items-center justify-between px-8 bg-black border-b-2 border-yellow-400 shadow-lg">
 
     <!-- Left: Logo/Brand -->
     <div class="flex items-center space-x-2">
-      <span class="text-2xl font-bold font-serif">Elite Cart</span>
+      <span class="text-3xl sm:text-4xl font-bold font-serif text-white tracking-wide">Elite Cart</span>
     </div>
 
     <!-- Center: Nav Links -->
-    <nav class="hidden md:flex items-center space-x-6 text-sm text-gray-800 font-medium">
-      <a href="/" class="hover:text-gray-500 transition">Home</a>
-      <a href="/product" class="hover:text-gray-500 transition">Shop</a>
-      <a href="/contact" class="hover:text-gray-500 transition">Contact us</a>
-      <a href="/about" class="hover:text-gray-500 transition">About</a>
+    <nav class="hidden md:flex items-center space-x-8 text-base sm:text-lg text-white font-medium">
+      <a href="/" class="hover:text-yellow-400 transition">Home</a>
+      <a href="/product" class="hover:text-yellow-400 transition">Shop</a>
+      <a href="/contact" class="hover:text-yellow-400 transition">Contact us</a>
+      <a href="/about" class="hover:text-yellow-400 transition">About</a>
     </nav>
 
     <!-- Right: Icons + Profile Dropdown -->
-    <div class="flex items-center space-x-6">
+    <div class="flex items-center space-x-8">
       <!-- Icons -->
-      <div class="hidden sm:flex items-center space-x-6 text-gray-700 text-lg">
-        <a href="/wishlist" class="hover:text-gray-500">
+      <div class="hidden sm:flex items-center space-x-6 text-white text-xl">
+        <a href="/wishlist" class="hover:text-yellow-400">
           <i class="fa-regular fa-heart"></i>
         </a>
-        <a href="/cart" class="hover:text-gray-500">
+        <a href="/cart" class="hover:text-yellow-400">
           <i class="fa-solid fa-cart-shopping"></i>
         </a>
       </div>
 
       <!-- Profile Dropdown -->
       <div class="relative">
-        <button id="profileButton" class="hover:text-gray-500 focus:outline-none">
-          <i class="fa-regular fa-user text-lg"></i>
+        <button id="profileButton" class="hover:text-yellow-400 focus:outline-none text-white">
+          <i class="fa-regular fa-user text-xl"></i>
         </button>
 
         <!-- Dropdown Menu -->
         <div id="profileMenu"
-          class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          class="hidden absolute right-0 mt-3 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
 
           <!-- When not logged in -->
           <div id="guestMenu" class="p-4 border-b">
@@ -57,7 +56,7 @@
               <a href="/login"
                 class="text-sm font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded hover:bg-gray-200">Login</a>
               <a href="/signup"
-                class="text-sm font-semibold text-white bg-emerald-600 px-3 py-1 rounded hover:bg-emerald-700">Sign
+                class="text-sm font-semibold text-white bg-yellow-600 px-3 py-1 rounded hover:bg-yellow-700">Sign
                 Up</a>
             </div>
           </div>
@@ -90,6 +89,7 @@
       </div>
     </div>
   </div>
+
 
   <script>
     const profileBtn = document.getElementById("profileButton");

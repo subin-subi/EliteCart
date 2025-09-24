@@ -1,113 +1,317 @@
 <%- include("../../views/partials/nav") %>
-
 <!-- Hero Section -->
-<div class="w-full h-[400px] md:h-[500px] lg:h-[600px] bg-cover bg-center flex justify-start items-center shadow-lg text-white" style="background-image: url('/images/banner.jpg')">
-  <header class="text-left max-w-4xl px-4 md:px-8">
-      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[90px] text-white font-playfair font-bold tracking-widest uppercase drop-shadow-[4px_4px_15px_rgba(255,204,0,0.8)]">
-          ELITECART
-      </h1>
-      <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-[30px] font-medium mt-4 md:mt-6 leading-relaxed tracking-wide text-white drop-shadow-[2px_2px_12px_rgba(255,165,0,0.8)] font-playfair italic">
-        "Behind every mask lies a story,<br class="hidden sm:block"> a mystery waiting to shine through the light..."
-      </p>
-  </header>
+<div id="banner" 
+     class="w-full h-[500px] md:h-[625px] lg:h-[750px] bg-cover bg-center flex justify-start items-center shadow-lg text-white transition-all duration-1000"
+     style="background-image: url('/images/ban1.jpg')">
+<header class="text-left max-w-4xl pl-12 px-4 md:px-8">
+  <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[90px] text-white font-playfair font-extrabold tracking-widest uppercase drop-shadow-[4px_4px_20px_rgba(255,215,0,0.9)]">
+    ELITECART
+  </h1>
+  <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-[32px] font-medium mt-5 md:mt-7 leading-relaxed tracking-wide text-white drop-shadow-[2px_2px_15px_rgba(255,165,0,0.9)] font-playfair italic">
+    <span class="text-yellow-300">“From energy</span> to 
+    <span class="text-orange-400">elegance</span> — <br class="hidden sm:block">
+    <span class="text-rose-400">drinks for every mood.”</span>
+  </p>
+</header>
+
+
 </div>
 
 <!-- Best Selling Section -->
 <section class="flex flex-col lg:flex-row justify-between items-center px-6 md:px-[10%] py-12 md:py-16 bg-white">
-  <div class="max-w-xs md:max-w-sm text-center lg:text-left mb-8 lg:mb-0">
-    <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 font-playfair">
-        Reveal Your Style<br><span>With Elegance</span>
-    </h2>
-    <p class="text-gray-600 text-sm md:text-base leading-relaxed mb-4">
-        Unveil beauty and tradition with our unique mask collection—crafted to inspire, protect, and decorate your space with cultural charm. 🎭
-    </p>
-    <a href="#" class="inline-block mt-2 px-4 py-2 md:px-5 md:py-3 rounded-lg font-bold text-gray-800 bg-gradient-to-r from-orange-300 to-orange-500 transition hover:opacity-90">
-        Explore Masks →
-    </a>
-  </div>
+ <div class="max-w-xs md:max-w-sm text-center lg:text-left mb-8 lg:mb-0">
+  <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 font-playfair">
+      Refresh Your Taste<br><span>With Every Sip</span>
+  </h2>
+  <p class="text-gray-600 text-sm md:text-base leading-relaxed mb-4">
+      Discover a world of flavors with our exclusive drink collection—crafted to energize, refresh, and delight every moment of your day. 🍹
+  </p>
+  <a href="#" class="inline-block mt-2 px-4 py-2 md:px-5 md:py-3 rounded-lg font-bold text-gray-800 bg-gradient-to-r from-orange-300 to-orange-500 transition hover:opacity-90">
+      Explore Drinks →
+  </a>
+</div>
+
 
   <div class="flex gap-4 md:gap-6 flex-wrap justify-center">
     <!-- Card -->
-    <div class="bg-gradient-to-r from-orange-300 to-orange-500 p-4 md:p-5 rounded-xl text-center transform transition hover:-translate-y-1 w-40 sm:w-52 md:w-64">
-      <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
-        <img src="/images/one.webp" alt="Premium" class="h-full w-full object-cover rounded-md">
-      </div>
-      <p class="text-base md:text-lg font-bold text-gray-800 mt-2">Premium</p>
-    </div>
+   <div class="bg-gradient-to-r from-orange-300 to-orange-500 p-4 md:p-5 rounded-xl text-center transform transition hover:-translate-y-1 w-40 sm:w-52 md:w-64">
+  <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
+    
+    <video autoplay loop muted playsinline class="h-full w-full object-cover rounded-md">
+      <source src="/video/vd.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <p class="text-base md:text-lg font-bold text-gray-800 mt-2">CoolEdge</p>
+</div>
+
 
     <div class="bg-gradient-to-r from-orange-300 to-orange-500 p-4 md:p-5 rounded-xl text-center transform transition hover:-translate-y-1 w-40 sm:w-52 md:w-64">
-      <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
-        <img src="/images/ban.jpg" alt="Limited" class="h-full w-full object-cover rounded-md">
-      </div>
-      <p class="text-base md:text-lg font-bold text-gray-800 mt-2">Limited</p>
-    </div>
+  <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
+    
+    <video autoplay loop muted playsinline class="h-full w-full object-cover rounded-md">
+      <source src="/video/b.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <p class="text-base md:text-lg font-bold text-gray-800 mt-2">ChillMax</p>
+</div>
+
 
     <div class="bg-gradient-to-r from-orange-300 to-orange-500 p-4 md:p-5 rounded-xl text-center transform transition hover:-translate-y-1 w-40 sm:w-52 md:w-64">
-      <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
-        <img src="/images/GoldMens.webp" alt="Elite" class="h-full w-full object-cover rounded-md">
+  <div class="bg-white p-2 md:p-3 rounded-md shadow-md h-40 sm:h-48 md:h-56 flex items-center justify-center">
+    
+    <video autoplay loop muted playsinline class="h-full w-full object-cover rounded-md">
+      <source src="/video/d.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <p class="text-base md:text-lg font-bold text-gray-800 mt-2">FreshWave</p>
+</div>
+
+</section>
+
+<!-- Categories Section -->
+<section class="py-12 md:py-16 px-6 md:px-[10%] bg-white">
+  <h2 class="text-2xl md:text-3xl font-bold text-gray-800 font-playfair mb-2 text-center">
+    Categories
+  </h2>
+  <p class="text-gray-500 mb-8 text-sm md:text-base text-center">
+    Find what you are looking for
+  </p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <!-- Big Left Card -->
+    <div class="relative group col-span-1 md:col-span-2 lg:col-span-2">
+      <img src="/images/qq.jpg" alt="Men" class="w-full h-72 md:h-96 object-cover rounded-lg">
+      <!-- Overlay -->
+      <div class="absolute inset-0 bg-black/60 flex flex-col justify-end p-6 rounded-lg">
+       <h3 class="text-white text-lg md:text-xl font-bold">Sprite Collection</h3>
+      <p class="text-gray-200 text-sm">Refreshing taste, made for everyone.</p>
+
+        <div class="flex gap-3 mt-3">
+         <a href="/product" class="px-3 py-2 bg-black text-white rounded-md text-xs font-semibold">Shop Now</a>
+
+          
+        </div>
       </div>
-      <p class="text-base md:text-lg font-bold text-gray-800 mt-2">Elite</p>
     </div>
+
+    <!-- Right Top Card -->
+  <div class="relative group w-full h-72 md:h-80 lg:h-96 overflow-hidden rounded-lg">
+  <img src="/images/y.jpg" alt="Couples" class="w-full h-full object-cover">
+  <div class="absolute inset-0 bg-black/60 flex flex-col justify-end p-6 rounded-lg">
+    <h3 class="text-white text-lg font-bold">Coke & Pepsi Duo</h3>
+    <p class="text-gray-200 text-sm">The ultimate pair, refreshing together.</p>
+    <div class="flex gap-3 mt-3">
+      <a href="/product" class="px-3 py-2 bg-black text-white rounded-md text-xs font-semibold">Shop Now</a>
+
+    </div>
+  </div>
+</div>
+
+
+    <!-- Grid Cards -->
+    <div class="relative group">
+      <img src="/images/pp.jpg" alt="Women" class="w-full h-72 object-cover rounded-lg">
+      <div class="absolute inset-0 bg-black/60 flex flex-col justify-end p-6 rounded-lg">
+       <h3 class="text-white text-lg font-bold">Pepsi </h3>
+        <p class="text-gray-200 text-sm">Trendy, refreshing, and full of energy.</p>
+        <div class="flex gap-3 mt-3">
+         <a href="/product" class="px-3 py-2 bg-black text-white rounded-md text-xs font-semibold">Shop Now</a>
+
+         
+        </div>
+      </div>
+    </div>
+    <div class="relative group">
+      <img src="/images/up.jpg" alt="Women" class="w-full h-72 object-cover rounded-lg">
+      <div class="absolute inset-0 bg-black/60 flex flex-col justify-end p-6 rounded-lg">
+       <h3 class="text-white text-lg font-bold">7UP </h3>
+          <p class="text-gray-200 text-sm">Crisp, refreshing, and full of zest.</p>
+
+        <div class="flex gap-3 mt-3">
+         <a href="/product" class="px-3 py-2 bg-black text-white rounded-md text-xs font-semibold">Shop Now</a>
+
+          
+        </div>
+      </div>
+    </div>
+    <div class="relative group">
+      <img src="/images/ff.jpg" alt="Women" class="w-full h-72 object-cover rounded-lg">
+      <div class="absolute inset-0 bg-black/60 flex flex-col justify-end p-6 rounded-lg">
+       <h3 class="text-white text-lg font-bold">Coca-Cola </h3>
+        <p class="text-gray-200 text-sm">Classic, refreshing, and full of charm.</p>
+
+        <div class="flex gap-3 mt-3">
+         <a href="/product" class="px-3 py-2 bg-black text-white rounded-md text-xs font-semibold">Shop Now</a>
+
+          
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<!-- //////////////////////////////////////////////////////////////////////////////////////////////// -->
+<section class="px-6 md:px-[10%] py-12 md:py-16 bg-white">
+  <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-6 font-playfair text-center">
+    Our Exclusive Collection
+  </h2>
+
+  <!-- Carousel Wrapper -->
+  <div class="overflow-hidden relative">
+    <!-- Slides Container -->
+    <div id="carousel" class="flex transition-transform duration-500 ease-in-out">
+      
+      <!-- Card 1 -->
+      <div class="min-w-[50%] p-4">
+        <div class="bg-gradient-to-r from-gray-900 to-black p-4 rounded-xl text-center">
+          <div class="bg-white p-3 rounded-md shadow-md h-72 flex items-center justify-center">
+            <img src="/images/rd.jpg" alt="Image 1" class="h-full w-full object-cover rounded-md">
+          </div>
+          <p class="text-lg font-bold text-white mt-2">Premium</p>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="min-w-[50%] p-4">
+        <div class="bg-gradient-to-r from-gray-900 to-black p-4 rounded-xl text-center">
+          <div class="bg-white p-3 rounded-md shadow-md h-72 flex items-center justify-center">
+            <img src="/images/spr.jpg" alt="Image 2" class="h-full w-full object-cover rounded-md">
+          </div>
+          <p class="text-lg font-bold text-white mt-2">Elite</p>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="min-w-[50%] p-4">
+        <div class="bg-gradient-to-r from-gray-900 to-black p-4 rounded-xl text-center">
+          <div class="bg-white p-3 rounded-md shadow-md h-72 flex items-center justify-center">
+            <img src="/images/mstr.jpg" alt="Image 3" class="h-full w-full object-cover rounded-md">
+          </div>
+          <p class="text-lg font-bold text-white mt-2">Signature</p>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="min-w-[50%] p-4">
+        <div class="bg-gradient-to-r from-gray-900 to-black p-4 rounded-xl text-center">
+          <div class="bg-white p-3 rounded-md shadow-md h-72 flex items-center justify-center">
+            <img src="/images/red.jpg" alt="Image 4" class="h-full w-full object-cover rounded-md">
+          </div>
+          <p class="text-lg font-bold text-white mt-2">Luxury</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Navigation Buttons -->
+    <button onclick="slide(-1)" class="absolute top-1/2 left-2 -translate-y-1/2 bg-gray-800 text-white px-3 py-2 rounded-full">‹</button>
+    <button onclick="slide(1)" class="absolute top-1/2 right-2 -translate-y-1/2 bg-gray-800 text-white px-3 py-2 rounded-full">›</button>
   </div>
 </section>
 
-<!-- Categories -->
-<section class="py-12 md:py-16 px-6 md:px-[10%] bg-white text-center flex flex-col items-center">
-  <h2 class="text-2xl md:text-3xl font-bold text-gray-800 font-playfair mb-2">Categories</h2>
-  <p class="text-gray-500 mb-8 text-sm md:text-base">Find what you are looking for</p>
 
-  <div class="flex flex-wrap justify-center gap-6 sm:gap-10 p-6 md:p-10 rounded-lg bg-gradient-to-r from-orange-300 to-orange-500">
-      <!-- Category Card -->
-      <div class="text-center">
-          <div class="bg-white p-3 md:p-4 rounded-xl shadow-md transition transform hover:-translate-y-1 w-40 sm:w-52 md:w-[220px] h-52 sm:h-60 md:h-[260px] flex items-center justify-center">
-              <img src="/images/two.webp" alt="Men" class="w-full h-[180px] sm:h-[200px] object-cover rounded-lg">
-          </div>
-          <p class="mt-2 font-bold text-gray-800 text-sm md:text-base">Men</p>
-      </div>
+ <!-- //////////////////////////////////////////// below home//////////////////////////////////////////////////// -->
+ <section class="px-6 md:px-[10%] py-16 bg-white">
+  <!-- First Row: Video + Text -->
+  <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+    <!-- Left Text -->
+    <div class="flex flex-col justify-center h-[600px]">
+      <h2 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 drop-shadow-lg">
+        <span class="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">DEFINING CLASS</span> since 1886.
+      </h2>
+     <p class="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed">
+  A lot has changed in the way we refresh and recharge. With every generation, 
+  our drinks have evolved to deliver more than just hydration. 
+  <span class="font-semibold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+    Experience energy, freshness, and bold taste
+  </span> like never before.
+</p>
 
-      <div class="text-center">
-          <div class="bg-white p-3 md:p-4 rounded-xl shadow-md transition transform hover:-translate-y-1 w-40 sm:w-52 md:w-[220px] h-52 sm:h-60 md:h-[260px] flex items-center justify-center">
-              <img src="/images/co.webp" alt="Couple" class="w-full h-[180px] sm:h-[200px] object-cover rounded-lg">
-          </div>
-          <p class="mt-2 font-bold text-gray-800 text-sm md:text-base">Couples  </p>
-      </div>
-
-      <div class="text-center">
-          <div class="bg-white p-3 md:p-4 rounded-xl shadow-md transition transform hover:-translate-y-1 w-40 sm:w-52 md:w-[220px] h-52 sm:h-60 md:h-[260px] flex items-center justify-center">
-              <img src="/images/w.jpg" alt="Women" class="w-full h-[180px] sm:h-[200px] object-cover rounded-lg">
-          </div>
-          <p class="mt-2 font-bold text-gray-800 text-sm md:text-base">Women</p>
-      </div>
+      <a href="#"
+      class="block w-48 mx-auto px-6 py-4 rounded-lg bg-gradient-to-r from-orange-400 to-orange-600 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all text-center">
+     Learn more
+   </a>
+   
+    </div>
+    <!-- Right Video -->
+    <div class="h-[500px] flex items-center">
+      <video autoplay loop muted playsinline class="rounded-xl shadow-2xl w-full h-full object-cover border-4 border-orange-200">
+        <source src="/video/nv.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
   </div>
+  
+  <!-- Second Row: Video + Text -->
+  <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+    <!-- Left Video -->
+    <div class="h-[500px] flex items-center">
+      <video autoplay loop muted playsinline class="rounded-xl shadow-2xl w-full h-full object-cover border-4 border-orange-200">
+        <source src="/video/vd.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <!-- Right Text -->
+    <div class="flex flex-col justify-center h-[600px]">
+      <h2 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 drop-shadow-lg">
+        History and <span class="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Brand World</span>
+      </h2>
+     <p class="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed">
+  Our energy drink is more than just a boost. It represents moments fueled by 
+  <span class="font-semibold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+    unstoppable energy, bold flavors, and a refreshing rush
+  </span>. 
+  Every sip powers your day with strength and confidence.
+</p>
+
+      <a href="#"
+   class="block w-48 mx-auto px-6 py-4 rounded-lg bg-gradient-to-r from-orange-400 to-orange-600 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all text-center">
+  Learn more
+</a>
+
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <p class="text-xs text-gray-500 mb-12 text-center">
+    Disclaimer: Information, pictures, and colors may differ from local specifications. 
+    Contact your dealer for more information.
+  </p>
 </section>
 
-<!-- About Us -->
-<section class="py-12 md:py-16 px-6 md:px-[10%] bg-white text-center">
-  <h2 class="text-xl md:text-2xl font-bold text-gray-800 font-playfair">About Us</h2>
-  <p class="text-gray-500 mb-8 text-sm md:text-base">Order now and appreciate the beauty of nature</p>
-
-  <div class="flex flex-col md:flex-row justify-center items-center gap-12 md:gap-20">
-      <!-- Card -->
-      <div class="flex flex-col items-center text-center max-w-xs">
-          <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-orange-300 to-orange-500 rounded-full flex items-center justify-center mb-4 md:mb-6">
-              <i class="fas fa-box text-lg md:text-2xl text-gray-800"></i>
-          </div>
-          <h3 class="text-base md:text-lg font-bold text-gray-800 mb-2">Fast & Free Shipping</h3>
-          <p class="text-xs md:text-sm text-gray-600 leading-relaxed">
-              4-day or less delivery time, free shipping and an expedited delivery option.
-          </p>
-      </div>
-
-      <div class="flex flex-col items-center text-center max-w-xs">
-          <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-orange-300 to-orange-500 rounded-full flex items-center justify-center mb-4 md:mb-6">
-              <i class="fas fa-phone text-lg md:text-2xl text-gray-800"></i>
-          </div>
-          <h3 class="text-base md:text-lg font-bold text-gray-800 mb-2">24/7 Support</h3>
-          <p class="text-xs md:text-sm text-gray-600 leading-relaxed">
-              Answers to any business-related inquiry 24/7 and in real-time.
-          </p>
-      </div>
-  </div>
-</section>
 
 <%- include("../../views/partials/footer") %>
+
+<script>
+  // ================== Carousel Script ==================
+  let index = 0;
+  const carousel = document.getElementById("carousel");
+  const totalSlides = 4;
+  const slidesToShow = 2;
+
+  function slide(direction) {
+    index += direction;
+    if (index < 0) index = 0;
+    if (index > totalSlides - slidesToShow) index = totalSlides - slidesToShow;
+    carousel.style.transform = `translateX(-${index * 50}%)`;
+  }
+
+  // ================== Banner Script ==================
+  const banner = document.getElementById("banner");
+  const bannerImages = [
+    "/images/ban1.jpg",
+    "/images/ban2.jpeg",
+    "/images/ban3.jpg"
+  ];
+  
+  let bannerIndex = 0;
+
+  setInterval(() => {
+    bannerIndex = (bannerIndex + 1) % bannerImages.length;
+    banner.style.backgroundImage = `url('${bannerImages[bannerIndex]}')`;
+  }, 5000); // 5 seconds
+</script>

@@ -8,7 +8,7 @@ const checkSession = async (req, res, next) => {
 
         const user = await userModel.findById(req.session.user).select('-password').lean();
 
-        // If user is blocked → redirect
+        
         if (user && user.blocked) {
     req.session.destroy(() => {});
     return res.redirect('/login?message=Account+blocked');

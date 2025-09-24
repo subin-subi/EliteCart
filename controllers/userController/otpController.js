@@ -132,7 +132,7 @@ const resendOTP = async (req, res) => {
         // Update user with new OTP
         await userSchema.findByIdAndUpdate(user._id, {
             otp: newOTP,
-            otpExpiresAt: Date.now() + 120000, // 2 minutes
+            otpExpiresAt: Date.now() + 120000, 
             otpAttempts: 0
         });
 
@@ -172,9 +172,7 @@ const sendForgotPasswordOTP = async (req, res) => {
         
         console.log('User found:', !!user);
         if (user) {
-            console.log('User ID:', user._id);
-            console.log('User Email:', user.email);
-            console.log('Has Password:', !!user.password);
+           
         }
         
         if (!user) {
@@ -192,7 +190,7 @@ const sendForgotPasswordOTP = async (req, res) => {
         // Generate and save OTP
         const otp = generateOTP();
         console.log('Generated OTP:', otp);
-        console.log('OTP Type:', typeof otp);
+       
         
         user.otp = otp;
         user.otpExpiresAt = Date.now() + 120000;
