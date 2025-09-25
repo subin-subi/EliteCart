@@ -49,5 +49,7 @@ route.post("/logout", authController.getLogout)
 
 route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
 
+route.get("/productDetail/:id", productController.getProductDetailPage)
+
 
 export default route;

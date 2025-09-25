@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50">
+
+ <section class="max-w-6xl mx-auto px-4 md:px-8 py-12">
+     <!-- Breadcrumb -->
+     <nav class="flex text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1 md:space-x-2">
+    <!-- Home -->
+    <li class="inline-flex items-center">
+      <a href="/" class="inline-flex items-center text-gray-500 hover:text-gray-700">
+        <i class="fa fa-home mr-1"></i>
+        Home
+      </a>
+    </li>
+
+    <!-- Separator -->
+    <li>
+      <i class="fa fa-angle-right mx-2 text-gray-400"></i>
+    </li>
+
+    <!-- Shop -->
+    <li class="inline-flex items-center">
+      <a href="/product" class="inline-flex items-center text-gray-500 hover:text-gray-700">
+        <i class="fa fa-shopping-bag mr-1"></i>
+        Shop
+      </a>
+    </li>
+
+    <!-- Separator -->
+    <li>
+      <i class="fa fa-angle-right mx-2 text-gray-400"></i>
+    </li>
+
+    <!-- Product -->
+    <li class="inline-flex items-center text-gray-800 font-medium">
+      <i class="fa fa-cube mr-1"></i>
+      Product
+    </li>
+  </ol>
+</nav>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+    <!-- Left Side -->
+    <div class="flex flex-col md:w-[90%] lg:w-[85%] mx-auto">
+      <!-- Main Image -->
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <img id="mainImage"
+             src="<%= product.variants[0].mainImage || '/images/placeholder.png' %>"
+             alt="<%= product.name %>"
+             class="w-full h-[350px] sm:h-[450px] md:h-[550px] object-cover rounded-xl transition-all">
+      </div>
+
+      <!-- Thumbnails -->
+      <div class="mt-6 grid grid-cols-3 gap-4">
+        <% (product.variants[0].subImages || []).forEach(function(img, idx) { %>
+          <button type="button"
+                  class="thumbnail w-full h-20 sm:h-28 md:h-32 rounded-lg overflow-hidden border-2 border-transparent focus:outline-none"
+                  data-src="<%= img %>">
+            <img src="<%= img %>" alt="thumb <%= idx+1 %>" class="w-full h-full object-cover">
+          </button>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Right Side -->
+    <div class="bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100 flex flex-col justify-between md:h-[550px] md:w-[85%] lg:w-[80%] mx-auto">
+      <div>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900"><%= product.name %></h1>
+        <p class="text-2xl sm:text-3xl text-red-600 mt-3 font-semibold">
+          ₹<%= (product.variants[0].discountPrice != null ? product.variants[0].discountPrice : product.variants[0].price).toLocaleString() %>
+        </p> 
+        <p class="text-gray-700 mt-6 text-base sm:text-lg leading-relaxed"><%= product.description %></p>
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-8 flex flex-col gap-4">
+        <% if (product.variants[0].stock > 0) { %>
+          <a href="/cart/add/<%= product._id %>?variant=<%= product.variants[0]._id %>"
+             class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+            <i class="fa fa-shopping-cart"></i> Add To Cart
+          </a>
+
+          <a href="/checkout/<%= product._id %>?variant=<%= product.variants[0]._id %>"
+             class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+            <i class="fa fa-bolt"></i> Buy Now
+          </a>
+        <% } else { %>
+          <button disabled class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+            Out of Stock
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Related Products -->
+  <div class="mt-20">
+  <h2 class="text-3xl font-bold text-center mb-10">You May Also Like</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+    <% if (relatedProducts && relatedProducts.length > 0) { %>
+      <% relatedProducts.forEach(rp => { %>
+        <div class="bg-white border rounded-lg p-4">
+          <img src="<%= rp.variants[0]?.mainImage %>" 
+               alt="<%= rp.name %>" 
+               class="w-full h-48 object-cover rounded-lg mb-4">
+          <h3 class="text-lg font-semibold"><%= rp.name %></h3>
+          <p class="text-gray-600">
+            ₹<%= (rp.variants[0]?.discountPrice != null 
+                   ? rp.variants[0].discountPrice 
+                   : rp.variants[0]?.price) %>
+          </p>
+          <a href="/productDetail/<%= rp._id %>" 
+             class="mt-2 inline-block px-4 py-2 bg-orange-500 text-white rounded-lg">
+            View Details
+          </a>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p class="text-center col-span-full text-gray-500">No related products found.</p>
+    <% } %>
+  </div>
+</div>
+
+</section>
+
+
+  <!-- Footer -->
+  <%- include('../partials/footer') %>
+
+  <!-- Small script: thumbnail -> main image -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const mainImage = document.getElementById('mainImage');
+      document.querySelectorAll('.thumbnail').forEach(btn => {
+        btn.addEventListener('click', () => {
+          mainImage.src = btn.dataset.src;
+          document.querySelectorAll('.thumbnail').forEach(t => {
+            t.classList.remove('ring-2','ring-blue-500','border-blue-500');
+          });
+          btn.classList.add('ring-2','ring-blue-500','border-blue-500');
+        });
+      });
+    });
+  </script>
+</body>
+</html>
