@@ -2,69 +2,123 @@
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sticky top-20">
     <h3 class="text-sm tracking-widest text-gray-400 mb-4">Filters</h3>
 
-    <!-- Sort -->
-    <div class="mb-6">
-      <label for="sortFilter" class="block text-xs font-medium text-gray-500 mb-2">Sort By</label>
-      <select id="sortFilter" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm">
-        <option value="default">Default</option>
-        <option value="priceLowToHigh">Price: Low to High</option>
-        <option value="priceHighToLow">Price: High to Low</option>
-        <option value="newArrivals">New Arrivals</option>
-      </select>
-    </div>
-
-    <!-- Category -->
-    <div class="mb-6">
-      <label for="category" class="block text-xs font-medium text-gray-500 mb-2">Category</label>
-      <select id="category" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm">
-        <option value="">All</option>
-        <% if (categories && categories.length > 0) { %>
-          <% categories.forEach(function(cat) { %>
-            <option value="<%= cat._id %>" <%= (filters && filters.category === String(cat._id)) ? 'selected' : '' %>><%= cat.name %></option>
-          <% }) %>
-        <% } else { %>
-          <option value="" disabled>No categories available</option>
-        <% } %>
-      </select>
-    </div>
-
-    <!-- Brand -->
-    <div class="mb-6">
-      <label for="brand" class="block text-xs font-medium text-gray-500 mb-2">Brand</label>
-      <select id="brand" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm">
-        <option value="">All</option>
-        <% if (brands && brands.length > 0) { %>
-          <% brands.forEach(function(b) { %>
-            <option value="<%= b._id %>" <%= (filters && filters.brand === String(b._id)) ? 'selected' : '' %>><%= b.name %></option>
-          <% }) %>
-        <% } %>
-      </select>
-    </div>
-
-    <!-- Price -->
-    <div class="mb-6">
-      <span class="block text-xs font-medium text-gray-500 mb-2">Price Range</span>
-      <div class="flex items-center gap-3">
-        <input type="number" id="minPrice" placeholder="Min" value="<%= (filters && filters.minPrice) ? filters.minPrice : '' %>" class="w-1/2 rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm" />
-        <span class="text-gray-400">—</span>
-        <input type="number" id="maxPrice" placeholder="Max" value="<%= (filters && filters.maxPrice) ? filters.maxPrice : '' %>" class="w-1/2 rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm" />
+    <!-- Filter Form -->
+    <form method="GET" action="/product" class="space-y-6" id="filterForm">
+      
+      <!-- Sort -->
+      <div>
+        <label for="sortFilter" class="block text-xs font-medium text-gray-500 mb-2">Sort By</label>
+        <select name="sort" id="sortFilter" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm" onchange="applySort(this.value)">
+          <option value="default" <%= (filters && filters.sort === "default") ? "selected" : "" %>>Default</option>
+          <option value="priceLowToHigh" <%= (filters && filters.sort === "priceLowToHigh") ? "selected" : "" %>>Price: Low to High</option>
+          <option value="priceHighToLow" <%= (filters && filters.sort === "priceHighToLow") ? "selected" : "" %>>Price: High to Low</option>
+          <option value="az" <%= (filters && filters.sort === "az") ? "selected" : "" %>>Name: A → Z</option>
+          <option value="za" <%= (filters && filters.sort === "za") ? "selected" : "" %>>Name: Z → A</option> 
+        </select>
       </div>
-    </div>
 
-    <!-- Stock -->
-    <div class="mb-6">
-      <label for="stockFilter" class="block text-xs font-medium text-gray-500 mb-2">Stock Status</label>
-      <select id="stockFilter" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm">
-        <option value="" <%= (filters && !filters.stock) ? 'selected' : '' %>>All Products</option>
-        <option value="inStock" <%= (filters && filters.stock === 'inStock') ? 'selected' : '' %>>In Stock</option>
-        <option value="outOfStock" <%= (filters && filters.stock === 'outOfStock') ? 'selected' : '' %>>Out of Stock</option>
-      </select>
-    </div>
+      <!-- Category -->
+      <div>
+        <label for="category" class="block text-xs font-medium text-gray-500 mb-2">Category</label>
+        <select name="category" id="category" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm">
+          <option value="">All</option>
+          <% if (categories && categories.length > 0) { %>
+            <% categories.forEach(function(cat) { %>
+              <option value="<%= cat._id %>" <%= (filters && filters.category === String(cat._id)) ? 'selected' : '' %>><%= cat.name %></option>
+            <% }) %>
+          <% } else { %>
+            <option value="" disabled>No categories available</option>
+          <% } %>
+        </select>
+      </div>
 
-    <!-- Actions -->
-    <div class="flex items-center gap-3">
-      <button type="button" id="filterButton" class="flex-1 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-800">Apply</button>
-      <button id="resetButton" class="flex-1 text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100">Reset</button>
-    </div>
+      <!-- Brand -->
+      <div>
+        <label for="brand" class="block text-xs font-medium text-gray-500 mb-2">Brand</label>
+        <select name="brand" id="brand" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm">
+          <option value="">All</option>
+          <% if (brands && brands.length > 0) { %>
+            <% brands.forEach(function(b) { %>
+              <option value="<%= b._id %>" <%= (filters && filters.brand === String(b._id)) ? 'selected' : '' %>><%= b.name %></option>
+            <% }) %>
+          <% } %>
+        </select>
+      </div>
+
+      <!-- Price Range -->
+      <div>
+        <span class="block text-xs font-medium text-gray-500 mb-2">Price Range</span>
+        <div class="flex flex-col gap-2">
+          <div class="text-xs text-gray-600 mb-1">
+            Price: ₹<span id="minPriceText"><%= (filters && filters.minPrice) ? filters.minPrice : 0 %></span>
+            — ₹<span id="maxPriceText"><%= (filters && filters.maxPrice) ? filters.maxPrice : 1000 %></span>
+          </div>
+          <div class="relative w-full">
+            <input type="range" id="minPriceSlider" name="minPrice" min="0" max="1000" step="10" value="<%= (filters && filters.minPrice) ? filters.minPrice : 0 %>" class="absolute w-full h-2 bg-gray-200 rounded-lg appearance-none z-10" />
+            <input type="range" id="maxPriceSlider" name="maxPrice" min="0" max="1000" step="10" value="<%= (filters && filters.maxPrice) ? filters.maxPrice : 1000 %>" class="absolute w-full h-2 bg-gray-200 rounded-lg appearance-none z-20" />
+            <div class="relative flex justify-between mt-3">
+              <span class="text-gray-400 text-xs">0</span>
+              <span class="text-gray-400 text-xs">1000+</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock -->
+      <div>
+        <label for="stockFilter" class="block text-xs font-medium text-gray-500 mb-2">Stock Status</label>
+        <select name="stock" id="stockFilter" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-gray-900 text-sm">
+          <option value="" <%= (filters && !filters.stock) ? 'selected' : '' %>>All Products</option>
+          <option value="inStock" <%= (filters && filters.stock === 'inStock') ? 'selected' : '' %>>In Stock</option>
+          <option value="outOfStock" <%= (filters && filters.stock === 'outOfStock') ? 'selected' : '' %>>Out of Stock</option>
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
+        <button type="submit" id="filterButton" class="flex-1 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-800">Apply</button>
+        <a href="/product" id="resetButton" class="flex-1 text-center text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100">Reset</a>
+      </div>
+    </form>
   </div>
 </aside>
+
+<script>
+function applySort(sortValue) {
+  const url = new URL(window.location.href);
+  if (sortValue === 'default') {
+    url.searchParams.delete('sort');
+  } else {
+    url.searchParams.set('sort', sortValue);
+  }
+  window.location.href = url.toString();
+}
+
+// Price slider logic
+const minSlider = document.getElementById('minPriceSlider');
+const maxSlider = document.getElementById('maxPriceSlider');
+const minText = document.getElementById('minPriceText');
+const maxText = document.getElementById('maxPriceText');
+
+function updateDisplay() {
+  let min = parseInt(minSlider.value);
+  let max = parseInt(maxSlider.value);
+
+  // Prevent overlap
+  if (min > max - 10) min = max - 10;
+  if (max < min + 10) max = min + 10;
+
+  minSlider.value = min;
+  maxSlider.value = max;
+
+  minText.textContent = min;
+  maxText.textContent = max;
+}
+
+// Update display on slider input
+minSlider.addEventListener('input', updateDisplay);
+maxSlider.addEventListener('input', updateDisplay);
+
+// Initial update
+updateDisplay();
+</script>
