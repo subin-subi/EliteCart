@@ -10,12 +10,11 @@ const postAdmin = async (req, res) => {
     try {
       const { email, password } = req.body;
   
-      // Input validation
+      
       if (!email || !password) {
         return res.redirect('/admin/login?error=missing');
       }
-  
-      // Email format validation
+
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         return res.redirect('/admin/login?error=invalid_email');
