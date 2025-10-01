@@ -4,14 +4,12 @@ import Category from "../../models/categoryModel.js";
 
 
 
-
 const getProductsPage = async (req, res) => {
   try {
     const { category, brand, minPrice, maxPrice, stock, search, page, sort } = req.query;
 
     // Base filter
     const filter = { isBlocked: { $ne: true } };
-
     if (category && category !== 'all') filter.category = category;
     if (brand && brand !== 'all') filter.brand = brand;
     if (search && search.trim()) filter.name = { $regex: search.trim(), $options: 'i' };
@@ -21,13 +19,6 @@ const getProductsPage = async (req, res) => {
     const limit = 12;
     const skip = (currentPage - 1) * limit;
 
-    // Variant filters
-    const variantFilter = {};
-    if (minPrice) variantFilter.price = { ...variantFilter.price, $gte: Number(minPrice) };
-    if (maxPrice) variantFilter.price = { ...variantFilter.price, $lte: Number(maxPrice) };
-    if (stock === 'inStock') variantFilter.stock = { $gt: 0 };
-    else if (stock === 'outOfStock') variantFilter.stock = { $lte: 0 };
-
     // Sorting
     let sortOption = {};
     if (sort === 'priceLowToHigh') sortOption = { 'variants.price': 1 };
@@ -36,6 +27,7 @@ const getProductsPage = async (req, res) => {
     else if (sort === 'za') sortOption = { name: -1 };
     else sortOption = { createdAt: -1 }; // default
 
+    // Fetch products
     let products = await Product.find(filter)
       .populate('category')
       .populate('brand')
@@ -44,18 +36,30 @@ const getProductsPage = async (req, res) => {
       .limit(limit)
       .lean();
 
-    // Apply variant filtering
+    // Filter variants & select only **one variant per product**
     products = products.map(product => {
-      const filterVariants = product.variants.filter(variant => {
-        if (variant.isBlocked) return false;
-        if (minPrice && variant.price < Number(minPrice)) return false;
-        if (maxPrice && variant.price > Number(maxPrice)) return false;
-        if (stock === 'inStock' && variant.stock <= 0) return false;
-        if (stock === 'outOfStock' && variant.stock > 0) return false;
+      const validVariants = product.variants.filter(v => {
+        if (v.isBlocked) return false;
+        if (minPrice && v.price < Number(minPrice)) return false;
+        if (maxPrice && v.price > Number(maxPrice)) return false;
+        if (stock === 'inStock' && v.stock <= 0) return false;
+        if (stock === 'outOfStock' && v.stock > 0) return false;
         return true;
       });
-      return { ...product, variants: filterVariants };
-    }).filter(p => p.variants.length > 0);
+
+      if (validVariants.length === 0) return null;
+
+      let selectedVariant;
+      if (sort === 'priceLowToHigh') {
+        selectedVariant = validVariants.reduce((prev, curr) => prev.price < curr.price ? prev : curr);
+      } else if (sort === 'priceHighToLow') {
+        selectedVariant = validVariants.reduce((prev, curr) => prev.price > curr.price ? prev : curr);
+      } else {
+        selectedVariant = validVariants[0]; // default first variant
+      }
+
+      return { ...product, variants: [selectedVariant] };
+    }).filter(p => p !== null);
 
     // Total count
     const totalProducts = await Product.countDocuments(filter);
@@ -82,6 +86,7 @@ const getProductsPage = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+
 
 
 // Live search by product name (case-insensitive)
