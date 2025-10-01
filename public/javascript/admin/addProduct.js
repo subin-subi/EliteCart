@@ -1,5 +1,5 @@
 let variantCount = 0;
-let variantsData = {}; // Store images for all variants
+let variantsData = {}; 
 let currentCropper = null;
 let currentCropCallback = null;
 
@@ -150,14 +150,13 @@ function handleVariantMainImage(event, variantId) {
     // Save cropped file
     variantsData[variantId].mainImage = croppedFile;
 
-    // Update preview
     updateMainImagePreview(
       croppedFile,
       `${variantId}-mainImagePreview`,
       variantId
     );
 
-    // ✅ Clear error after successful upload
+    //  Clear error after successful upload
     const errorElement = document.getElementById(`${variantId}-errorMainImage`);
     if (errorElement) errorElement.textContent = "";
   });
@@ -189,7 +188,7 @@ function handleVariantSubImages(event, variantId) {
         variantId
       );
 
-      // ✅ Clear error only when they have exactly 3 images
+      //  Clear error only when they have exactly 3 images
       const errorElement = document.getElementById(`${variantId}-errorSubImages`);
       if (errorElement && variantsData[variantId].subImages.length === 3) {
         errorElement.textContent = "";
@@ -392,10 +391,10 @@ form.addEventListener("submit", async function (e) {
      }
    });
 
-  // Stop submission if any validation failed
+ 
   if (!isValid) return;
 
-  // ================== BUILD FORM DATA ==================
+  // ================== BUILD FORM DATA ==================>>>>>>>>>>
   const formData = new FormData();
   formData.append("name", name);
   formData.append("brand", brand);
@@ -426,9 +425,10 @@ form.addEventListener("submit", async function (e) {
 
   // ================== SUBMIT FORM ==================
   try {
-    const res = await axios.post("/admin/addproduct", formData, {
+    const res = await axios.post("/admin/addProduct", formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
+console.log("Server Response:", res.data);
 
     if (res.data.success) {
       Swal.fire("Success", "Product added successfully", "success").then(() => {

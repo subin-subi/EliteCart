@@ -193,10 +193,10 @@
                         <!-- Actions -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
-                                <button onclick="editProduct('<%= product._id %>')" 
-                                        class="text-blue-500 hover:text-blue-700 hover:underline text-sm">
-                                    Edit
-                                </button>
+                              <a href="/admin/editProduct/<%= product._id %>" 
+                                      class="text-blue-500 hover:text-blue-700 hover:underline text-sm">
+                                     Edit
+                                    </a>
                                 <button onclick="confirmToggleBlock('<%= product._id %>', <%= !!product.isBlocked %>)" 
                                         class="text-red-500 hover:text-red-700 hover:underline text-sm">
                                     <%= product.isBlocked ? 'Unblock' : 'Block' %>
@@ -353,82 +353,6 @@
     </div>
   </div>
 
-<!-- ////////////////////////////////////////////Edit Product Modal //////////////////////////////////////////////////////////// -->
- <div id="editProductModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center overflow-auto">
-  <div class="bg-white rounded-lg shadow-lg p-6 w-[600px] max-h-[90vh] overflow-y-auto">
-    <h2 class="text-xl font-bold mb-4">Edit Product</h2>
-
-    <form id="editProductForm" method="POST" enctype="multipart/form-data">
-      <!-- Hidden field for Product ID -->
-      <input type="hidden" id="editProductId" name="productId">
-
-      <!-- Name -->
-      <label class="block font-medium">Name</label>
-      <input type="text" id="editProductName" name="name"
-             class="w-full border p-2 rounded mb-3">
-
-      <!-- Category -->
-      <label class="block font-medium">Category</label>
-      <select id="editProductCategory" name="category"
-              class="w-full border p-2 rounded mb-3">
-        <% categories.forEach(cat => { %>
-          <option value="<%= cat._id %>"><%= cat.name %></option>
-        <% }) %>
-      </select>
-
-      <!-- Brand -->
-      <label class="block font-medium">Brand</label>
-      <select id="editProductBrand" name="brand"
-              class="w-full border p-2 rounded mb-3">
-        <% brands.forEach(brand => { %>
-          <option value="<%= brand._id %>"><%= brand.name %></option>
-        <% }) %>
-      </select>
-
-      <!-- Description -->
-      <label class="block font-medium">Description</label>
-      <textarea id="editProductDescription" name="description"
-                class="w-full border p-2 rounded mb-3"></textarea>
-
-      <!-- Variant -->
-      <h3 class="text-lg font-semibold mb-2">Variant</h3>
-
-      <label class="block font-medium">Volume (ml)</label>
-      <input type="number" id="editProductVolume" name="variants[0][volume]"
-             class="w-full border p-2 rounded mb-3">
-
-      <label class="block font-medium">Stock</label>
-      <input type="number" id="editProductStock" name="variants[0][stock]"
-             class="w-full border p-2 rounded mb-3">
-
-      <label class="block font-medium">Price</label>
-      <input type="number" id="editProductPrice" name="variants[0][price]"
-             class="w-full border p-2 rounded mb-3">
-
-      <!-- Main Image -->
-      <label class="block font-medium">Main Image</label>
-      <input type="file" id="editMainImage" name="mainImage" accept="image/*" class="mb-3">
-      <img id="editMainImagePreview" class="h-24 mb-3 rounded" src="">
-
-      <!-- Sub Images -->
-      <label class="block font-medium">Sub Images</label>
-      <input type="file" id="editSubImages" name="subImages" multiple accept="image/*" class="mb-3">
-
-      <div id="editSubImagesPreview" class="flex gap-3 flex-wrap mb-3"></div>
-
-      <!-- Buttons -->
-      <div class="flex justify-end gap-2">
-        <button type="button" onclick="closeEditProductModal()"
-                class="bg-gray-500 text-white px-3 py-1 rounded">
-          Cancel
-        </button>
-        <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded">
-          Save Changes
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
 
 
  

@@ -53,19 +53,16 @@ router.patch("/products/:id/toggle-block", productController.toggleProductStatus
 router.get("/product/:id", productController.getProductById);
 
 
-router.post("/products/:id", 
-  upload.fields([
-  { name: "mainImage", maxCount: 1 },
-  { name: "subImages", maxCount: 3 }
-]),  
-productController.updateProduct);
 
 
-router.get("/api/products", productController.getProductsAPI);
+
+
 
 
 
 
 router.get("/addProduct",addproductController.getaddProductPage)
 router.post("/addProduct", addproductController.addProduct)
+router.get("/editProduct/:id",addproductController.getEditPage)
+router.post("/editProduct/:id",addproductController.editProduct)
 export default router;

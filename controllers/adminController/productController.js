@@ -16,6 +16,7 @@ const getProduct = async (req, res) => {
     // Filters
     const search = req.query.search?.trim() || "";
     const isBlocked = req.query.isBlocked?.trim() || ""; 
+    const status = req.query.status?.trim() || '';
 
     let searchQuery = {};
 
@@ -46,6 +47,7 @@ const getProduct = async (req, res) => {
       categories,
       brands,
       search,
+       status,
       isBlocked, 
       pagination: {
         currentPage: page,
@@ -86,72 +88,6 @@ const getProductById = async (req, res) => {
 
 
 
-// Update product
- const updateProduct = async (req, res) => {
-  try {
-    const productId = req.params.id; 
-    const { name, brand, category, description , variants } = req.body;
-  
-    const existingProduct = await Product.findById(productId);
-    if (!existingProduct) {
-      return res.status(404).json({ success: false, message: "Product not found" });
-    }
-
-   let incomingVariant = null;
-    if (variants) {
-      if (typeof variants === "string") {
-        // If frontend sends JSON string
-        incomingVariant = JSON.parse(variants)[0];
-      } else if (Array.isArray(variants)) {
-        incomingVariant = variants[0];
-      }
-    }
-
-    let updatedVariant = existingProduct.variants[0] || {}
-
-
-    if(variants && variants[0]){
-      updatedVariant.volume = variants.volume || updatedVariant.volume;
-      updatedVariant.stock = variants.stock || updatedVariant.stock;
-      updatedVariant.price = variants.price || updatedVariant.price;
-    }
-
-
-if(req.files?.mainImage?.[0]){
-  updatedVariant.mainImage = req.files.mainImage[0].path;
-}
-
-if(req.files?.subImages?.length > 0){
-  updatedVariant.subImages = req.files.subImages.map(f => f.path)
-}
-
-if(updatedVariant.subImages.length !== 3){
-  return res.status(400).json({
-    success : false,
-    message : "Exactly 3 sub images are required"
-  })
-}
-
-existingProduct.name = name || existingProduct.name;
-existingProduct.brand = brand || existingProduct.brand;
-existingProduct.category = category || existingProduct.category;
-existingProduct.description = description || existingProduct.description
-
-existingProduct.variants[0] = updatedVariant;
-const updatedProduct = await existingProduct.save()
-
-
-    res.json({ 
-      success: true,
-       message: "Product updated successfully",
-        product: updatedProduct 
-      });
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ success: false, message: "Error updating product" });
-  }
-};
-
 
 
 
@@ -189,54 +125,11 @@ const toggleProductStatus = async (req, res) => {
 };
 
 
-// ////////////////////////////////////////////////searching//////////////////////////////////////////////////////////////
-function escapeRegex(text = "") {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-
-
-const getProductsAPI = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-    const search = req.query.search || '';
-    const status = req.query.status || '';
-
-    let searchQuery = {};
-    if (search) {
-      const safeSearch = escapeRegex(search); 
-      searchQuery.name = { $regex: `^${safeSearch}`, $options: 'i' };
-    }
-
-
-    if (status && status !== 'All Status') {
-      searchQuery.status = status;
-    }
-
-    const totalProducts = await Product.countDocuments(searchQuery);
-    const products = await Product.find(searchQuery)
-      .populate('category', 'name')
-      .populate('brand', 'name')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    res.json({ success: true, products, totalProducts });
-  } catch (error) {
-    console.error('Error getting products API:', error);
-    res.status(500).json({ success: false, message: 'Error retrieving products' });
-  }
-};
-
 ////////////////////////////////////////////////edit//////////////////////////////////////////////////////////////
 
 
 export default {
   getProduct,
-  updateProduct,
   toggleProductStatus,
-  getProductsAPI,
   getProductById,
 };
