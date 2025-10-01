@@ -86,7 +86,10 @@ function cropAndSave() {
   }, "image/jpeg", 0.9);
 }
 
-
+ function clearFilters() {
+    // Redirect to the main product page (replace with your route)
+    window.location.href = '/admin/products';
+  }
 
 
 

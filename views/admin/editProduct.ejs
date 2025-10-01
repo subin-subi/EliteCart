@@ -194,11 +194,11 @@
       Add Sub Images
     </button>
 
-    <input type="file" name="variants[<%= index %>][subImages][]" 
-           id="subImagesInput-<%= variant._id %>" 
-           multiple class="hidden" 
-           accept="image/*"
-           onchange="handleExistingSubImages(event, '<%= variant._id %>')">
+   <input type="file" name="variants[<%= index %>][subImages]" 
+       id="subImagesInput-<%= variant._id %>" multiple class="hidden" 
+       accept="image/*" onchange="handleExistingSubImages(event, '<%= variant._id %>')">
+
+
   </div>
 </div>
     </div>
