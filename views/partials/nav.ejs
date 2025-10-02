@@ -91,55 +91,72 @@
   </div>
 
 
-  <script>
-    const profileBtn = document.getElementById("profileButton");
-    const profileMenu = document.getElementById("profileMenu");
-    const guestMenu = document.getElementById("guestMenu");
-    const userMenu = document.getElementById("userMenu");
-    const logoutBtn = document.getElementById("logoutButton");
+<script>
+  const profileBtn = document.getElementById("profileButton");
+  const profileMenu = document.getElementById("profileMenu");
+  const guestMenu = document.getElementById("guestMenu");
+  const userMenu = document.getElementById("userMenu");
+  const logoutBtn = document.getElementById("logoutButton");
 
-    // Toggle dropdown
-    profileBtn.addEventListener("click", () => {
-      profileMenu.classList.toggle("hidden");
-    });
+  // Toggle dropdown
+  profileBtn.addEventListener("click", () => {
+    profileMenu.classList.toggle("hidden");
+  });
 
-    // Close if clicked outside
-    document.addEventListener("click", (e) => {
-      if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
-        profileMenu.classList.add("hidden");
+  // Close menu if clicked outside
+  document.addEventListener("click", (e) => {
+    if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+      profileMenu.classList.add("hidden");
+    }
+  });
+
+  // Session check
+  document.addEventListener("DOMContentLoaded", async function () {
+    try {
+      const response = await fetch('/check-session');
+      const data = await response.json();
+
+      if (data.isLoggedIn) {
+        guestMenu.classList.add("hidden");
+        userMenu.classList.remove("hidden");
+      } else {
+        guestMenu.classList.remove("hidden");
+        userMenu.classList.add("hidden");
       }
-    });
+    } catch (error) {
+      console.error("Session check error:", error);
+    }
+  });
 
-    // Session check
-    document.addEventListener("DOMContentLoaded", async function () {
-      try {
-        const response = await fetch('/check-session');
-        const data = await response.json();
+  // Logout with confirmation
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
 
-        if (data.isLoggedIn) {
-          guestMenu.classList.add("hidden");
-          userMenu.classList.remove("hidden");
-        } else {
-          guestMenu.classList.remove("hidden");
-          userMenu.classList.add("hidden");
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-      }
-    });
-
-    // Logout
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", async () => {
-        try {
-          await fetch('/logout', { method: 'POST' });
-          window.location.reload();
-        } catch (error) {
-          console.error("Logout failed:", error);
+      Swal.fire({
+        title: "Are you sure?",
+        text: "Do you really want to logout?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, Logout",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6"
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await fetch('/logout', { method: 'POST' });
+            window.location.href = "/"; 
+          } catch (error) {
+            console.error("Logout failed:", error);
+            Swal.fire("Error", "Logout failed. Try again.", "error");
+          }
         }
       });
-    }
-  </script>
+    });
+  }
+</script>
+
 </body>
 
 </html>

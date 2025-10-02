@@ -386,10 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // OPTIONAL: Close OTP modal button (add this button in your HTML inside otpModal):
-  /*
-  <button id="closeOtpModal" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900">&times;</button>
-  */
+  
   const closeOtpModalBtn = document.getElementById('closeOtpModal');
   if (closeOtpModalBtn) {
     closeOtpModalBtn.addEventListener('click', () => {

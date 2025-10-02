@@ -55,13 +55,13 @@ const getProductsPage = async (req, res) => {
       } else if (sort === 'priceHighToLow') {
         selectedVariant = validVariants.reduce((prev, curr) => prev.price > curr.price ? prev : curr);
       } else {
-        selectedVariant = validVariants[0]; // default first variant
+        selectedVariant = validVariants[0]; 
       }
 
       return { ...product, variants: [selectedVariant] };
     }).filter(p => p !== null);
 
-    // Total count
+
     const totalProducts = await Product.countDocuments(filter);
 
     const [categories, brands] = await Promise.all([
@@ -89,6 +89,36 @@ const getProductsPage = async (req, res) => {
 
 
 
+ const searchProduct = async (req, res) => {
+    const { query } = req.query;
+
+    if (!query || query.trim() === "") {
+        return res.redirect("/product"); // If no query, show all products
+    }
+
+    try {
+        const products = await Product.find({
+            name: { $regex: '^' + query.trim(), $options: 'i' },
+            isBlocked: { $ne: true }
+        })
+        .populate('category')
+        .populate('brand')
+        .lean();
+
+        res.render("user/product", {
+            products,
+            categories: await Category.find({ isActive: true, isHidden: false }).lean(),
+            brands: await Brand.find({ isActive: true, isHidden: false }).lean(),
+            filters: { search: query },
+            pagination: { currentPage: 1, totalPages: 1, totalProducts: products.length }
+        });
+    } catch (err) {
+        console.error("Search Error:", err);
+        res.status(500).send("Server Error");
+    }
+}
+
+
 
 
 const getProductDetailPage = async (req, res) => {
@@ -100,7 +130,7 @@ const getProductDetailPage = async (req, res) => {
       return res.status(404).send("Product not found");
     }
 
-    // Step 1: Same category
+    
     let relatedProducts = await Product.find({
       category: product.category,
       _id: { $ne: product._id }
@@ -120,7 +150,7 @@ const getProductDetailPage = async (req, res) => {
       relatedProducts = [...relatedProducts, ...brandProducts];
     }
 
-    // Step 3: If still not enough, fetch other products
+    
     if (relatedProducts.length < 4) {
       const otherProducts = await Product.find({
         _id: { $ne: product._id, $nin: relatedProducts.map(p => p._id) }
@@ -143,5 +173,6 @@ const getProductDetailPage = async (req, res) => {
 
 export default {
   getProductsPage,
-  getProductDetailPage
+  getProductDetailPage,
+  searchProduct
 };

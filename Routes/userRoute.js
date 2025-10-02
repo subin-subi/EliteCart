@@ -29,7 +29,6 @@ route.post("/login",authController.postLogin)
 
 route.get("/",userMiddleware.checkSession, authController.homepage)
 
-route.get("/about", otpController.aboutPage)
 
 route.get('/forgot-password', authController.getForgotPassword)
 
@@ -48,6 +47,7 @@ route.post("/logout", authController.getLogout)
 ////////////product Controller/////////////////////
 
 route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
+route.get("/search-products",userMiddleware.checkSession,productController.searchProduct)
 
 route.get("/productDetail/:id", productController.getProductDetailPage)
 

@@ -112,167 +112,6 @@ function removeVariant(button) {
   // Remove from croppedFiles if exists
   if (croppedFiles[variantId]) delete croppedFiles[variantId];
 }
-///////////////////////////////////////// SUB IMAGES /////////////////////////////////////////////
-
-// function editSubImage(variantId, subIndex) {
-//   const input = document.getElementById(`subImagesInput-${variantId}`);
-//   input.click();
-//   input.dataset.editIndex = subIndex;
-// }
-
-// function handleExistingSubImages(event, variantId) {
-//   const files = Array.from(event.target.files);
-//   const container = document.getElementById(`subImagesContainer-${variantId}`);
-//   const editIndex = parseInt(event.target.dataset.editIndex);
-
-//   // Current number of images
-//   const currentCount = container.children.length;
-//   const maxLimit = 3; // Set your limit here
-
-//   files.forEach((file, i) => {
-//     if (currentCount + i >= maxLimit) {
-//       alert(`You can only upload a maximum of ${maxLimit} sub-images.`);
-//       return;
-//     }
-
-//     openCropModal(file, (croppedFile) => {
-//       const wrapper = document.createElement("div");
-//       wrapper.className = "relative w-20 h-20";
-
-//       const img = document.createElement("img");
-//       img.src = URL.createObjectURL(croppedFile);
-//       img.className = "w-20 h-20 object-cover rounded-lg cursor-pointer";
-//       img.onclick = () => editSubImage(variantId, i);
-
-//       const btn = document.createElement("button");
-//       btn.type = "button";
-//       btn.innerText = "✕";
-//       btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
-//       btn.onclick = () => wrapper.remove();
-
-//       const hiddenInput = document.createElement("input");
-//       hiddenInput.type = "hidden";
-//       hiddenInput.name = `variants[${variantId}][subImages][]`; // or use index
-//       hiddenInput.value = URL.createObjectURL(croppedFile);
-
-//       wrapper.appendChild(img);
-//       wrapper.appendChild(btn);
-//       wrapper.appendChild(hiddenInput);
-
-//       // Append only if within limit
-//       container.appendChild(wrapper);
-//     });
-//   });
-
-//   event.target.value = ""; // Reset input
-// }
-
-
-// function removeSubImage(variantId, subIndex) {
-//   const container = event.target.closest(".relative");
-//   if (container) container.remove();
-
-//   const imgElement = container.querySelector("img");
-//   const imageUrl = imgElement?.getAttribute("src"); 
-
-//   const form = document.getElementById("editProductForm");
-//   const hiddenInput = document.createElement("input");
-//   hiddenInput.type = "hidden";
-//   hiddenInput.name = "removeSubImages[]";
-//   hiddenInput.value = imageUrl;  
-//   form.appendChild(hiddenInput);
-
-//   // Also remove from croppedFiles if exists
-//   if (croppedFiles[variantId]?.subImages?.[subIndex]) {
-//     croppedFiles[variantId].subImages.splice(subIndex, 1);
-//   }
-// }
-
-
-// document.addEventListener("DOMContentLoaded", () => {
-//   const form = document.getElementById("editProductForm");
-
-//   form.addEventListener("submit", async (e) => {
-//     e.preventDefault(); 
-
-//     const formData = new FormData();
-
-//     // Append product fields
-//     formData.append("name", document.getElementById("productName").value);
-//     formData.append("brand", document.getElementById("productBrand").value);
-//     formData.append("category", document.getElementById("productCategory").value);
-//     formData.append("description", document.getElementById("productDescription").value);
-
-//     // Variants
-//     const variants = [];
-//     document.querySelectorAll(".variant-row").forEach((row, index) => {
-//       const variantId = row.getAttribute("data-variant-id");
-//       const volume = row.querySelector(`[name="variants[${index}][volume]"]`)?.value;
-//       const price = row.querySelector(`[name="variants[${index}][price]"]`)?.value;
-//       const stock = row.querySelector(`[name="variants[${index}][stock]"]`)?.value;
-
-//       variants.push({ index, volume, price, stock });
-
-//       // Append cropped files
-//       if (croppedFiles[variantId]) {
-//         if (croppedFiles[variantId].mainImage) {
-//           formData.append(`variants[${index}][mainImage]`, croppedFiles[variantId].mainImage);
-//         }
-//         if (croppedFiles[variantId].subImages?.length > 0) {
-//           croppedFiles[variantId].subImages.forEach(f =>
-//             formData.append(`variants[${index}][subImages][]`, f)
-//           );
-//         }
-//       }
-
-//       // Append new un-cropped files from input
-//       const mainInput = row.querySelector(`[name="variants[${index}][mainImage]"]`);
-//       if (mainInput?.files[0]) formData.append(`variants[${index}][mainImage]`, mainInput.files[0]);
-
-//    const subInput = row.querySelector(`[name="variants[${index}][subImages]"]`);
-// if (subInput?.files) {
-//   Array.from(subInput.files).forEach(f => {
-//     formData.append(`variants[${index}][subImages]`, f);
-//   });
-// }
-
-//     });
-//     // Append removed sub-images
-// document.querySelectorAll('input[name="removeSubImages[]"]').forEach(input => {
-//   formData.append("removeSubImages[]", input.value);
-// });
-
-// // Append removed variants
-// document.querySelectorAll('input[name="removeVariants[]"]').forEach(input => {
-//   formData.append("removeVariants[]", input.value);
-// });
-
-
-//     formData.append("variants", JSON.stringify(variants));
-
-//    try {
-//   const response = await axios.post(form.action, formData, {
-//     headers: { "Content-Type": "multipart/form-data" },
-//   });
-
-//   console.log("Product updated:", response.data);
-
-//   Swal.fire("Success", "Product updated successfully!", "success")
-//     .then(() => {
-//       // Redirect to product page after clicking OK
-//       window.location.href = '/admin/products';
-//     });
-
-// } catch (err) {
-//   console.error("Error updating product:", err);
-//   Swal.fire("Error", "Failed to update product", "error");
-// }
-
-//   });
-// });
-
-
-
 
 // -------------------- HANDLE SUB-IMAGE EDITING --------------------
 function editSubImage(variantId, subIndex) {
@@ -325,15 +164,23 @@ function handleExistingSubImages(event, variantId) {
 // -------------------- REMOVE SUB-IMAGE --------------------
 function removeSubImage(variantId, imageUrl) {
   const form = document.getElementById("editProductForm");
+
+  // Add a hidden input to submit removed image paths to backend
   const hiddenInput = document.createElement("input");
   hiddenInput.type = "hidden";
   hiddenInput.name = "removeSubImages[]";
-  hiddenInput.value = imageUrl; // Must be the actual DB path
+  hiddenInput.value = imageUrl;
   form.appendChild(hiddenInput);
+
+  // Remove from DOM
+  const imageWrapper = document.querySelector(`.subImageWrapper[data-variant="${variantId}"][data-url="${imageUrl}"]`);
+  if (imageWrapper) {
+    imageWrapper.remove();
+  }
 
   // Remove from croppedFiles if exists
   if (croppedFiles[variantId]?.subImages) {
-    croppedFiles[variantId].subImages = croppedFiles[variantId].subImages.filter(f => URL.createObjectURL(f) !== imageUrl);
+    croppedFiles[variantId].subImages = croppedFiles[variantId].subImages.filter(f => f.name !== imageUrl && f.url !== imageUrl);
   }
 }
 

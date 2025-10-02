@@ -161,47 +161,48 @@
 
 
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const searchInput = document.getElementById("searchInput");
-    const searchButton = document.getElementById("searchButton");
-    const clearButton = document.getElementById("clearSearchButton");
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("searchInput");
+  const searchButton = document.getElementById("searchButton");
+  const clearButton = document.getElementById("clearSearchButton");
 
-    // Show/hide clear button based on input
-    searchInput.addEventListener("input", () => {
-      clearButton.classList.toggle("hidden", searchInput.value.trim() === "");
-    });
+  if (!searchInput || !searchButton || !clearButton) return;
 
-    // Clear search
-    clearButton.addEventListener("click", () => {
-      searchInput.value = "";
-      clearButton.classList.add("hidden");
-      searchInput.focus();
-      // Reload page to show all products
-      window.location.href = window.location.pathname;
-    });
+  // 1️⃣ Set input value from URL on page load
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchQuery = urlParams.get("query") || "";
+  searchInput.value = searchQuery;
 
-    // Trigger search on button click
-    searchButton.addEventListener("click", () => {
-      const query = searchInput.value.trim();
-      const url = new URL(window.location.href);
+  // 2️⃣ Show/hide clear button based on input
+  clearButton.classList.toggle("hidden", searchInput.value.trim() === "");
 
-      if (query) {
-        url.searchParams.set("search", query);
-      } else {
-        // If empty, remove search param to show all products
-        url.searchParams.delete("search");
-      }
-      url.searchParams.set("page", 1); // reset to page 1 on new search
-      window.location.href = url.toString();
-    });
-
-    // Trigger search on Enter key
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        searchButton.click();
-      }
-    });
+  // 3️⃣ Show/hide clear button dynamically
+  searchInput.addEventListener("input", () => {
+    clearButton.classList.toggle("hidden", searchInput.value.trim() === "");
   });
+
+  // 4️⃣ Clear search when X is clicked
+  clearButton.addEventListener("click", () => {
+    searchInput.value = "";
+    clearButton.classList.add("hidden");
+    window.location.href = "/product"; // reload all products
+  });
+
+  // 5️⃣ Perform search
+  const doSearch = () => {
+    const query = searchInput.value.trim();
+    if (query) {
+      window.location.href = `/search-products?query=${encodeURIComponent(query)}`;
+    } else {
+      window.location.href = "/product";
+    }
+  };
+
+  searchButton.addEventListener("click", doSearch);
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doSearch();
+  });
+});
 
 
   </script>

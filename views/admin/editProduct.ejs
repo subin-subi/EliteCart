@@ -82,12 +82,12 @@
       </div>
 
       <!-- Variants Section Header -->
-      <div class="flex justify-between items-center mt-6">
+      <!-- <div class="flex justify-between items-center mt-6">
         <h2 class="text-xl font-semibold text-gray-800">Variants*</h2>
         <button type="button" onclick="addVariant()" class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm">
           + Add Variant
         </button>
-      </div>
+      </div> -->
 
       <!-- Variants -->
       <div class="space-y-6" id="variantsContainer">
@@ -168,38 +168,38 @@
     <div id="mainImagePreview-<%= variant._id %>" class="mt-3"></div>
   </div>
 </div>
+<!-- Sub Images Section -->
+<div>
+  <label class="block text-gray-600 mb-2 font-medium">Additional Images</label>
 
-  <!-- Sub Images Section -->
-  <div>
-    <label class="block text-gray-600 mb-2 font-medium">Additional Images</label>
-
-    <div class="flex flex-wrap gap-3 mb-3" id="subImagesContainer-<%= variant._id %>">
-      <% if(variant.subImages && variant.subImages.length > 0){ %>
-        <% variant.subImages.forEach((img, subIndex) => { %>
-          <div class="relative w-20 h-20">
-            <img src="<%= img %>" 
-                 class="w-20 h-20 object-cover rounded-lg cursor-pointer"
-                 onclick="editSubImage('<%= variant._id %>', <%= subIndex %>)">
-            <button type="button" 
-                    class="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                    onclick="removeSubImage('<%= variant._id %>', <%= subIndex %>)">✕</button>
-          </div>
-        <% }) %>
-      <% } %>
-    </div>
-
-    <button type="button" 
-            onclick="document.getElementById('subImagesInput-<%= variant._id %>').click()" 
-            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-      Add Sub Images
-    </button>
-
-   <input type="file" name="variants[<%= index %>][subImages]" 
-       id="subImagesInput-<%= variant._id %>" multiple class="hidden" 
-       accept="image/*" onchange="handleExistingSubImages(event, '<%= variant._id %>')">
-
-
+  <div class="flex flex-wrap gap-3 mb-3" id="subImagesContainer-<%= variant._id %>">
+    <% if(variant.subImages && variant.subImages.length > 0){ %>
+      <% variant.subImages.forEach((img, subIndex) => { %>
+        <div class="relative w-20 h-20 subImageWrapper" 
+             data-variant="<%= variant._id %>" 
+             data-url="<%= img %>">
+          <img src="<%= img %>" 
+               class="w-20 h-20 object-cover rounded-lg cursor-pointer"
+               onclick="editSubImage('<%= variant._id %>', <%= subIndex %>)">
+          <button type="button" 
+                  class="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  onclick="removeSubImage('<%= variant._id %>', '<%= img %>')">✕</button>
+        </div>
+      <% }) %>
+    <% } %>
   </div>
+
+  <button type="button" 
+          onclick="document.getElementById('subImagesInput-<%= variant._id %>').click()" 
+          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+    Add Sub Images
+  </button>
+
+  <input type="file" name="variants[<%= index %>][subImages]" 
+         id="subImagesInput-<%= variant._id %>" multiple class="hidden" 
+         accept="image/*" onchange="handleExistingSubImages(event, '<%= variant._id %>')">
+</div>
+
 </div>
     </div>
         <% }) %>
