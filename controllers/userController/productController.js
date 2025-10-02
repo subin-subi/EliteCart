@@ -89,19 +89,6 @@ const getProductsPage = async (req, res) => {
 
 
 
-// Live search by product name (case-insensitive)
-const searchProductsByName = async (req, res) => {
-  try {
-    const q = (req.query.q || "").trim();
-    if (!q) return res.json({ success: true, results: [] });
-    const results = await Product.find({ name: { $regex: q, $options: 'i' } })
-      .select('name _id')
-      .limit(10);
-    res.json({ success: true, results });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Search failed' });
-  }
-};
 
 
 const getProductDetailPage = async (req, res) => {
@@ -121,7 +108,7 @@ const getProductDetailPage = async (req, res) => {
       .limit(4)
       .lean();
 
-    // Step 2: If not enough from same category, check same brand
+    
     if (relatedProducts.length < 4) {
       const brandProducts = await Product.find({
         brand: product.brand,
@@ -156,6 +143,5 @@ const getProductDetailPage = async (req, res) => {
 
 export default {
   getProductsPage,
-  searchProductsByName,
   getProductDetailPage
 };
