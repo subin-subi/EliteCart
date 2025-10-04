@@ -294,50 +294,64 @@
             document.getElementById("categoryModal").classList.add("hidden");
         }
 
-        function saveCategory() {
-            const nameInput = document.getElementById("categoryName");
-            if (!nameInput) return Swal.fire("Error", "Category name input not found.", "error");
+    function saveCategory() {
+    const nameInput = document.getElementById("categoryName");
+    if (!nameInput) {
+        return Swal.fire("Error", "Category name input not found.", "error");
+    }
 
-            const name = nameInput.value.trim();
-            if (!name) return Swal.fire("Warning", "Category name cannot be empty!", "warning");
-            if (!/^[A-Za-z]+$/.test(name)) return Swal.fire("Warning", "Category name can only contain alphabets.", "warning");
-            if (name.length > 10) return Swal.fire("Warning", "Category name must not exceed 10 characters.", "warning");
+    const name = nameInput.value.trim(); // get input value
+    const namePattern = /^[A-Za-z.\s]{3,40}$/;
 
-            const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    // Check if name does NOT match pattern
+    if (!namePattern.test(name)) {
+        return Swal.fire(
+            "Warning",
+            "Category name must be 3–40 characters and contain only alphabets, dots, or spaces.",
+            "warning"
+        );
+    }
 
-            fetch("/admin/add-category", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ categoryName: formattedName, isActive: true })
-            })
-            .then(response => response.json().catch(() => null))
-            .then(data => {
-                if (!data || !data.success) throw new Error(data?.message || "Unexpected error occurred");
-                Swal.fire("Success", "Category added successfully!", "success").then(() => {
-                    closeModal();
-                    window.location.reload();
-                });
-            })
-            .catch(error => Swal.fire("Error", "Failed to add category: " + error.message, "error"));
-        }
+    const formattedName =
+        name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 
-        function editCategory(id) {
-            fetch(`/admin/category/${id}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.category) {
-                        document.getElementById("editCategoryId").value = data.category._id;
-                        document.getElementById("editCategoryName").value = data.category.name;
-                        document.getElementById("editCategoryModal").classList.remove("hidden");
-                    } else {
-                        Swal.fire("Error", data.message || "Failed to load category", "error");
-                    }
-                })
-                .catch(err => {
-                    console.error("Error:", err);
-                    Swal.fire("Error", "Something went wrong", "error");
-                });
-        }
+    fetch("/admin/add-category", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categoryName: formattedName, isActive: true })
+    })
+        .then(response => response.json().catch(() => null))
+        .then(data => {
+            if (!data || !data.success) {
+                throw new Error(data?.message || "Unexpected error occurred");
+            }
+            Swal.fire("Success", "Category added successfully!", "success").then(() => {
+                closeModal();
+                window.location.reload();
+            });
+        })
+        .catch(error =>
+            Swal.fire("Error", "Failed to add category: " + error.message, "error")
+        );
+}
+
+            function editCategory(id) {
+                fetch(`/admin/category/${id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.category) {
+                            document.getElementById("editCategoryId").value = data.category._id;
+                            document.getElementById("editCategoryName").value = data.category.name;
+                            document.getElementById("editCategoryModal").classList.remove("hidden");
+                        } else {
+                            Swal.fire("Error", data.message || "Failed to load category", "error");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error:", err);
+                        Swal.fire("Error", "Something went wrong", "error");
+                    });
+            }
 
         function closeEditModal() {
             document.getElementById("editCategoryModal").classList.add("hidden");
@@ -347,9 +361,9 @@
             const id = document.getElementById("editCategoryId").value;
             const name = document.getElementById("editCategoryName").value.trim();
 
-            if (!name) return Swal.fire("Warning", "Category name cannot be empty!", "warning");
-            if (!/^[A-Za-z]+$/.test(name)) return Swal.fire("Warning", "Only alphabets allowed", "warning");
-            if (name.length > 10) return Swal.fire("Warning", "Max 10 characters allowed", "warning");
+            const namePattern =  /^[A-Za-z.\s]{3,20}$/;
+
+            if(!namePattern.test(name)) return swal.fire('name not satifining the rules')
 
             const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 

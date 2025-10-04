@@ -71,25 +71,22 @@ const addBrand = async (req, res) => {
         const { brandName } = req.body;
         const trimmedBrandName = brandName.trim();
 
-        if (!/^[A-Za-z]+$/.test(trimmedBrandName)) {
+        
+        const namePattern = /^[A-Za-z.\s]{3,40}$/;
+        if (!namePattern.test(trimmedBrandName)) {
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
-                message: 'Brand name can only contain alphabets.'
+                message: 'Brand name must be 3–40 characters and can contain only alphabets, dots, and spaces.'
             });
         }
 
-        if (trimmedBrandName.length > 10) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({
-                success: false,
-                message: 'Brand name must not exceed 10 characters.'
-            });
-        }
+        const formattedBrandName =
+            trimmedBrandName.charAt(0).toUpperCase() +
+            trimmedBrandName.slice(1).toLowerCase();
 
-        const formattedBrandName = trimmedBrandName.charAt(0).toUpperCase() + 
-                                   trimmedBrandName.slice(1).toLowerCase();
-
+        // Check for existing brand (case-insensitive)
         const existingBrand = await Brand.findOne({
-            name: { $regex: new RegExp(`^${formattedBrandName}$`, 'i') }
+            name: { $regex: new RegExp(`${formattedBrandName}$`, 'i') }
         });
 
         if (existingBrand) {
@@ -113,7 +110,7 @@ const addBrand = async (req, res) => {
         });
     } catch (error) {
         console.error('Error adding brand:', error);
-        return res.status(HTTP_STATUS. INTERNAL_SERVER_ERROR).json({
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Error adding brand.',
             error: error.message
@@ -121,40 +118,6 @@ const addBrand = async (req, res) => {
     }
 };
 
-const editBrand = async (req, res) => {
-    try {
-        const { brandId, brandName } = req.body;
-        const trimmedBrandName = brandName.trim();
-
-        if (!/^[A-Za-z]+$/.test(trimmedBrandName)) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).send('Brand name can only contain alphabets.');
-        }
-        if (trimmedBrandName.length > 10) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).send('Brand name must not exceed 10 characters.');
-        }
-
-        const formattedBrandName = trimmedBrandName.charAt(0).toUpperCase() + 
-                                   trimmedBrandName.slice(1).toLowerCase();
-
-        const existingBrand = await Brand.findOne({
-            _id: { $ne: brandId },
-            name: { $regex: new RegExp(`^${formattedBrandName}$`, 'i') }
-        });
-
-        if (existingBrand) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).send('Brand name already exists.');
-        }
-
-        await Brand.findByIdAndUpdate(brandId, {
-            name: formattedBrandName,
-        });
-
-        res.redirect('/admin/brand');
-    } catch (error) {
-        console.error('Error editing brand:', error);
-        res.status(HTTP_STATUS. INTERNAL_SERVER_ERROR).send('Error editing brand.');
-    }
-};
 
 const getBrandById = async (req, res) => {
     try {
@@ -207,7 +170,6 @@ const unblockBrand = async (req, res) => {
 export default {
     getBrand,
     addBrand,
-    editBrand,
     getBrandById,
     updateBrand,
     blockBrand,

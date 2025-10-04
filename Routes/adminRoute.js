@@ -32,7 +32,6 @@ router.get("/category", categoryController.getCategory);
 router.post("/add-category", categoryController.addCategory);
 router.get("/category/:id", categoryController.getCategoryById);
 router.put("/edit-category/:id", categoryController.updateCategory);
-router.put("/edit-category", categoryController.editCategory);
 router.patch("/block-category/:id", categoryController.blockCategory);
 router.patch("/unblock-category/:id", categoryController.unblockCategory);
 
@@ -48,15 +47,8 @@ router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.u
 
 
  router.get("/products", productController.getProduct);
-
 router.patch("/products/:id/toggle-block", productController.toggleProductStatus);
 router.get("/product/:id", productController.getProductById);
-
-
-
-
-
-
 
 
 

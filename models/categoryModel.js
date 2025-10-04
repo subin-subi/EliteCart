@@ -7,8 +7,8 @@ const categorySchema = new mongoose.Schema({
         required: [true, "Category name is required"],
         trim: true,
         minLength: [1, "Category name cannot be empty"],
-        maxLength: [10, "Category name must be less than 10 characters"],
-        match: [/^[a-zA-Z]+$/, "Category name must contain only alphabets"]
+        maxLength: [40, "Category name must be less than 10 characters"],
+        match: [/^[A-Za-z.\s]{3,40}$/, "Category name must contain only alphabets, dots, and spaces"]
     },
     isActive: {
         type: Boolean,

@@ -168,27 +168,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!searchInput || !searchButton || !clearButton) return;
 
-  // 1️⃣ Set input value from URL on page load
+  
   const urlParams = new URLSearchParams(window.location.search);
   const searchQuery = urlParams.get("query") || "";
   searchInput.value = searchQuery;
 
-  // 2️⃣ Show/hide clear button based on input
+  
   clearButton.classList.toggle("hidden", searchInput.value.trim() === "");
 
-  // 3️⃣ Show/hide clear button dynamically
+  
   searchInput.addEventListener("input", () => {
     clearButton.classList.toggle("hidden", searchInput.value.trim() === "");
   });
 
-  // 4️⃣ Clear search when X is clicked
+ 
   clearButton.addEventListener("click", () => {
     searchInput.value = "";
     clearButton.classList.add("hidden");
     window.location.href = "/product"; // reload all products
   });
 
-  // 5️⃣ Perform search
+  
   const doSearch = () => {
     const query = searchInput.value.trim();
     if (query) {

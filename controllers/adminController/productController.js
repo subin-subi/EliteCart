@@ -22,7 +22,7 @@ const getProduct = async (req, res) => {
 
     // Search by name
     if (search) {
-      searchQuery.name = { $regex: `^${search}`, $options: "i" };
+      searchQuery.name = { $regex: `${search}`, $options: "i" };
     }
 
     if (req.query.isBlocked) {

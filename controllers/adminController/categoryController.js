@@ -11,7 +11,7 @@ const getCategory = async (req, res) => {
         // Build search query
         let searchQuery = { isHidden: false };
         if (search) {
-           searchQuery.name = { $regex: `^${search}`, $options: 'i' }; 
+           searchQuery.name = { $regex: `${search}`, $options: 'i' }; 
         }
 
         // Get total count for pagination
@@ -70,24 +70,22 @@ const addCategory = async (req, res) => {
         const { categoryName } = req.body;
         const trimmedCategoryName = categoryName.trim();
 
-        if (!/^[A-Za-z]+$/.test(trimmedCategoryName)) {
+       
+        const namePattern = /^[A-Za-z.\s]{3,40}$/;
+
+        if (!namePattern.test(trimmedCategoryName)) {
             return res.status(400).json({
                 success: false,
-                message: 'Category name can only contain alphabets.'
+                message: 'Category name must be 3–40 characters and contain only alphabets, dots, or spaces.'
             });
         }
 
-        if (trimmedCategoryName.length > 10) {
-            return res.status(400).json({
-                success: false,
-                message: 'Category name must not exceed 10 characters.'
-            });
-        }
-
+        // Format name (first letter uppercase, rest lowercase)
         const formattedCategoryName =
             trimmedCategoryName.charAt(0).toUpperCase() +
             trimmedCategoryName.slice(1).toLowerCase();
 
+        // Check if category already exists (case-insensitive)
         const existingCategory = await Category.findOne({
             name: { $regex: new RegExp(`^${formattedCategoryName}$`, 'i') }
         });
@@ -121,42 +119,6 @@ const addCategory = async (req, res) => {
     }
 };
 
-
-const editCategory = async (req, res) => {
-    try {
-        const { categoryId, categoryName } = req.body;
-        const trimmedCategoryName = categoryName.trim();
-
-        if (!/^[A-Za-z]+$/.test(trimmedCategoryName)) {
-            return res.status(400).send('Category name can only contain alphabets.');
-        }
-        if (trimmedCategoryName.length > 10) {
-            return res.status(400).send('Category name must not exceed 10 characters.');
-        }
-
-        const formattedCategoryName =
-            trimmedCategoryName.charAt(0).toUpperCase() +
-            trimmedCategoryName.slice(1).toLowerCase();
-
-        const existingCategory = await Category.findOne({
-            _id: { $ne: categoryId },
-            name: { $regex: new RegExp(`^${formattedCategoryName}$`, 'i') }
-        });
-
-        if (existingCategory) {
-            return res.status(400).send('Category name already exists.');
-        }
-
-        await Category.findByIdAndUpdate(categoryId, {
-            name: formattedCategoryName,
-        });
-
-        res.redirect('/admin/category');
-    } catch (error) {
-        console.error('Error editing category:', error);
-        res.status(500).send('Error editing category.');
-    }
-};
 
 
 const getCategoryById = async (req, res) => {
@@ -216,7 +178,6 @@ const unblockCategory = async (req, res) => {
 export default {
     getCategory,
     addCategory,
-    editCategory,
     getCategoryById,
     updateCategory,
     blockCategory,

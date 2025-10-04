@@ -49,7 +49,7 @@ route.post("/logout", authController.getLogout)
 route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
 route.get("/search-products",userMiddleware.checkSession,productController.searchProduct)
 
-route.get("/productDetail/:id", productController.getProductDetailPage)
+route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
 
 
 export default route;
