@@ -48,16 +48,19 @@ const userSchema = new mongoose.Schema(
       default: false
     },
     
-    // Google authentication fields
+    
     googleId: {
       type: String,
       default: null
     },
     
-    // Account status
+   
     blocked: {
       type: Boolean,
       default: false
+    },
+    profileImage:{
+      type :String
     }
   },
   { timestamps: true }

@@ -158,7 +158,7 @@ function handleExistingSubImages(event, variantId) {
     });
   });
 
-  event.target.value = ""; // Reset input
+  event.target.value = ""; 
 }
 
 // -------------------- REMOVE SUB-IMAGE --------------------

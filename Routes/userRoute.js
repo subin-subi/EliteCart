@@ -3,7 +3,7 @@ import authController from "../controllers/userController/signupController.js";
 import otpController from "../controllers/userController/otpController.js"
 import userMiddleware from "../middleware/userMiddleware.js"
 import productController from "../controllers/userController/productController.js";
-
+import profileController from "../controllers/userController/personalDetailController.js"
 
 
 
@@ -50,6 +50,12 @@ route.get("/product",userMiddleware.checkSession,productController.getProductsPa
 route.get("/search-products",userMiddleware.checkSession,productController.searchProduct)
 
 route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
+
+route.get("/profile" , profileController.getProfile)
+route.post("/profile",profileController.editDetail)
+
+
+
 
 
 export default route;

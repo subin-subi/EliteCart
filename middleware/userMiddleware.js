@@ -11,7 +11,7 @@ const checkBlocked = async (req, res, next) => {
         if (productId) {
             const product = await Product.findById(productId);
             if (!product || product.isBlocked) {
-                return res.redirect("/"); // Redirect to home if blocked
+                return res.redirect("/"); 
             }
         }
      next(); 
@@ -27,6 +27,7 @@ const checkBlocked = async (req, res, next) => {
 const checkSession = async (req, res, next) => {
     try {
         if (!req.session || !req.session.user) {
+            
             return next(); 
         }
 
