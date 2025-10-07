@@ -4,7 +4,7 @@ import otpController from "../controllers/userController/otpController.js"
 import userMiddleware from "../middleware/userMiddleware.js"
 import productController from "../controllers/userController/productController.js";
 import profileController from "../controllers/userController/personalDetailController.js"
-
+import passwordController from "../controllers/userController/passwordController.js";
 
 
 const route = Router();
@@ -53,6 +53,12 @@ route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.ge
 
 route.get("/profile" , profileController.getProfile)
 route.post("/profile",profileController.editDetail)
+
+route.post("/sendotp", profileController.sendOtp)
+route.post("/validateOtp", profileController.verifyOtp)
+
+
+route.get("/change-password", passwordController.getPage)
 
 
 
