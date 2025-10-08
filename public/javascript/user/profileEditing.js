@@ -131,51 +131,60 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ----------------------- FORM SUBMIT -----------------------
-  editProfileForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+editProfileForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    const name = document.getElementById("nameInput").value.trim();
-    const email = document.getElementById("emailInput").value.trim();
-    const phone = document.getElementById("phoneInput").value.trim();
-    const croppedImageBase64 = document.getElementById("croppedImageInput").value;
+  const name = document.getElementById("nameInput").value.trim();
+  const email = document.getElementById("emailInput").value.trim();
+  const phone = document.getElementById("phoneInput").value.trim();
+  const croppedImageBase64 = document.getElementById("croppedImageInput").value;
 
-    const nameValid = name.length >= 3 && /^[a-zA-Z\s.]+$/.test(name);
-    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    const phoneValid = !phone || /^[1-9][0-9]{9}$/.test(phone);
+  // ✅ validation
+  const nameValid = name.length >= 3 && /^[a-zA-Z\s.]+$/.test(name);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const phoneValid = !phone || /^[1-9][0-9]{9}$/.test(phone);
 
-    document.getElementById("nameError").classList.toggle("hidden", nameValid);
-    document.getElementById("emailError").classList.toggle("hidden", emailValid);
-    document.getElementById("phoneError").classList.toggle("hidden", phoneValid);
+  document.getElementById("nameError").classList.toggle("hidden", nameValid);
+  document.getElementById("emailError").classList.toggle("hidden", emailValid);
+  document.getElementById("phoneError").classList.toggle("hidden", phoneValid);
 
-    if (!nameValid || !emailValid || !phoneValid) return;
+  if (!nameValid || !emailValid || !phoneValid) return;
 
-   
-    if (email !== originalEmail) {
-      try {
-        const { data } = await axios.post(
-          "/sendotp",
-          { email },
-          { withCredentials: true }
-        );
+ 
+  if (email !== originalEmail) {
+  try {
+    const { data } = await axios.post("/sendotp", { email }, { withCredentials: true });
 
-        if (data.success) {
-          otpModal.classList.remove("hidden");
-          otpModal.classList.add("flex");
-          startOTPTimer(120);
-          pendingFormData = new FormData(editProfileForm);
-        } else {
-          Swal.fire("Error", data.message || "Failed to send OTP", "error");
-        }
-      } catch (error) {
-        console.error(error);
-        Swal.fire("Error", "Failed to send OTP", "error");
-      }
-      return;
+    if (data.success) {
+      console.log("OTP sent, switching modals...");
+
+      // Hide edit modal
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+
+      // Show OTP modal
+      otpModal.classList.remove("hidden");
+      otpModal.classList.add("flex");
+
+      // Start OTP timer
+      startOTPTimer(120);
+
+      // Save form data to submit after OTP verification
+      pendingFormData = new FormData(editProfileForm);
+    } else {
+      Swal.fire("Error", data.message || "Failed to send OTP", "error");
     }
+  } catch (error) {
+    console.error("Send OTP Error:", error);
+    const msg = error.response?.data?.message || "Failed to send OTP";
+    Swal.fire("Error", msg, "error");
+  }
+  return;
+}
 
-    // ✅ If email not changed → update directly
-    await submitProfileForm(editProfileForm, croppedImageBase64);
-  });
+  // ✅ If email is NOT changed → directly update
+  await submitProfileForm(editProfileForm, croppedImageBase64);
+});
 
   // ----------------------- VERIFY OTP -----------------------
  verifyOtpBtn.addEventListener("click", async () => {
@@ -270,3 +279,10 @@ async function submitProfileForm(formOrFormData) {
     Swal.fire("Error", "Something went wrong while updating profile", "error");
   }
 }
+
+window.addEventListener('click', (e) => {
+  if (e.target === modal && !otpModal.classList.contains('flex')) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+});

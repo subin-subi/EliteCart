@@ -83,6 +83,16 @@ const sendOtp = async (req, res) => {
     const userId = req.session.user;
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
+
+     const existingUser = await User.findOne({ email: email.trim().toLowerCase(), _id: { $ne: userId } });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "This email is already in use by another account."
+      });
+    }
+
+
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
@@ -129,8 +139,8 @@ const verifyOtp = async (req, res) => {
     }
 
     // OTP is valid
-    user.isverified = true; // mark verified
-    user.otp = null;        // remove OTP
+    user.isverified = true;
+    user.otp = null;        
     user.otpExpiresAt = null; // remove expiry
     await user.save();
 
