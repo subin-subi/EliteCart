@@ -60,8 +60,9 @@ route.post("/validateOtp", profileController.verifyOtp)
 route.post("/resendOtp",profileController.resendOtp)
 
 
-route.get("/change-password", passwordController.getPage)
 
+route.get("/change-password", passwordController.getPage)
+route.post("/changePassword",passwordController.changePassword)
 
 
 

@@ -33,12 +33,14 @@
                 <span class="font-medium text-gray-700">Coupon</span>
             </a>
         </li>
+       <% if (!user.googleId) { %>
         <li>
             <a href="/change-password" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg transition">
                 <span>🔒</span>
                 <span class="font-medium text-gray-700">Password Change</span>
             </a>
         </li>
+        <% } %>
         <li>
             <a href="/logout" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg transition">
                 <span>⏻</span>
