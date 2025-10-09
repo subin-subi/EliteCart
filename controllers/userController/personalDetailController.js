@@ -128,15 +128,17 @@ const verifyOtp = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
+     // Check if OTP is expired
+    if (Date.now() > user.otpExpiresAt) {
+      return res.status(400).json({ success: false, message: "OTP expired" });
+    } 
+
     // Check if OTP matches
     if (user.otp !== otp) {
       return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
 
-    // Check if OTP is expired
-    if (Date.now() > user.otpExpiresAt) {
-      return res.status(400).json({ success: false, message: "OTP expired" });
-    }
+   
 
     // OTP is valid
     user.isverified = true;
@@ -153,10 +155,72 @@ const verifyOtp = async (req, res) => {
 };
 
 
+const resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    const userId = req.session.user;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Prevent multiple OTP requests
+    if (user.otpExpiresAt && Date.now() < user.otpExpiresAt) {
+      return res.status(400).json({
+        success: false,
+        message: "Please wait before requesting a new OTP"
+      });
+    }
+
+    const newOtp = generateOTP();
+
+    user.otp = newOtp;
+    user.otpExpiresAt = Date.now() + 2 * 60 * 1000; // 2 min
+    user.otpAttempts = 0;
+    await user.save();
+
+    await sendOTPEmail(email, newOtp);
+
+    return res.json({
+      success: true,
+      message: "OTP resent successfully"
+    });
+
+  } catch (err) {
+    console.log("Resend OTP error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to resend OTP"
+    });
+  }
+};
+
+
+
+
+
 
 export default { 
                 getProfile,
                 editDetail,
               sendOtp,
-               verifyOtp
+               verifyOtp,
+               resendOtp
               }

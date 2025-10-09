@@ -112,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clearInterval(otpTimerInterval);
         timerDisplay.textContent = "00:00";
         timerDisplay.classList.add("text-red-600");
+        resendOtpBtn.classList.remove("hidden");
       }
       seconds--;
     };
@@ -139,7 +140,7 @@ editProfileForm.addEventListener("submit", async (e) => {
   const phone = document.getElementById("phoneInput").value.trim();
   const croppedImageBase64 = document.getElementById("croppedImageInput").value;
 
-  // ✅ validation
+  //  validation
   const nameValid = name.length >= 3 && /^[a-zA-Z\s.]+$/.test(name);
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const phoneValid = !phone || /^[1-9][0-9]{9}$/.test(phone);
@@ -156,7 +157,7 @@ editProfileForm.addEventListener("submit", async (e) => {
     const { data } = await axios.post("/sendotp", { email }, { withCredentials: true });
 
     if (data.success) {
-      console.log("OTP sent, switching modals...");
+      
 
       // Hide edit modal
       modal.classList.add("hidden");
@@ -182,7 +183,7 @@ editProfileForm.addEventListener("submit", async (e) => {
   return;
 }
 
-  // ✅ If email is NOT changed → directly update
+  // If email is NOT changed → directly update
   await submitProfileForm(editProfileForm, croppedImageBase64);
 });
 
@@ -220,33 +221,41 @@ editProfileForm.addEventListener("submit", async (e) => {
       otpInputs.forEach((i) => (i.value = ""));
       otpInputs[0].focus();
     }
-  } catch (err) {
-    otpLoadingSpinner.classList.add("hidden");
-    otpError.textContent = "Error verifying OTP.";
-    otpError.classList.remove("hidden");
-  }
+  }catch (err) {
+  otpLoadingSpinner.classList.add("hidden");
+
+  // Get error message from server if available
+  const msg = err.response?.data?.message || "Error verifying OTP.";
+  otpError.textContent = msg;
+  otpError.classList.remove("hidden");
+
+  // Clear inputs
+  otpInputs.forEach((i) => (i.value = ""));
+  otpInputs[0].focus();
+}
 });
 
   // ----------------------- RESEND OTP -----------------------
   resendOtpBtn.addEventListener("click", async () => {
-    const email = document.getElementById("emailInput").value.trim();
-    try {
-      const { data } = await axios.post(
-        "/resend-otp",
-        { email },
-        { withCredentials: true }
-      );
+  const email = document.getElementById("emailInput").value.trim();
+  try {
+    const { data } = await axios.post(
+      "/resendOtp", 
+      { email }, 
+      { withCredentials: true });
 
-      if (data.success) {
-        startOTPTimer(120);
-        Swal.fire("Sent", "OTP resent successfully!", "success");
-      } else {
-        Swal.fire("Error", "Failed to resend OTP", "error");
-      }
-    } catch {
-      Swal.fire("Error", "Something went wrong while resending OTP", "error");
+    if (data.success) {
+      Swal.fire("Sent", "OTP resent successfully!", "success");
+      startOTPTimer(120);  // 
+      resendOtpBtn.classList.add("hidden");  // 
+    } else {
+      Swal.fire("Error", data.message || "Failed to resend OTP", "error");
     }
-  });
+  } catch {
+    Swal.fire("Error", "Something went wrong while resending OTP", "error");
+  }
+});
+
 });
 
 // ----------------------- SUBMIT PROFILE FORM FUNCTION -----------------------
