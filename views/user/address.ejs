@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Address | Elite Cart</title>
+  <link rel="stylesheet" href="/css/output.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <%- include("../partials/nav") %>
+
+  <div class="flex flex-1 mt-20 px-4 md:px-10 gap-6">
+
+    <!-- Sidebar -->
+    <div class="hidden md:block">
+      <%- include("../partials/userSidebar") %>
+    </div>
+
+    <!-- Address Section -->
+    <div class="flex-1 max-w-3xl mx-auto my-[60px] px-4 gap-6">
+      <div class="bg-white border rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Address</h2>
+        <p class="text-sm text-gray-500 text-center mb-6">
+          Save your address for faster checkout experience.
+        </p>
+
+        <!-- Add Address Button (Always Visible) -->
+        <div class="text-center mb-4">
+          <button onclick="openAddressModal()" 
+            class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition">
+            + Add New Address
+          </button>
+        </div>
+
+        <!-- Address List -->
+        <div id="addressList" class="flex flex-col gap-4">
+          <% if (addresses && addresses.length > 0) { %>
+            <% addresses.forEach(addr => { %>
+              <div class="bg-gray-50 border rounded-lg p-4 shadow flex flex-col gap-2">
+                <div class="flex justify-between items-center">
+                  <h3 class="font-semibold text-lg"><%= addr.name %></h3>
+                 <label class="inline-flex items-center cursor-pointer">
+  <input 
+    type="checkbox" 
+    class="defaultToggle" 
+    data-id="<%= addr._id %>" 
+    <%= addr.isDefault ? "checked" : "" %>>
+  <span class="ml-2 text-green-600 font-bold">Default</span>
+</label>
+
+                </div>
+                <p><%= addr.houseName %>, <%= addr.street %>, <%= addr.city %>, <%= addr.state %>, <%= addr.pincode %>, <%= addr.country %></p>
+                <p>Mobile: <%= addr.mobile %></p>
+                <div class="mt-4 flex justify-end gap-2">
+                  <button class="px-4 py-1 bg-gray-200 rounded hover:bg-gray-300 editBtn">Edit</button>
+                 <button 
+  class="blockBtn px-3 py-1 rounded-md text-white text-sm transition 
+    <%= addr.isBlocked ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600" %>"
+  onclick="toggleBlockAddress('<%= addr._id %>', <%= addr.isBlock %>) "
+>  
+  <span class="material-icons text-sm mr-1">
+    <%= addr.isBlock ? "check_circle" : "block" %> 
+  </span>
+  <%= addr.isBlock ? "Unblock" : "Block" %>
+</button>
+
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p class="text-center text-gray-500">No addresses found. Add a new address above.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <%- include('../partials/footer') %>
+
+  <!-- Address Form Modal -->
+  <%- include('../partials/addressForm') %>
+
+
+  <script>
+    const addressList = document.getElementById("addressList");
+
+    function openAddressModal() {
+      document.getElementById('addressModal').classList.remove('hidden');
+    }
+    function closeModal() {
+      document.getElementById('addressModal').classList.add('hidden');
+    }
+
+    function editAddress(addr) {
+      document.getElementById('modalTitle').textContent = 'Edit Address';
+      // Fill form values here for editing
+      document.getElementById('name').value = addr.name;
+      document.getElementById('house').value = addr.houseName;
+      document.getElementById('street').value = addr.street;
+      document.getElementById('city').value = addr.city;
+      document.getElementById('state').value = addr.state;
+      document.getElementById('pincode').value = addr.pincode;
+      document.getElementById('country').value = addr.country;
+      document.getElementById('mobile').value = addr.mobile;
+      document.getElementById('addressId').value = addr._id; // hidden input for editing
+      openAddressModal();
+    }
+
+      
+function toggleBlockAddress(addressId, currentlyBlocked) {
+  const action = currentlyBlocked ? "unblock" : "block";
+  Swal.fire({
+    title: `Are you sure you want to ${action} this address?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: currentlyBlocked ? "#28a745" : "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: `Yes, ${action} it!`
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/${action}-address/${addressId}`, { method: "PATCH" })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire("Success", `Address ${currentlyBlocked ? "unblocked" : "blocked"} successfully!`, "success")
+              .then(() => location.reload()); // reload the list with fresh state
+          } else {
+            Swal.fire("Error", data.message || `Failed to ${action} address`, "error");
+          }
+        })
+        .catch(() => Swal.fire("Error", `Error trying to ${action} address`, "error"));
+    }
+  });
+}
+
+
+   document.querySelectorAll(".defaultToggle").forEach(toggle => {
+  toggle.addEventListener("change", async (e) => {
+    const selectedToggle = e.target;
+    const addressId = selectedToggle.getAttribute("data-id");
+
+    
+    if (!addressId || addressId === "undefined" || addressId === "null") {
+      console.error("Address ID is missing!");
+      selectedToggle.checked = false;
+      return;
+    }
+
+    if (selectedToggle.checked) {
+      try {
+        await axios.post(`/set-default-address/${addressId}`);
+        document.querySelectorAll(".defaultToggle").forEach(cb => {
+          if (cb !== selectedToggle) cb.checked = false;
+        });
+      } catch (err) {
+        console.error("Error setting default address:", err);
+        selectedToggle.checked = false;
+      }
+    } else {
+      selectedToggle.checked = true;
+    }
+  });
+});
+
+
+  
+  </script>
+</body>
+</html>

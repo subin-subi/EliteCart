@@ -5,7 +5,7 @@ import userMiddleware from "../middleware/userMiddleware.js"
 import productController from "../controllers/userController/productController.js";
 import profileController from "../controllers/userController/personalDetailController.js"
 import passwordController from "../controllers/userController/passwordController.js";
-
+import addressController from "../controllers/userController/addressController.js"
 
 const route = Router();
 
@@ -64,7 +64,10 @@ route.post("/resendOtp",profileController.resendOtp)
 route.get("/change-password", passwordController.getPage)
 route.post("/changePassword",passwordController.changePassword)
 
-
-
+route.get("/address", addressController.getAddress)
+route.post("/add-Address", addressController.saveAddress)
+route.post("/set-default-address/:id", addressController.setDefaultAddress)
+route.patch("/block-address/:id", addressController.blockAddress);
+route.patch("/unblock-address/:id",addressController.unblockAddress );
 
 export default route;
