@@ -69,5 +69,5 @@ route.post("/add-Address", addressController.saveAddress)
 route.post("/set-default-address/:id", addressController.setDefaultAddress)
 route.patch("/block-address/:id", addressController.blockAddress);
 route.patch("/unblock-address/:id",addressController.unblockAddress );
-
+route.patch("/edit-Address/:id", addressController.editAddress)
 export default route;

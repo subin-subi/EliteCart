@@ -118,7 +118,7 @@ const blockAddress = async (req, res) => {
       { $set: { isBlock: true } },
       { new: true }
     );
-console.log("block:", updated)
+
     if (!updated) return res.json({ success: false, message: "Address not found" });
 
     res.json({ success: true, message: "Address blocked successfully" });
@@ -149,13 +149,47 @@ const unblockAddress = async (req, res) => {
 
 
 
+const editAddress = async (req, res) => {
+  try {
+    const addressId = req.params.id;
+    const { name, houseName, street, city, state, country, pincode, mobile } = req.body;
+
+    // Update the address
+    const updatedAddress = await Address.findByIdAndUpdate(
+      addressId,
+      {
+        name,
+        houseName,
+        street,
+        city,
+        state,
+        country,
+        pincode,
+        mobile
+      },
+      { new: true } // return the updated document
+    );
+
+    if (!updatedAddress) {
+      return res.status(404).json({ success: false, message: "Address not found" });
+    }
+
+    res.json({ success: true, message: "Address updated successfully!", address: updatedAddress });
+
+  } catch (err) {
+    console.log("Error in editAddress:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 
 
 export default({
              getAddress,
              saveAddress,
-            
              setDefaultAddress,
              blockAddress,
-             unblockAddress
+             unblockAddress,
+             editAddress
 })

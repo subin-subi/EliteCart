@@ -1,55 +1,109 @@
-  <!-- Modal for Add/Edit Address -->
-<div id="addressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center hidden">
+<!-- Add Address Modal -->
+<div id="addAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center hidden">
   <div class="bg-white rounded-lg p-6 w-full max-w-md mt-[120px] mb-[40px]">
-    <h3 class="text-lg font-semibold mb-4" id="modalTitle">Add Address</h3>
-    <form id="addressForm" class="space-y-3 mb-0">
-      <input type="text" id="name" placeholder="Full Name" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="house" placeholder="House Name" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="street" placeholder="Street" class="w-full px-3 py-2 border rounded">
-      <input type="text" id="city" placeholder="City" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="state" placeholder="State" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="pincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="country" placeholder="Country" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="mobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded" required>
+    <h3 class="text-lg font-semibold mb-4">Add Address</h3>
+    <form id="addAddressForm" class="space-y-3 mb-0">
+      <input type="text" id="addName" placeholder="Full Name" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="addHouse" placeholder="House Name" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="addStreet" placeholder="Street" class="w-full px-3 py-2 border rounded">
+      <input type="text" id="addCity" placeholder="City" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="addState" placeholder="State" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="addPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="addCountry" placeholder="Country" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="addMobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded" required>
 
       <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="closeModal()" class="px-2 py-1 text-sm bg-gray-200 rounded">Cancel</button>
-<button type="submit" class="px-2 py-1 text-sm bg-black text-white rounded">Save</button>
+        <button type="button" onclick="closeAddModal()" class="px-2 py-1 text-sm bg-gray-200 rounded">Cancel</button>
+        <button type="submit" class="px-2 py-1 text-sm bg-black text-white rounded">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
 
+<!-- Edit Address Modal -->
+<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mt-[120px] mb-[40px]">
+    <h3 class="text-lg font-semibold mb-4">Edit Address</h3>
+    <form id="editAddressForm" class="space-y-3 mb-0">
+      <input type="hidden" id="editAddressId">
+      <input type="text" id="editName" placeholder="Full Name" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="editHouse" placeholder="House Name" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="editStreet" placeholder="Street" class="w-full px-3 py-2 border rounded">
+      <input type="text" id="editCity" placeholder="City" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="editState" placeholder="State" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="editPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="editCountry" placeholder="Country" class="w-full px-3 py-2 border rounded" required>
+      <input type="text" id="editMobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded" required>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeEditModal()" class="px-2 py-1 text-sm bg-gray-200 rounded">Cancel</button>
+        <button type="submit" class="px-2 py-1 text-sm bg-black text-white rounded">Save</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-    
-document.getElementById('addressForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const data = {
-    name: document.getElementById('name').value,
-    houseName: document.getElementById('house').value,
-    street: document.getElementById('street').value,
-    city: document.getElementById('city').value,
-    state: document.getElementById('state').value,
-    pincode: document.getElementById('pincode').value,
-    country: document.getElementById('country').value,
-    mobile: document.getElementById('mobile').value
-  };    
+  // Close modals
+  function closeAddModal() { document.getElementById('addAddressModal').classList.add('hidden'); }
+  function closeEditModal() { document.getElementById('editAddressModal').classList.add('hidden'); }
 
-  try {
-    const res = await axios.post('/add-Address', data);
-    if (res.data.success) {
-      Swal.fire('Success', 'Address added successfully!', 'success').then(() => {
-        window.location.reload();
-      });
-    }
-  } catch (err) {
-    console.error(err);
-    Swal.fire('Error', 'Something went wrong!', 'error');
+  // Add Address
+  document.getElementById('addAddressForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = {
+      name: document.getElementById('addName').value,
+      houseName: document.getElementById('addHouse').value,
+      street: document.getElementById('addStreet').value,
+      city: document.getElementById('addCity').value,
+      state: document.getElementById('addState').value,
+      pincode: document.getElementById('addPincode').value,
+      country: document.getElementById('addCountry').value,
+      mobile: document.getElementById('addMobile').value
+    };
+
+    try {
+      const res = await axios.post('/add-Address', data);
+      if (res.data.success) {
+        Swal.fire('Success', 'Address added successfully!', 'success').then(() => window.location.reload());
+      }
+    } catch (err) { console.error(err); Swal.fire('Error', 'Something went wrong!', 'error'); }
+  });
+
+  // Prefill Edit form
+  function editAddress(addr) {
+    document.getElementById('editAddressId').value = addr._id;
+    document.getElementById('editName').value = addr.name;
+    document.getElementById('editHouse').value = addr.houseName;
+    document.getElementById('editStreet').value = addr.street;
+    document.getElementById('editCity').value = addr.city;
+    document.getElementById('editState').value = addr.state;
+    document.getElementById('editPincode').value = addr.pincode;
+    document.getElementById('editCountry').value = addr.country;
+    document.getElementById('editMobile').value = addr.mobile;
+    document.getElementById('editAddressModal').classList.remove('hidden');
   }
-});
 
+  // Edit Address
+  document.getElementById('editAddressForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = document.getElementById('editAddressId').value;
+    const data = {
+      name: document.getElementById('editName').value,
+      houseName: document.getElementById('editHouse').value,
+      street: document.getElementById('editStreet').value,
+      city: document.getElementById('editCity').value,
+      state: document.getElementById('editState').value,
+      pincode: document.getElementById('editPincode').value,
+      country: document.getElementById('editCountry').value,
+      mobile: document.getElementById('editMobile').value
+    };
 
-
+    try {
+      const res = await axios.patch(`/edit-Address/${id}`, data);
+      if (res.data.success) {
+        Swal.fire('Success', 'Address updated successfully!', 'success').then(() => window.location.reload());
+      }
+    } catch (err) { console.error(err); Swal.fire('Error', 'Something went wrong!', 'error'); }
+  });
 </script>
-

@@ -57,7 +57,12 @@
                 <p><%= addr.houseName %>, <%= addr.street %>, <%= addr.city %>, <%= addr.state %>, <%= addr.pincode %>, <%= addr.country %></p>
                 <p>Mobile: <%= addr.mobile %></p>
                 <div class="mt-4 flex justify-end gap-2">
-                  <button class="px-4 py-1 bg-gray-200 rounded hover:bg-gray-300 editBtn">Edit</button>
+     <button 
+  class="px-4 py-1 bg-gray-200 rounded hover:bg-gray-300 editBtn"
+  onclick='editAddress(<%- JSON.stringify(addr) %>)'>
+  Edit
+</button>
+
                  <button 
   class="blockBtn px-3 py-1 rounded-md text-white text-sm transition 
     <%= addr.isBlocked ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600" %>"
@@ -85,33 +90,17 @@
 
   <!-- Address Form Modal -->
   <%- include('../partials/addressForm') %>
-
+  
 
   <script>
     const addressList = document.getElementById("addressList");
 
     function openAddressModal() {
-      document.getElementById('addressModal').classList.remove('hidden');
+      document.getElementById('addAddressModal').classList.remove('hidden');
     }
-    function closeModal() {
-      document.getElementById('addressModal').classList.add('hidden');
-    }
+    
 
-    function editAddress(addr) {
-      document.getElementById('modalTitle').textContent = 'Edit Address';
-      // Fill form values here for editing
-      document.getElementById('name').value = addr.name;
-      document.getElementById('house').value = addr.houseName;
-      document.getElementById('street').value = addr.street;
-      document.getElementById('city').value = addr.city;
-      document.getElementById('state').value = addr.state;
-      document.getElementById('pincode').value = addr.pincode;
-      document.getElementById('country').value = addr.country;
-      document.getElementById('mobile').value = addr.mobile;
-      document.getElementById('addressId').value = addr._id; // hidden input for editing
-      openAddressModal();
-    }
-
+    
       
 function toggleBlockAddress(addressId, currentlyBlocked) {
   const action = currentlyBlocked ? "unblock" : "block";
