@@ -5,10 +5,30 @@ const getAddress = async (req, res) => {
   try {
     const userId = req.session.user; 
     const user = await User.findById(userId).lean();
- const addresses = await Address.find({ userId }).sort({ createdAt: -1 });
 
+   
+    const page = parseInt(req.query.page) || 1;
+    const limit = 3; // number of addresses per page
+    const skip = (page - 1) * limit;
 
-    res.render("user/address", { user, addresses });
+    
+    const addresses = await Address.find({ userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    
+    const totalAddresses = await Address.countDocuments({ userId });
+    const totalPages = Math.ceil(totalAddresses / limit);
+
+    res.render("user/address", { 
+      user, 
+      addresses, 
+      currentPage: page,
+      totalPages
+    });
+
   } catch (err) {
     console.log("Error fetching addresses:", err);
     res.status(500).send("Something went wrong");

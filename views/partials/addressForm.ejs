@@ -26,14 +26,46 @@
     <h3 class="text-lg font-semibold mb-4">Edit Address</h3>
     <form id="editAddressForm" class="space-y-3 mb-0">
       <input type="hidden" id="editAddressId">
-      <input type="text" id="editName" placeholder="Full Name" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="editHouse" placeholder="House Name" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="editStreet" placeholder="Street" class="w-full px-3 py-2 border rounded">
-      <input type="text" id="editCity" placeholder="City" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="editState" placeholder="State" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="editPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="editCountry" placeholder="Country" class="w-full px-3 py-2 border rounded" required>
-      <input type="text" id="editMobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded" required>
+
+      <div>
+        <input type="text" id="editName" placeholder="Full Name" class="w-full px-3 py-2 border rounded" required>
+        <span id="editNameError" class="text-red-500 text-sm"></span>
+      </div>
+
+      <div>
+        <input type="text" id="editHouse" placeholder="House Name" class="w-full px-3 py-2 border rounded" required>
+        <span id="editHouseError" class="text-red-500 text-sm"></span>
+      </div>
+
+      <div>
+        <input type="text" id="editStreet" placeholder="Street" class="w-full px-3 py-2 border rounded">
+        <span id="editStreetError" class="text-red-500 text-sm"></span>
+      </div>
+
+      <div>
+        <input type="text" id="editCity" placeholder="City" class="w-full px-3 py-2 border rounded" required>
+        <span id="editCityError" class="text-red-500 text-sm"></span>
+      </div>
+
+      <div>
+        <input type="text" id="editState" placeholder="State" class="w-full px-3 py-2 border rounded" required>
+        <span id="editStateError" class="text-red-500 text-sm"></span>
+      </div>
+
+      <div>
+        <input type="text" id="editPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded" required>
+        <span id="editPincodeError" class="text-red-500 text-sm"></span>
+      </div>
+
+      <div>
+        <input type="text" id="editCountry" placeholder="Country" class="w-full px-3 py-2 border rounded" required>
+        <span id="editCountryError" class="text-red-500 text-sm"></span>
+      </div>
+
+      <div>
+        <input type="text" id="editMobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded" required>
+        <span id="editMobileError" class="text-red-500 text-sm"></span>
+      </div>
 
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="closeEditModal()" class="px-2 py-1 text-sm bg-gray-200 rounded">Cancel</button>
@@ -70,7 +102,9 @@
     } catch (err) { console.error(err); Swal.fire('Error', 'Something went wrong!', 'error'); }
   });
 
-  // Prefill Edit form
+
+  //////////////////////////// Prefill Edit form/////////////////////////
+  
   function editAddress(addr) {
     document.getElementById('editAddressId').value = addr._id;
     document.getElementById('editName').value = addr.name;
@@ -84,26 +118,106 @@
     document.getElementById('editAddressModal').classList.remove('hidden');
   }
 
-  // Edit Address
-  document.getElementById('editAddressForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const id = document.getElementById('editAddressId').value;
-    const data = {
-      name: document.getElementById('editName').value,
-      houseName: document.getElementById('editHouse').value,
-      street: document.getElementById('editStreet').value,
-      city: document.getElementById('editCity').value,
-      state: document.getElementById('editState').value,
-      pincode: document.getElementById('editPincode').value,
-      country: document.getElementById('editCountry').value,
-      mobile: document.getElementById('editMobile').value
-    };
+document.getElementById('editAddressForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    try {
-      const res = await axios.patch(`/edit-Address/${id}`, data);
-      if (res.data.success) {
-        Swal.fire('Success', 'Address updated successfully!', 'success').then(() => window.location.reload());
-      }
-    } catch (err) { console.error(err); Swal.fire('Error', 'Something went wrong!', 'error'); }
-  });
+  // Inputs
+  const id = document.getElementById('editAddressId').value;
+  const name = document.getElementById('editName').value.trim();
+  const houseName = document.getElementById('editHouse').value.trim();
+  const street = document.getElementById('editStreet').value.trim();
+  const city = document.getElementById('editCity').value.trim();
+  const state = document.getElementById('editState').value.trim();
+  const pincode = document.getElementById('editPincode').value.trim();
+  const country = document.getElementById('editCountry').value.trim();
+  const mobile = document.getElementById('editMobile').value.trim();
+
+  // Error spans
+  const errorFields = {
+    name: document.getElementById('editNameError'),
+    houseName: document.getElementById('editHouseError'),
+    street: document.getElementById('editStreetError'),
+    city: document.getElementById('editCityError'),
+    state: document.getElementById('editStateError'),
+    pincode: document.getElementById('editPincodeError'),
+    country: document.getElementById('editCountryError'),
+    mobile: document.getElementById('editMobileError')
+  };
+
+  // Clear previous errors
+  Object.values(errorFields).forEach(span => span.textContent = "");
+
+  let isValid = true;
+
+  // ✅ Name
+  if (!name) {
+    errorFields.name.textContent = "Full name is required";
+    isValid = false;
+  }
+
+  // 🏠 House name
+  if (!houseName) {
+    errorFields.houseName.textContent = "House name is required";
+    isValid = false;
+  }
+
+  // 🏘️ Street (optional, you can make required if needed)
+  if (street && street.length < 2) {
+    errorFields.street.textContent = "Street name is too short";
+    isValid = false;
+  }
+
+  // 🏙️ City
+  if (!city) {
+    errorFields.city.textContent = "City is required";
+    isValid = false;
+  }
+
+  // 🗺️ State
+  if (!state) {
+    errorFields.state.textContent = "State is required";
+    isValid = false;
+  }
+
+  // 📮 Pincode
+  if (!/^\d{6}$/.test(pincode)) {
+    errorFields.pincode.textContent = "Pincode must be 6 digits";
+    isValid = false;
+  }
+
+  // 🌍 Country
+  if (!country) {
+    errorFields.country.textContent = "Country is required";
+    isValid = false;
+  }
+
+  // 📱 Mobile
+  if (!/^[0-9]{10}$/.test(mobile)) {
+    errorFields.mobile.textContent = "Mobile number must be 10 digits";
+    isValid = false;
+  } else if (/^0{10}$/.test(mobile)) {
+    errorFields.mobile.textContent = "Mobile number can't be all zeros";
+    isValid = false;
+  }
+
+  if (!isValid) return; // Stop if validation fails ❌
+
+  // ✅ Submit
+  const data = { name, houseName, street, city, state, pincode, country, mobile };
+
+  try {
+    const res = await axios.patch(`/edit-Address/${id}`, data);
+    if (res.data.success) {
+      Swal.fire('Success', 'Address updated successfully!', 'success').then(() => {
+        window.location.reload();
+      });
+    } else {
+      Swal.fire('Error', res.data.message || 'Update failed', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    Swal.fire('Error', 'Something went wrong!', 'error');
+  }
+});
+
 </script>

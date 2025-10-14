@@ -81,9 +81,34 @@
             <p class="text-center text-gray-500">No addresses found. Add a new address above.</p>
           <% } %>
         </div>
+
+
+<div class="mt-4 flex justify-center gap-2">
+  <% if (currentPage > 1) { %>
+    <a href="?page=<%= currentPage - 1 %>" 
+       class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <a href="?page=<%= i %>" 
+       class="px-3 py-1 rounded <%= i === currentPage ? 'bg-black text-white' : 'bg-gray-200 hover:bg-gray-300' %>">
+      <%= i %>
+    </a>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+    <a href="?page=<%= currentPage + 1 %>" 
+       class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
+  <% } %>
+</div>
+
+
+
       </div>
     </div>
   </div>
+
+
 
   <!-- Footer -->
   <%- include('../partials/footer') %>
