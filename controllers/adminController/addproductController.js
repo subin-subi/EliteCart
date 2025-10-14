@@ -164,10 +164,134 @@ const editProduct = [
 ];
 
 
+
+
+
+
+
+
+
+const addNewVariants = [
+  // Accept any file field
+  upload.any(),
+
+  async (req, res) => {
+    try {
+      const productId = req.params.id;
+
+      // Validate product exists
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      // Ensure variants exist
+      if (!Array.isArray(req.body.newVariants) || req.body.newVariants.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No variants provided",
+        });
+      }
+
+      const variantsToAdd = [];
+
+      for (let i = 0; i < req.body.newVariants.length; i++) {
+        const variant = req.body.newVariants[i];
+
+        const volume = Number(variant.volume);
+        const price = parseFloat(variant.price);
+        const stock = parseInt(variant.stock);
+
+        // ===== VALIDATIONS =====
+        if (isNaN(volume) || volume <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Volume must be a positive number`,
+          });
+        }
+        if (!price || price <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Price must be a positive number`,
+          });
+        }
+        if (stock < 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Stock must be a non-negative number`,
+          });
+        }
+
+       
+        const mainImageFile = req.files.find(
+          (file) => file.fieldname === `newVariants[${i}][mainImage]`
+        );
+        const subImageFiles = req.files.filter(
+          (file) => file.fieldname === `newVariants[${i}][subImages]`
+        );
+
+        if (!mainImageFile) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Main image is required`,
+          });
+        }
+
+        if (!subImageFiles || subImageFiles.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: At least one sub image is required`,
+          });
+        }
+
+        // Multer + Cloudinary already gives the uploaded URL in file.path
+        const mainImageUrl = mainImageFile.path;
+        const subImagesUrls = subImageFiles.map((file) => file.path);
+
+        // Add validated variant
+        variantsToAdd.push({
+          volume,
+          price,
+          stock,
+          mainImage: mainImageUrl,
+          subImages: subImagesUrls,
+        });
+      }
+
+      // Save to database
+      product.variants.push(...variantsToAdd);
+      await product.save();
+
+      res.json({
+        success: true,
+        message: `${variantsToAdd.length} new variant(s) added successfully`,
+        product,
+      });
+    } catch (err) {
+      console.error("Error adding new variants:", err);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  },
+];
+
+
+
+
+
+
+
+
 export default {
                getaddProductPage ,
                 addProduct,
                 getEditPage,
-                editProduct
+                editProduct,
+                addNewVariants
                
 };

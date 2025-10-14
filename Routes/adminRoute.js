@@ -60,4 +60,6 @@ router.post("/addProduct", addproductController.addProduct)
 router.get("/editProduct/:id",addproductController.getEditPage)
 
 router.post("/editProduct/:id",addproductController.editProduct)
+
+router.post("/addNewVariants/:id",addproductController.addNewVariants)
 export default router;

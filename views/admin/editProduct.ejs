@@ -82,12 +82,15 @@
       </div>
 
       <!-- Variants Section Header -->
-      <!-- <div class="flex justify-between items-center mt-6">
+      <div class="flex justify-between items-center mt-6">
         <h2 class="text-xl font-semibold text-gray-800">Variants*</h2>
-        <button type="button" onclick="addVariant()" class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm">
-          + Add Variant
-        </button>
-      </div> -->
+        <button type="button" 
+        onclick="addVariant('<%= product._id %>')" 
+        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm">
+  + Add Variant
+</button>
+
+      </div>
 
       <!-- Variants -->
       <div class="space-y-6" id="variantsContainer">
@@ -96,7 +99,7 @@
          data-variant-id="<%= variant._id %>">
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-md font-medium text-gray-700">Variant <%= index + 1 %></h4>
-        <button type="button" onclick="removeVariant(this)" class="text-red-500 text-sm">✕</button>
+       
       </div>
 
             <div class="grid grid-cols-3 gap-4 mb-6">
@@ -195,9 +198,13 @@
     Add Sub Images
   </button>
 
-  <input type="file" name="variants[<%= index %>][subImages]" 
-         id="subImagesInput-<%= variant._id %>" multiple class="hidden" 
-         accept="image/*" onchange="handleExistingSubImages(event, '<%= variant._id %>')">
+  <input type="file" 
+       name="variants[<%= index %>][subImages]" 
+       id="subImagesInput-<%= variant._id %>" 
+       multiple class="hidden" 
+       accept="image/*"
+       onchange="handleExistingSubImages(event, '<%= variant._id %>', <%= variant.subImages ? variant.subImages.length : 0 %>)">
+
 </div>
 
 </div>
