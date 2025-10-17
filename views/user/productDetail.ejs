@@ -6,6 +6,8 @@
   <title>Product Details</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 </head>
 <body class="bg-gray-100 pt-16 sm:pt-20">
 <!-- Navbar -->
@@ -89,11 +91,13 @@
   <!-- Buttons -->
   <div class="mt-8 flex flex-col gap-4">
     <% if (product.variants[0].stock > 0) { %>
-      <a id="addToCartBtn"
-         href="/cart/add/<%= product._id %>?variant=<%= product.variants[0]._id %>"
-         class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
-        <i class="fa fa-shopping-cart"></i> Add To Cart
-      </a>
+     <button id="addToCartBtn"
+        data-product="<%= product._id %>"
+        data-variant="<%= product.variants[0]._id %>"
+        class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+     <i class="fa fa-shopping-cart"></i> Add To Cart
+    </button>
+
 
       <a id="buyNowBtn"
          href="/checkout/<%= product._id %>?variant=<%= product.variants[0]._id %>"
@@ -168,49 +172,64 @@ mainImage.addEventListener("mouseleave", () => {
 
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  const mainImage = document.getElementById("mainImage");
-  const priceText = document.getElementById("priceText");
-  const addToCartBtn = document.getElementById("addToCartBtn");
-  const buyNowBtn = document.getElementById("buyNowBtn");
-  const outOfStockBtn = document.getElementById("outOfStockBtn");
+variantSelect.addEventListener("change", (e) => {
+  const selectedOption = e.target.selectedOptions[0];
 
-  const variantSelect = document.getElementById("variantSelect");
+  const price = selectedOption.getAttribute("data-price");
+  priceText.textContent = `₹${Number(price).toLocaleString()}`;
 
-  if (variantSelect) {
-    variantSelect.addEventListener("change", (e) => {
-      const selectedOption = e.target.selectedOptions[0];
+  const image = selectedOption.getAttribute("data-image");
+  mainImage.src = image;
 
-      // Update price
-      const price = selectedOption.getAttribute("data-price");
-      priceText.textContent = `₹${Number(price).toLocaleString()}`;
+  const variantId = selectedOption.value;
+  // ✅ Store variant ID in data attributes instead of href
+  addToCartBtn.dataset.variant = variantId;
+  buyNowBtn.dataset.variant = variantId;
 
-      // Update main image
-      const image = selectedOption.getAttribute("data-image");
-      mainImage.src = image;
-
-      // Update cart/checkout links
-      const variantId = selectedOption.value;
-      addToCartBtn.href = `/cart/add/<%= product._id %>?variant=${variantId}`;
-      buyNowBtn.href = `/checkout/<%= product._id %>?variant=${variantId}`;
-
-      // Handle stock
-      const stock = parseInt(selectedOption.getAttribute("data-stock"), 10);
-      if (stock > 0) {
-        addToCartBtn.style.display = "flex";
-        buyNowBtn.style.display = "flex";
-        outOfStockBtn.style.display = "none";
-      } else {
-        addToCartBtn.style.display = "none";
-        buyNowBtn.style.display = "none";
-        outOfStockBtn.style.display = "block";
-      }
-    });
+  const stock = parseInt(selectedOption.getAttribute("data-stock"), 10);
+  if (stock > 0) {
+    addToCartBtn.style.display = "flex";
+    buyNowBtn.style.display = "flex";
+    outOfStockBtn.style.display = "none";
+  } else {
+    addToCartBtn.style.display = "none";
+    buyNowBtn.style.display = "none";
+    outOfStockBtn.style.display = "block";
   }
+});
+
+
+//////////////////////////////add to cart form ////////////////////////////////////
+document.addEventListener("DOMContentLoaded", () => {
+  const addToCartBtn = document.getElementById("addToCartBtn");
+
+  addToCartBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const productId = addToCartBtn.dataset.product;
+    const variantId = addToCartBtn.dataset.variant;
+
+    if (!variantId) {
+      alert("Please select a variant first");
+      return;
+    }
+
+    try {
+      const res = await axios.post("/cart/add", { productId, variantId });
+      if (res.data.success) {
+         window.location.href = "/cart";
+      } else {
+        alert("❌ Failed to add product");
+      }
+    } catch (err) {
+      console.error("Add to cart error:", err);
+      alert("⚠️ Something went wrong!");
+    }
+  });
 });
 
 
 
 </script>
-</body>
+</body>   
 </html>

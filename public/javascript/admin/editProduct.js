@@ -123,33 +123,41 @@ function editSubImage(variantId, subIndex) {
 function removeSubImage(variantId, imageUrl) {
   const form = document.getElementById("editProductForm");
 
-  // Add a hidden input to submit removed image paths to backend
+  // ✅ Add a hidden input for server to delete old image
   const hiddenInput = document.createElement("input");
   hiddenInput.type = "hidden";
   hiddenInput.name = "removeSubImages[]";
   hiddenInput.value = imageUrl;
   form.appendChild(hiddenInput);
 
-  // Remove from DOM
-  const imageWrapper = document.querySelector(`.subImageWrapper[data-variant="${variantId}"][data-url="${imageUrl}"]`);
+  // ✅ Remove from DOM
+  const imageWrapper = document.querySelector(
+    `.subImageWrapper[data-variant="${variantId}"][data-url="${imageUrl}"]`
+  );
   if (imageWrapper) {
     imageWrapper.remove();
   }
 
-  // Remove from croppedFiles if exists
+  // ✅ Remove from croppedFiles (if it's a newly added image)
   if (croppedFiles[variantId]?.subImages) {
     croppedFiles[variantId].subImages = croppedFiles[variantId].subImages.filter(
-      f => f.name !== imageUrl && f.url !== imageUrl
+      (f) => f.name !== imageUrl && f.url !== imageUrl
     );
   }
 
-  
-  const totalImages = document.querySelectorAll(`#subImagesContainer-${variantId} .subImageWrapper`).length 
-                      + (croppedFiles[variantId]?.subImages.length || 0);
+  // ✅ Correct counting — only count DOM elements now
+  const totalImages = document.querySelectorAll(
+    `#subImagesContainer-${variantId} .subImageWrapper`
+  ).length;
+
   if (totalImages < 3) {
     document.getElementById(`subImagesInput-${variantId}`).disabled = false;
   }
 }
+
+
+
+const removedExistingImages = {}; 
 
 function handleExistingSubImages(event, variantId) {
   const files = Array.from(event.target.files);
@@ -157,10 +165,11 @@ function handleExistingSubImages(event, variantId) {
   const maxLimit = 3;
 
   if (!croppedFiles[variantId]) croppedFiles[variantId] = { subImages: [] };
+  if (!removedExistingImages[variantId]) removedExistingImages[variantId] = [];
 
- 
-  const currentCount = container.querySelectorAll(".subImageWrapper").length 
-                       + croppedFiles[variantId].subImages.length;
+  // Count only server-existing wrappers (marked .existing) + newly added in memory (croppedFiles)
+  const existingCount = container.querySelectorAll(".subImageWrapper.existing").length;
+  const currentCount = existingCount + croppedFiles[variantId].subImages.length;
 
   const remainingSlots = maxLimit - currentCount;
   if (remainingSlots <= 0) {
@@ -173,15 +182,18 @@ function handleExistingSubImages(event, variantId) {
 
   allowedFiles.forEach((file) => {
     openCropModal(file, (croppedFile) => {
-      
-      const totalImages = container.querySelectorAll(".subImageWrapper").length 
-                          + croppedFiles[variantId].subImages.length;
+
+      // re-check (race-safety) — if reached limit, bail out
+      const existingNow = container.querySelectorAll(".subImageWrapper.existing").length;
+      const totalImages = existingNow + croppedFiles[variantId].subImages.length;
       if (totalImages >= maxLimit) return;
 
+      // push to in-memory list of new images
       croppedFiles[variantId].subImages.push(croppedFile);
 
+      // create wrapper and mark as "new" (so we don't count it as existing)
       const wrapper = document.createElement("div");
-      wrapper.className = "relative w-20 h-20 subImageWrapper";
+      wrapper.className = "relative w-20 h-20 subImageWrapper new"; // <-- important: 'new' flag
 
       const img = document.createElement("img");
       img.src = URL.createObjectURL(croppedFile);
@@ -192,13 +204,23 @@ function handleExistingSubImages(event, variantId) {
       btn.type = "button";
       btn.innerText = "✕";
       btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
+
       btn.onclick = () => {
+        // remove wrapper from DOM
         wrapper.remove();
-        croppedFiles[variantId].subImages = croppedFiles[variantId].subImages.filter(f => f !== croppedFile);
+
+        // since this wrapper is 'new', remove it from croppedFiles
+        if (wrapper.classList.contains("new")) {
+          croppedFiles[variantId].subImages = croppedFiles[variantId].subImages.filter(f => f !== croppedFile);
+        } else if (wrapper.classList.contains("existing")) {
+          // if it's an existing image (server-provided), record it for deletion
+          const existingIdOrUrl = wrapper.dataset.existingId || wrapper.dataset.src;
+          removedExistingImages[variantId].push(existingIdOrUrl);
+        }
 
         // Re-enable input if total < maxLimit
-        const totalAfterRemove = container.querySelectorAll(".subImageWrapper").length 
-                                 + croppedFiles[variantId].subImages.length;
+        const existingAfter = container.querySelectorAll(".subImageWrapper.existing").length;
+        const totalAfterRemove = existingAfter + croppedFiles[variantId].subImages.length;
         if (totalAfterRemove < maxLimit) {
           document.getElementById(`subImagesInput-${variantId}`).disabled = false;
         }
@@ -208,9 +230,9 @@ function handleExistingSubImages(event, variantId) {
       wrapper.appendChild(btn);
       container.appendChild(wrapper);
 
-      // Disable input if reached max limit
-      const totalAfterAdd = container.querySelectorAll(".subImageWrapper").length 
-                            + croppedFiles[variantId].subImages.length;
+      // Disable input if reached max limit (note: we count existing + new only)
+      const existingAfterAdd = container.querySelectorAll(".subImageWrapper.existing").length;
+      const totalAfterAdd = existingAfterAdd + croppedFiles[variantId].subImages.length;
       if (totalAfterAdd >= maxLimit) {
         document.getElementById(`subImagesInput-${variantId}`).disabled = true;
       }
@@ -219,6 +241,7 @@ function handleExistingSubImages(event, variantId) {
 
   event.target.value = "";
 }
+
 
 
 

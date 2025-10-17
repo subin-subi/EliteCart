@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link
+  href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"
+  rel="stylesheet"
+/>
+
+</head>
+<body class="bg-gray-100 pt-16 sm:pt-20">
+  
+<!-- cart.ejs -->
+ <%- include("../partials/nav") %>
+
+<section class="max-w-7xl mx-auto px-6 py-16">
+  <h2 class="text-2xl font-extrabold mb-8">YOUR CART</h2>
+
+  <!-- Breadcrumb -->
+  <nav class="flex text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-2">
+      <li class="inline-flex items-center">
+        <a href="/" class="inline-flex items-center text-gray-500 hover:text-gray-700">
+          <i class="fa fa-home mr-1"></i> Home
+        </a>
+      </li>
+      <li><i class="fa fa-angle-right mx-2 text-gray-400"></i></li>
+      <li class="inline-flex items-center">
+        <a href="/product" class="inline-flex items-center text-gray-500 hover:text-gray-700">
+          <i class="fa fa-shopping-bag mr-1"></i> Shop
+        </a>
+      </li>
+   
+<li><i class="fa fa-angle-right mx-2 text-gray-400"></i></li>
+<li class="inline-flex items-center text-gray-800 font-semibold">
+  <i class="fa fa-cart-shopping mr-1"></i> Cart
+</li>
+
+
+    </ol>
+  </nav>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- Cart Items -->
+    <div class="lg:col-span-2 space-y-4">
+
+      <% if (cartItems.length > 0) { %>
+        <% cartItems.forEach(item => { %>
+          <div class="flex items-center justify-between border rounded-xl p-4 shadow-sm">
+
+            <!-- Product Info -->
+            <div class="flex items-center space-x-4">
+              <img src="<%= item.variant.mainImage %>" 
+     alt="<%= item.productId.name %>" 
+     class="w-24 h-24 object-cover rounded-lg">
+
+<div>
+  <h3 class="font-semibold text-sm tracking-wide">
+    <%= item.productId.name %>
+  </h3>
+  <p class="text-xs text-gray-500">
+    Volume: <%= item.variant.volume %> ml
+  </p>
+  <p class="font-semibold mt-2">
+    ₹<%= item.variant.discountPrice || item.variant.price %>
+  </p>
+</div>
+
+            </div>
+
+            <!-- Quantity + Delete -->
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center border rounded-full px-3 py-1 bg-gray-100">
+                <button onclick="updateCartQuantity('<%= item._id %>', -1)" class="text-gray-600 hover:text-black">−</button>
+                <span class="mx-3"><%= item.productQuantity %></span>
+                <button onclick="updateCartQuantity('<%= item._id %>', 1)" class="text-gray-600 hover:text-black">+</button>
+              </div>
+<button 
+  onclick="removeFromCart('<%= item._id %>')" 
+  class="text-red-500 hover:text-red-700 z-50 relative"
+>
+  <i class="ri-delete-bin-line text-lg"></i>
+</button>
+
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="text-gray-500">Your cart is empty 🛒</p>
+      <% } %>
+
+    </div>
+
+    <!-- Order Summary -->
+    <div class="border rounded-xl p-6 shadow-sm h-fit">
+      <h3 class="font-semibold text-lg mb-4">Order Summary</h3>
+
+      <div class="flex justify-between text-sm mb-2">
+        <span>Subtotal</span>
+        <span>$<%= subtotal %></span>
+      </div>
+      <div class="flex justify-between text-sm mb-2">
+        <span>Delivery Fee</span>
+        <span class="text-green-600">Free</span>
+      </div>
+
+      <div class="border-t mt-4 pt-4 flex justify-between font-semibold text-base">
+        <span>Total</span>
+        <span>$<%= subtotal %></span>
+      </div>
+
+     
+      <!-- Checkout Button -->
+      <button class="mt-6 w-full bg-black text-white py-3 rounded-full flex items-center justify-center hover:bg-gray-800">
+        Go to Checkout
+        <i class="ri-arrow-right-line ml-2"></i>
+      </button>
+    </div>
+  </div>
+</section>
+
+ <%- include("../partials/footer") %>
+
+
+<script>
+  async function updateCartQuantity(itemId, change) {
+    try {
+      const res = await axios.patch(`/cart/update-quantity/${itemId}`, { change });
+      if (res.data.success) {
+       
+        window.location.reload();
+      } else {
+        alert(res.data.message || "Failed to update quantity");
+      }
+    } catch (err) {
+      console.error("Update quantity error:", err);
+      alert("⚠️ Something went wrong!");
+    }
+  }
+
+  async function removeFromCart(itemId) {
+    try {
+      const res = await axios.delete(`/cart/remove/${itemId}`);
+      if (res.data.success) {
+        window.location.reload();
+      } else {
+        alert(res.data.message || "Failed to remove item");
+      }
+    } catch (err) {
+      console.error("Remove item error:", err);
+      alert("⚠️ Something went wrong!");
+    }
+  }
+</script>
+
+
+
+
+</body>
+</html>
+

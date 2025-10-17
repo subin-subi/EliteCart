@@ -6,6 +6,9 @@ import productController from "../controllers/userController/productController.j
 import profileController from "../controllers/userController/personalDetailController.js"
 import passwordController from "../controllers/userController/passwordController.js";
 import addressController from "../controllers/userController/addressController.js"
+import cartController from "../controllers/userController/cartController.js";
+
+
 
 const route = Router();
 
@@ -70,4 +73,13 @@ route.post("/set-default-address/:id", addressController.setDefaultAddress)
 route.patch("/block-address/:id", addressController.blockAddress);
 route.patch("/unblock-address/:id",addressController.unblockAddress );
 route.patch("/edit-Address/:id", addressController.editAddress)
+
+
+
+
+route.get("/cart", cartController.getCart)
+route.post("/cart/add", cartController.addToCart);
+route.patch("/cart/update-quantity/:itemId", cartController.updateQuantity )
+route.delete("/cart/remove/:itemId",cartController.removeProduct)
+
 export default route;
