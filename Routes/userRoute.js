@@ -7,7 +7,7 @@ import profileController from "../controllers/userController/personalDetailContr
 import passwordController from "../controllers/userController/passwordController.js";
 import addressController from "../controllers/userController/addressController.js"
 import cartController from "../controllers/userController/cartController.js";
-import checkoutController from "../controllers/userController/checkout.js";
+import checkoutController from "../controllers/userController/checkoutController.js";
 
 
 const route = Router();
@@ -83,7 +83,7 @@ route.post("/cart/add", cartController.addToCart);
 route.patch("/cart/update-quantity/:itemId", cartController.updateQuantity )
 route.delete("/cart/remove/:itemId",cartController.removeProduct)
 
-
-route.get("/checkout", checkoutController.getCheckout)
+route.get("/checkout", checkoutController.getSingleCheckout);
+route.get("/checkout/cart", checkoutController.getCartCheckout)
 
 export default route;

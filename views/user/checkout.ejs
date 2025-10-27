@@ -1,159 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <body class="bg-gray-100 pt-16 sm:pt-20">
-      <%- include("../partials/nav") %>
-    <main class="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <%- include("../partials/nav") %>
 
-  <!-- Left Section -->
-  <section class="lg:col-span-2 space-y-8">
+  <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
 
-
-
-    
-<!-- Shipping Address -->
-<div>
-  <h2 class="text-lg font-semibold mb-4">Shipping Address</h2>
-
-  <% if (defaultAddress) { %>
-    <div class="bg-[#e6f2ef] rounded-lg p-4 flex justify-between items-start w-[50%]">
-      <div class="text-sm leading-6 text-gray-700">
-        <p class="font-semibold"><%= defaultAddress.name %></p>
-        <p><%= defaultAddress.houseName %>, <%= defaultAddress.street %></p>
-        <p><%= defaultAddress.city %>, <%= defaultAddress.state %>, <%= defaultAddress.country %></p>
-        <p>PIN: <%= defaultAddress.pincode %></p>
-        <p>Contact number: <%= defaultAddress.mobile %></p>
-      </div>
-
-      <!-- Edit button -->
+    <!-- ========== PRODUCT + PAYMENT SECTION ========== -->
+    <section class="flex flex-col lg:flex-row gap-8 bg-white rounded-lg p-6 shadow-md">
       
- <button 
-  type="button" 
-  onclick='editAddress(<%- JSON.stringify(defaultAddress) %>)' 
-  class="bg-black text-white text-xs px-4 py-1 rounded-full hover:bg-gray-800 transition"
->
-  Edit
-</button>
-
-
-
-    </div>
-  <% } else { %>
-    <div class="bg-red-100 text-red-600 rounded-lg p-4 w-[50%]">
-      No default address found. Please add one.
-    </div>
-  <% } %>
-
-  <!-- Add Address Button -->
-   <div class="mt-4">
-  <button 
-    onclick="openAddressModal()" 
-    class="bg-green-600 text-white text-sm px-5 py-2 rounded-full hover:bg-green-700 transition"
-  >
-    + Add New Address
-  </button>
-</div>
-
-</div>
-
-
-
-    <!-- Checkout Payment Options -->
-    <div class="mt-10">
-  <h2 class="text-xl font-semibold mb-4">Checkout</h2>
-  <form id="payment-form" class="space-y-3 flex flex-col items-center">
-    
-    <label class="flex items-center justify-between bg-gray-200 rounded-full px-5 py-2 cursor-pointer w-1/2">
-      <div class="flex items-center gap-3">
-        <input type="radio" name="payment" value="UPI" class="w-4 h-4">
-        <span>UPI</span>
-      </div>
-    </label>
-
-    <label class="flex items-center justify-between bg-gray-200 rounded-full px-5 py-2 cursor-pointer w-1/2">
-      <div class="flex items-center gap-3">
-        <input type="radio" name="payment" value="Wallet" class="w-4 h-4">
-        <span>Wallet</span>
-      </div>
-    </label>
-
-    <label class="flex items-center justify-between bg-gray-200 rounded-full px-5 py-2 cursor-pointer w-1/2">
-      <div class="flex items-center gap-3">
-        <input type="radio" name="payment" value="COD" checked class="w-4 h-4">
-        <span>Cash On Delivery</span>
-      </div>
-    </label>
-
-    <div class="flex justify-center mt-6">
-      <button type="submit" class="bg-[#e6f2ef] text-black font-medium px-8 py-2 rounded-full hover:bg-[#d5e9e5]">Pay Now</button>
-    </div>
-  </form>
-</div>
-
-  </section>
-
-  <!-- Right Section: Order Summary -->
-  <aside class="border border-gray-200 rounded-lg p-5 h-fit">
-    <h3 class="font-semibold text-sm mb-4">Your Order <span class="text-gray-500 text-xs">( <%= cart.items.length %> )</span></h3>
-
-    <div class="space-y-4">
-      <% cart.items.forEach(item => { %>
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <img src="<%= item.image %>" alt="<%= item.name %>" class="w-14 h-14 object-cover rounded-md">
-          <div>
-            <p class="text-sm font-medium"><%= item.name %></p>
-            <p class="text-xs text-gray-500">Color: <%= item.color %></p>
-            <p class="text-xs text-gray-400">(x<%= item.quantity %>)</p>
+      <!-- 🛒 Product Details -->
+      <div class="flex-1 flex items-center gap-6 border-r border-gray-200 pr-6">
+        <% if (singleProduct) { %>
+          <img 
+            src="<%= singleProduct.mainImage %>" 
+            alt="<%= singleProduct.name %>" 
+            class="w-36 h-36 object-cover rounded-lg shadow"
+          >
+          <div class="space-y-1">
+            <h2 class="text-xl font-semibold text-gray-800"><%= singleProduct.name %></h2>
+            <p class="text-gray-600 text-sm">Volume: <%= singleProduct.volume %> ml</p>
+            <p class="text-gray-600 text-sm">Price: ₹<%= singleProduct.price %></p>
           </div>
+        <% } else if (cart && cart.length > 0) { %>
+          <div class="space-y-3">
+            <% cart.forEach(item => { %>
+              <div class="flex items-center gap-4">
+                <img src="<%= item.mainImage %>" alt="<%= item.name %>" class="w-20 h-20 object-cover rounded-md">
+                <div>
+                  <p class="text-base font-semibold"><%= item.name %></p>
+                  <p class="text-sm text-gray-500">Volume: <%= item.volume %> ml</p>
+                  <p class="text-sm text-gray-400">(x<%= item.quantity %>)</p>
+                </div>
+                <p class="ml-auto font-semibold">₹<%= item.total %></p>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- 💳 Payment Methods -->
+      <div class="flex-1">
+        <h2 class="text-xl font-semibold mb-4 text-gray-800">Payment Options</h2>
+        <form id="payment-form" class="space-y-3 flex flex-col">
+          <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
+            <input type="radio" name="payment" value="UPI" class="w-4 h-4 accent-green-600">
+            <span>UPI</span>
+          </label>
+          <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
+            <input type="radio" name="payment" value="Wallet" class="w-4 h-4 accent-green-600">
+            <span>Wallet</span>
+          </label>
+          <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
+            <input type="radio" name="payment" value="COD" checked class="w-4 h-4 accent-green-600">
+            <span>Cash On Delivery</span>
+          </label>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========== ADDRESS SECTION ========== -->
+    <section class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-lg font-semibold mb-4">Shipping Address</h2>
+
+      <% if (addresses && addresses.length > 0) { %>
+        <div id="addressContainer" class="flex flex-wrap gap-6"></div>
+
+        <!-- Pagination Controls -->
+        <div class="flex justify-center gap-3 mt-4">
+          <button id="prevBtn" class="px-4 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm">Prev</button>
+          <button id="nextBtn" class="px-4 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm">Next</button>
         </div>
-        <p class="text-sm font-medium">$<%= item.price %></p>
+      <% } else { %>
+        <div class="bg-red-100 text-red-600 rounded-lg p-4 w-[50%]">
+          No address found. Please add one.
+        </div>
+      <% } %>
+
+      <!-- Add New Address Button -->
+      <div class="mt-6 flex justify-between items-center">
+        <button 
+          onclick="openAddressModal()" 
+          class="bg-green-600 text-white text-sm px-5 py-2 rounded-full hover:bg-green-700 transition"
+        >
+          + Add New Address
+        </button>
       </div>
-      <% }) %>
+    </section>
+
+    <!-- ✅ BUY BUTTON -->
+    <div class="flex justify-center">
+      <button 
+        class="bg-black text-white text-lg px-10 py-3 rounded-full hover:bg-gray-800 transition"
+        onclick="submitCheckout()"
+      >
+        Buy Now
+      </button>
     </div>
+  </main>
 
-    <div class="border-t border-gray-200 mt-6 pt-4 text-sm space-y-2">
-      <div class="flex justify-between">
-        <span>Subtotal</span>
-        <span>$<%= cart.subtotal %></span>
-      </div>
-      <div class="flex justify-between">
-        <span>Shipping</span>
-        <span>Calculated at next step</span>
-      </div>
-      <div class="flex justify-between font-semibold mt-2">
-        <span>Total</span>
-        <span>$<%= cart.total %></span>
-      </div>
-    </div>
-  </aside>
+  <div class="pt-6">
+    <%- include("../partials/footer") %>
+  </div>
 
-</main>
- <div class="pt-6"><%- include("../partials/footer") %></div>
-
-
- <!-- Address Form Modal -->
   <%- include('../partials/addressForm') %>
 
-
-
-<script>
-  // Close modals
-  
+  <script>
+    // Open Add Address Modal
     function openAddressModal() {
       document.getElementById('addAddressModal').classList.remove('hidden');
     }
 
-</script>
+  
+    const addresses = <%- JSON.stringify(addresses || []) %>;
+    const container = document.getElementById('addressContainer');
+    const itemsPerPage = 2;
+    let currentPage = 1;
 
 
+function renderAddresses() {
+  container.innerHTML = '';
+
+  // ✅ Reverse order so newest address appears first
+  const orderedAddresses = [...addresses].reverse();
+
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const visible = orderedAddresses.slice(start, end);
+
+  visible.forEach(addr => {
+    const div = document.createElement('div');
+    div.className = "relative bg-[#e6f2ef] rounded-lg p-4 w-[45%] shadow-md hover:shadow-lg transition";
+
+    div.innerHTML = `
+      <!-- ✅ Toggle to select address -->
+      <div class="absolute top-3 right-3">
+        <input 
+          type="radio" 
+          name="selectedAddress" 
+          value="${addr._id}" 
+          ${addr.isDefault ? "checked" : ""}
+          onchange="selectAddress('${addr._id}')"
+          class="w-4 h-4 cursor-pointer accent-green-600"
+        >
+      </div>
+
+      <!-- ✅ Address content -->
+      <div class="text-sm leading-6 text-gray-700 mt-3">
+        <p class="font-semibold">${addr.name}</p>
+        <p>${addr.houseName}, ${addr.street}</p>
+        <p>${addr.city}, ${addr.state}, ${addr.country}</p>
+        <p>PIN: ${addr.pincode}</p>
+        <p>Contact: ${addr.mobile}</p>
+      </div>
+
+      <!-- ✅ Edit button bottom-right -->
+      <button 
+        onclick='editAddress(${JSON.stringify(addr)})'
+        class="absolute bottom-3 right-3 bg-black text-white text-xs px-4 py-1 rounded-full hover:bg-gray-800 transition"
+      >
+        Edit
+      </button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentPage * itemsPerPage < addresses.length) {
+        currentPage++;
+        renderAddresses();
+      }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderAddresses();
+      }
+    });
+
+    renderAddresses();
+
+    function submitCheckout() {
+      // Add your form submission logic here
+      alert("Proceeding to checkout...");
+    }
+
+    async function selectAddress(addressId) {
+  try {
+    await axios.post('/set-default-address', { addressId });
+    addresses.forEach(a => a.isDefault = (a._id === addressId)); 
+  } catch (error) {
+    console.error("Error selecting address:", error);
+    alert("Something went wrong while updating default address.");
+  }
+}
+
+    
+  </script>
 </body>
 </html>

@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const total = priceText.textContent.replace(/[₹,]/g, "").trim();
 
     
-    window.location.href = `/checkout?total=${total}&productIds=${productId}&variant=${variantId}`;
+    window.location.href = `/checkout?total=${total}&productId=${productId}&variant=${variantId}`;
   });
 });
 
