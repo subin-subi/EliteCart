@@ -149,49 +149,49 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
 
   let isValid = true;
 
-  // ✅ Name
+
   if (!name) {
     errorFields.name.textContent = "Full name is required";
     isValid = false;
   }
 
-  // 🏠 House name
+
   if (!houseName) {
     errorFields.houseName.textContent = "House name is required";
     isValid = false;
   }
 
-  // 🏘️ Street (optional, you can make required if needed)
+ 
   if (street && street.length < 2) {
     errorFields.street.textContent = "Street name is too short";
     isValid = false;
   }
 
-  // 🏙️ City
+
   if (!city) {
     errorFields.city.textContent = "City is required";
     isValid = false;
   }
 
-  // 🗺️ State
+
   if (!state) {
     errorFields.state.textContent = "State is required";
     isValid = false;
   }
 
-  // 📮 Pincode
+
   if (!/^\d{6}$/.test(pincode)) {
     errorFields.pincode.textContent = "Pincode must be 6 digits";
     isValid = false;
   }
 
-  // 🌍 Country
+ 
   if (!country) {
     errorFields.country.textContent = "Country is required";
     isValid = false;
   }
 
-  // 📱 Mobile
+
   if (!/^[0-9]{10}$/.test(mobile)) {
     errorFields.mobile.textContent = "Mobile number must be 10 digits";
     isValid = false;
@@ -200,9 +200,9 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
     isValid = false;
   }
 
-  if (!isValid) return; // Stop if validation fails ❌
+  if (!isValid) return; 
 
-  // ✅ Submit
+  
   const data = { name, houseName, street, city, state, pincode, country, mobile };
 
   try {

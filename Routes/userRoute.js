@@ -7,14 +7,14 @@ import profileController from "../controllers/userController/personalDetailContr
 import passwordController from "../controllers/userController/passwordController.js";
 import addressController from "../controllers/userController/addressController.js"
 import cartController from "../controllers/userController/cartController.js";
-
+import checkoutController from "../controllers/userController/checkout.js";
 
 
 const route = Router();
 
 route.get("/check-session",authController.checkSession)
 
-route.get("/signup", userMiddleware.isLogin, authController.getSignUp);
+route.get("/signup", authController.getSignUp);
 
 route.post("/signup", authController.postSignup);
 
@@ -26,7 +26,7 @@ route.get("/test-otp", otpController.testOTP);
 
 route.get("/debug-otp/:email", otpController.debugOTP)  
 
-route.get('/login', userMiddleware.isLogin, authController.getLogin)
+route.get('/login', authController.getLogin)
 
 route.post("/login",authController.postLogin)
 
@@ -49,10 +49,11 @@ route.post("/logout", authController.getLogout)
 
 ////////////product Controller/////////////////////
 
-route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
-route.get("/search-products",userMiddleware.checkSession,productController.searchProduct)
+route.get("/product",userMiddleware.isLogin,productController.getProductsPage)
+route.get("/search-products",userMiddleware.checkBlocked,productController.searchProduct)
 
 route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
+
 
 route.get("/profile" , profileController.getProfile)
 route.post("/profile",profileController.editDetail)
@@ -77,9 +78,12 @@ route.patch("/edit-Address/:id", addressController.editAddress)
 
 
 
-route.get("/cart", cartController.getCart)
+route.get("/cart" ,userMiddleware.isLogin, cartController.getCart)
 route.post("/cart/add", cartController.addToCart);
 route.patch("/cart/update-quantity/:itemId", cartController.updateQuantity )
 route.delete("/cart/remove/:itemId",cartController.removeProduct)
+
+
+route.get("/checkout", checkoutController.getCheckout)
 
 export default route;

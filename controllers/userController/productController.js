@@ -25,18 +25,24 @@ const getProductsPage = async (req, res) => {
     else if (sort === 'priceHighToLow') sortOption = { 'variants.price': -1 };
     else if (sort === 'az') sortOption = { name: 1 };
     else if (sort === 'za') sortOption = { name: -1 };
-    else sortOption = { createdAt: -1 }; // default
-
+    else sortOption = { createdAt: -1 }; 
     // Fetch products
-    let products = await Product.find(filter)
-      .populate('category')
-      .populate('brand')
+   let products = await Product.find(filter)
+      .populate({
+        path: 'category',
+        match: { isActive: true, isHidden: false } 
+      })
+      .populate({
+        path: 'brand',
+        match: { isActive: true, isHidden: false } 
+      })
       .sort(sortOption)
       .skip(skip)
       .limit(limit)
       .lean();
+    
+ products = products.filter(product => product.category && product.brand);
 
-    // Filter variants & select only **one variant per product**
     products = products.map(product => {
       const validVariants = product.variants.filter(v => {
         if (v.isBlocked) return false;

@@ -1,25 +1,39 @@
 import userModel from "../models/userModel.js"
 import Product from "../models/productModel.js";
-import Brand from "../models/brandModel.js";
-import Category from "../models/categoryModel.js";
 
 const checkBlocked = async (req, res, next) => {
     try {
-       
         const productId = req.params.id;
-        
+
         if (productId) {
-            const product = await Product.findById(productId);
-            if (!product || product.isBlocked) {
-                return res.redirect("/"); 
-            }
+           
+            const product = await Product.findById(productId)
+                .populate("category")
+                .populate("brand");
+
+            if (!product) return res.redirect("/");
+
+            if (product.isBlocked) return res.redirect("/");
+
+            const variantBlocked = product.variants.some(variant => variant.isBlocked);
+            if (variantBlocked) return res.redirect("/");
+
+           
+            const categoryBlocked = product.category && (!product.category.isActive || product.category.isHidden);
+            if (categoryBlocked) return res.redirect("/");
+
+            
+            const brandBlocked = product.brand && (!product.brand.isActive || product.brand.isHidden);
+            if (brandBlocked) return res.redirect("/");
         }
-     next(); 
+
+        next();
     } catch (error) {
         console.error("Error checking blocked status:", error);
         return res.redirect("/"); 
     }
 };
+
 
 
 
@@ -50,17 +64,17 @@ const checkSession = async (req, res, next) => {
     }
 };
 
-const isLogin = async (req, res, next) => {
-    try {
-        if (req.session.user) {
-            return res.redirect('/');
+    const isLogin = async (req, res, next) => {
+        try {
+            if (!req.session.user) {
+                return res.redirect('/signup');
+            }
+            next();
+        } catch (error) {
+            console.error('Login Check Error:', error);
+            next();
         }
-        next();
-    } catch (error) {
-        console.error('Login Check Error:', error);
-        next();
     }
-}
 
 
 const noCache = (req, res, next) => {

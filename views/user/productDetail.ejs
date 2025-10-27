@@ -100,10 +100,13 @@
 
 
       <a id="buyNowBtn"
-         href="/checkout/<%= product._id %>?variant=<%= product.variants[0]._id %>"
-         class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
-        <i class="fa fa-bolt"></i> Buy Now
-      </a>
+   href="#"
+   data-product="<%= product._id %>"
+   data-variant="<%= product.variants[0]._id %>"
+   class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+   <i class="fa fa-bolt"></i> Buy Now
+</a>
+
     <% } else { %>
       <button id="outOfStockBtn" disabled class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
         Out of Stock
@@ -170,34 +173,36 @@ mainImage.addEventListener("mouseleave", () => {
   mainImage.style.transform = "scale(1)";
 });
 
+////////////////variant selection//////////////////////////
+  const variantSelect = document.getElementById("variantSelect");
+  const outOfStockBtn = document.getElementById("outOfStockBtn");
 
 
-variantSelect.addEventListener("change", (e) => {
-  const selectedOption = e.target.selectedOptions[0];
+ if (variantSelect) {
+    variantSelect.addEventListener("change", (e) => {
+      const selectedOption = e.target.selectedOptions[0];
+      const price = selectedOption.getAttribute("data-price");
+      priceText.textContent = `₹${Number(price).toLocaleString()}`;
 
-  const price = selectedOption.getAttribute("data-price");
-  priceText.textContent = `₹${Number(price).toLocaleString()}`;
+      const image = selectedOption.getAttribute("data-image");
+      mainImage.src = image;
 
-  const image = selectedOption.getAttribute("data-image");
-  mainImage.src = image;
+      const variantId = selectedOption.value;
+      addToCartBtn.dataset.variant = variantId;
+      buyNowBtn.dataset.variant = variantId;
 
-  const variantId = selectedOption.value;
-  // ✅ Store variant ID in data attributes instead of href
-  addToCartBtn.dataset.variant = variantId;
-  buyNowBtn.dataset.variant = variantId;
-
-  const stock = parseInt(selectedOption.getAttribute("data-stock"), 10);
-  if (stock > 0) {
-    addToCartBtn.style.display = "flex";
-    buyNowBtn.style.display = "flex";
-    outOfStockBtn.style.display = "none";
-  } else {
-    addToCartBtn.style.display = "none";
-    buyNowBtn.style.display = "none";
-    outOfStockBtn.style.display = "block";
+      const stock = parseInt(selectedOption.getAttribute("data-stock"), 10);
+      if (stock > 0) {
+        addToCartBtn.style.display = "flex";
+        buyNowBtn.style.display = "flex";
+        if (outOfStockBtn) outOfStockBtn.style.display = "none";
+      } else {
+        addToCartBtn.style.display = "none";
+        buyNowBtn.style.display = "none";
+        if (outOfStockBtn) outOfStockBtn.style.display = "block";
+      }
+    });
   }
-});
-
 
 //////////////////////////////add to cart form ////////////////////////////////////
 document.addEventListener("DOMContentLoaded", () => {
@@ -206,6 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
   addToCartBtn.addEventListener("click", async (e) => {
     e.preventDefault();
 
+   
     const productId = addToCartBtn.dataset.product;
     const variantId = addToCartBtn.dataset.variant;
 
@@ -228,6 +234,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+
+//////////////////// BUY NOW BUTTON ////////////////////
+document.addEventListener("DOMContentLoaded", () => {
+  const buyNowBtn = document.getElementById("buyNowBtn");
+  const priceText = document.getElementById("priceText");
+
+  buyNowBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    const productId = buyNowBtn.dataset.product;
+    const variantId = buyNowBtn.dataset.variant;
+
+    if (!variantId) {
+      alert("Please select a variant first");
+      return;
+    }
+
+    
+    const total = priceText.textContent.replace(/[₹,]/g, "").trim();
+
+    
+    window.location.href = `/checkout?total=${total}&productIds=${productId}&variant=${variantId}`;
+  });
+});
 
 
 </script>
