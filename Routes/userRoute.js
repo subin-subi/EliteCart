@@ -8,6 +8,7 @@ import passwordController from "../controllers/userController/passwordController
 import addressController from "../controllers/userController/addressController.js"
 import cartController from "../controllers/userController/cartController.js";
 import checkoutController from "../controllers/userController/checkoutController.js";
+import wishlistController from "../controllers/userController/wishlistController.js";
 
 
 const route = Router();
@@ -53,6 +54,8 @@ route.get("/product",userMiddleware.isLogin,productController.getProductsPage)
 route.get("/search-products",userMiddleware.checkBlocked,productController.searchProduct)
 
 route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
+route.post("/wishlist/add",productController.addToWishlist)
+
 
 
 route.get("/profile" , profileController.getProfile)
@@ -83,7 +86,15 @@ route.post("/cart/add", cartController.addToCart);
 route.patch("/cart/update-quantity/:itemId", cartController.updateQuantity )
 route.delete("/cart/remove/:itemId",cartController.removeProduct)
 
+
 route.get("/checkout", checkoutController.getSingleCheckout);
 route.get("/checkout/cart", checkoutController.getCartCheckout)
+
+
+route.get("/wishlist",wishlistController.getWishlist)
+route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
+route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
+
+
 
 export default route;

@@ -150,19 +150,61 @@
     }
   }
 
-  async function removeFromCart(itemId) {
-    try {
-      const res = await axios.delete(`/cart/remove/${itemId}`);
-      if (res.data.success) {
-        window.location.reload();
-      } else {
-        alert(res.data.message || "Failed to remove item");
-      }
-    } catch (err) {
-      console.error("Remove item error:", err);
-      alert("⚠️ Something went wrong!");
+async function removeFromCart(itemId) {
+  try {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to remove this item from your cart?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, remove it!",
+      cancelButtonText: "Cancel"
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    const res = await axios.delete(`/cart/remove/${itemId}`);
+
+    if (res.data.success) {
+      Swal.fire({
+        icon: "success",
+        title: "Item removed from cart",
+        toast: true,
+        position: "top-end",
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true
+      });
+      setTimeout(() => window.location.reload(), 1200);
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: res.data.message || "Failed to remove item",
+        toast: true,
+        position: "top-end",
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true
+      });
     }
+  } catch (err) {
+    console.error("Remove item error:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Something went wrong!",
+      toast: true,
+      position: "top-end",
+      timer: 2000,
+      showConfirmButton: false,
+      timerProgressBar: true
+    });
   }
+}
+
+
+
 </script>
 
 

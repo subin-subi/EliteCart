@@ -1,7 +1,7 @@
 import Product from "../../models/productModel.js";
 import Brand from "../../models/brandModel.js";
 import Category from "../../models/categoryModel.js";
-
+import Wishlist from "../../models/wishlistModel.js";
 
 
 const getProductsPage = async (req, res) => {
@@ -177,8 +177,56 @@ const getProductDetailPage = async (req, res) => {
   }
 };
 
+
+
+
+ const addToWishlist = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { productId, variantId } = req.body;
+console.log(productId)
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "User not logged in" });
+    }
+
+    let wishlist = await Wishlist.findOne({ userId });
+
+    // Create wishlist if it doesn't exist
+    if (!wishlist) {
+      wishlist = new Wishlist({
+        userId,
+        items: [{ productId, variantId: variantId || null }],
+      });
+      await wishlist.save();
+      return res.json({ success: true, message: "Added to wishlist" });
+    }
+
+    // Check if item already exists
+    const exists = wishlist.items.some(
+      (item) =>
+        item.productId.toString() === productId &&
+        (variantId ? item.variantId?.toString() === variantId : true)
+    );
+
+    if (exists) {
+      return res.json({ success: true, alreadyExists: true });
+    }
+
+    // Add new item
+    wishlist.items.push({ productId, variantId: variantId || null });
+    await wishlist.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error adding to wishlist:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 export default {
   getProductsPage,
   getProductDetailPage,
-  searchProduct
+  searchProduct,
+ addToWishlist
 };

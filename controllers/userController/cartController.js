@@ -105,9 +105,15 @@ const updateQuantity = async (req, res) => {
     const item = cart.items.id(itemId);
     if (!item) return res.json({ success: false, message: "Item not found" });
 
-    
+        const newQuantity = item.quantity + change;
+
     if (item.quantity + change < 1) {
       return res.json({ success: false, message: "Minimum quantity is 1" });
+    }
+
+    
+    if (newQuantity > 10) {
+      return res.json({ success: false, message: "Maximum quantity limit is 10" });
     }
 
     item.quantity += change;

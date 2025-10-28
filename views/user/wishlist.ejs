@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wishlist | Elite Cart</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    integrity="sha512-xh6Zg5HkZ93KMk8N6QbqOXtqENdZj9V6OfCZo9QepjvRrjGk0D3b3YMX0xS5j7L0pvBgwHeQpF7pjqOG4gkC0A=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+</head>
+
+<body class="bg-gray-100 pt-16 sm:pt-20 min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <%- include('../partials/nav') %>
+
+  <!-- Main Section -->
+  <main class="max-w-7xl mx-auto px-4 py-16 flex-1 flex flex-col items-center justify-center">
+
+    <% if (!wishlist || wishlist.items.length === 0) { %>
+      <!-- 🩷 Empty Wishlist -->
+      <div class="flex flex-col items-center justify-center text-center space-y-6">
+        <img 
+          src="/images/wh.jpeg" 
+          alt="Empty Wishlist" 
+          class="w-64 h-64 object-contain opacity-90"
+        >
+        <h2 class="text-2xl font-bold text-red-600">Your Wishlist is Empty!</h2>
+        <a href="/product" 
+          class="bg-indigo-600 text-white text-sm px-6 py-2 rounded-full hover:bg-indigo-700 transition">
+          Continue Shopping
+        </a>
+      </div>
+
+    <% } else { %>
+      <!-- 🛍 Wishlist Items -->
+      <h2 class="text-3xl font-bold mb-10 text-gray-800 text-center">Your Wishlist</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 w-full">
+<% wishlist.items.forEach(item => { 
+  const variant = item.variant || item.productId?.variants?.[0]; 
+%>
+  <div class="bg-white shadow-lg rounded-2xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1 relative group">
+
+    <!-- Remove from Wishlist -->
+    <form action="/wishlist/remove/<%= item.productId._id %>" method="POST" 
+          class="absolute top-3 right-3 z-10">
+      <button type="submit" 
+              class="bg-white rounded-full p-2 shadow-md hover:bg-pink-100 transition">
+        <i class="fa-solid fa-heart-crack text-pink-600 text-lg"></i>
+      </button>
+    </form>
+
+    <!-- Product Image -->
+    <div class="relative w-full h-60">
+      <img 
+        src="<%= variant?.mainImage || '/images/placeholder.jpg' %>" 
+        alt="<%= item.productId?.name %>" 
+        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      >
+    </div>
+
+    <!-- Product Info -->
+    <div class="p-4 flex flex-col justify-between min-h-[150px]">
+      <div>
+        <h3 class="font-semibold text-gray-800 text-lg truncate">
+          <%= item.productId?.name %>
+        </h3>
+        
+        <% if (item.productId?.category?.name) { %>
+          <p class="text-sm text-gray-500 mt-1">
+            <%= item.productId.category.name %>
+          </p>
+        <% } %>
+      </div>
+
+      <div class="flex items-center justify-between mt-3">
+        <p class="text-lg font-semibold text-gray-800">
+          ₹<%= variant?.discountPrice || variant?.price || '—' %>
+        </p>
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <a href="/productDetail/<%= item.productId._id %>" 
+           class="bg-indigo-600 text-white text-center py-2 rounded-full hover:bg-indigo-700 transition text-sm font-medium">
+          View Product
+        </a>
+
+        <form action="/cart/add-to-wish" method="POST" class="add-to-cart-form">
+          <input type="hidden" name="productId" value="<%= item.productId._id %>">
+          <input type="hidden" name="variantId" value="<%= variant?._id || '' %>">
+          <button type="submit"
+                  class="bg-green-600 text-white w-full py-2 rounded-full hover:bg-green-700 transition text-sm font-medium">
+            Add to Cart
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+<% }) %>
+
+</div>
+    <% } %>
+
+  </main>
+
+  <!-- Footer -->
+  <%- include('../partials/footer') %>
+  
+
+  <script>
+document.querySelectorAll('.add-to-cart-form').forEach(form => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const response = await fetch(form.action, {
+      method: form.method,
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      Swal.fire({
+        icon: "success",
+        title: result.message,
+        toast: true,
+        position: "top-end",
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true
+      });
+
+      
+      form.closest('.product-card')?.remove();
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: result.message || "Failed to add product",
+        toast: true,
+        position: "top-end",
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true
+      });
+    }
+  });
+});
+</script> 
+</body>
+
+</html>
