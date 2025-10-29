@@ -9,7 +9,7 @@ import addressController from "../controllers/userController/addressController.j
 import cartController from "../controllers/userController/cartController.js";
 import checkoutController from "../controllers/userController/checkoutController.js";
 import wishlistController from "../controllers/userController/wishlistController.js";
-
+import orderDetailController from "../controllers/userController/orderDetailController.js"
 
 const route = Router();
 
@@ -97,6 +97,6 @@ route.get("/wishlist",wishlistController.getWishlist)
 route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
 route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
 
-
+route.get("/my-orders",orderDetailController.getMyOrders)
 
 export default route;
