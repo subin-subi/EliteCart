@@ -89,6 +89,8 @@ route.delete("/cart/remove/:itemId",cartController.removeProduct)
 
 route.get("/checkout", checkoutController.getSingleCheckout);
 route.get("/checkout/cart", checkoutController.getCartCheckout)
+route.post('/select-address',checkoutController.selectAddres)
+route.post('/place-order',checkoutController.placeOrder)
 
 
 route.get("/wishlist",wishlistController.getWishlist)

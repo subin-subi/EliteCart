@@ -7,15 +7,15 @@
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
   <!-- Font Awesome -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    integrity="sha512-xh6Zg5HkZ93KMk8N6QbqOXtqENdZj9V6OfCZo9QepjvRrjGk0D3b3YMX0xS5j7L0pvBgwHeQpF7pjqOG4gkC0A=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
+ <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  referrerpolicy="no-referrer"
+/>
+
 </head>
 
 <body class="bg-gray-100 pt-16 sm:pt-20 min-h-screen flex flex-col">
@@ -46,8 +46,13 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 w-full">
 <% wishlist.items.forEach(item => { 
-  const variant = item.variant || item.productId?.variants?.[0]; 
+   const variant = item.variant || 
+                  (item.productId?.variants && item.productId.variants.length > 0 
+                    ? item.productId.variants[0] 
+                    : null);
+
 %>
+
   <div class="bg-white shadow-lg rounded-2xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1 relative group">
 
     <!-- Remove from Wishlist -->
@@ -94,15 +99,20 @@
            class="bg-indigo-600 text-white text-center py-2 rounded-full hover:bg-indigo-700 transition text-sm font-medium">
           View Product
         </a>
+<form action="/cart/add-to-wish" method="POST" class="add-to-cart-form">
+  <input type="hidden" name="productId" value="<%= item.productId?._id %>">
+  <input type="hidden" name="variantId" value="<%= item.variantId || variant?._id %>">
 
-        <form action="/cart/add-to-wish" method="POST" class="add-to-cart-form">
-          <input type="hidden" name="productId" value="<%= item.productId._id %>">
-          <input type="hidden" name="variantId" value="<%= variant?._id || '' %>">
-          <button type="submit"
-                  class="bg-green-600 text-white w-full py-2 rounded-full hover:bg-green-700 transition text-sm font-medium">
-            Add to Cart
-          </button>
-        </form>
+<script>
+console.log("variantId sent:", "<%= item.variantId || variant?._id %>");
+</script>
+
+  <button type="submit"
+          class="bg-green-600 text-white w-full py-2 rounded-full hover:bg-green-700 transition text-sm font-medium">
+    Add to Cart
+  </button>
+</form>
+
       </div>
     </div>
   </div>
@@ -118,35 +128,53 @@
   
 
   <script>
+
+
+
 document.querySelectorAll('.add-to-cart-form').forEach(form => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = new FormData(form);
-    const response = await fetch(form.action, {
-      method: form.method,
-      body: formData
-    });
+    const productId = form.querySelector('input[name="productId"]').value;
+    const variantId = form.querySelector('input[name="variantId"]').value;
 
-    const result = await response.json();
+    try {
+      const response = await axios.post(form.action, { productId, variantId });
+      const result = response.data;
 
-    if (result.success) {
-      Swal.fire({
-        icon: "success",
-        title: result.message,
-        toast: true,
-        position: "top-end",
-        timer: 2000,
-        showConfirmButton: false,
-        timerProgressBar: true
-      });
+      if (result.success) {
+        Swal.fire({
+          icon: "success",
+          title: result.message,
+          toast: true,
+          position: "top-end",
+          timer: 1500,
+          showConfirmButton: false,
+          timerProgressBar: true
+        });
 
-      
-      form.closest('.product-card')?.remove();
-    } else {
+        // 👇 Add this to auto-refresh wishlist after success
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: result.message || "Failed to add product",
+          toast: true,
+          position: "top-end",
+          timer: 2000,
+          showConfirmButton: false,
+          timerProgressBar: true
+        });
+      }
+
+    } catch (error) {
+      console.error("Axios error:", error);
       Swal.fire({
         icon: "error",
-        title: result.message || "Failed to add product",
+        title: "Something went wrong",
         toast: true,
         position: "top-end",
         timer: 2000,
@@ -156,6 +184,8 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
     }
   });
 });
+
+
 </script> 
 </body>
 

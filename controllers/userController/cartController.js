@@ -107,7 +107,7 @@ const updateQuantity = async (req, res) => {
 
         const newQuantity = item.quantity + change;
 
-    if (item.quantity + change < 1) {
+    if (item.quantity + change <= 1) {
       return res.json({ success: false, message: "Minimum quantity is 1" });
     }
 

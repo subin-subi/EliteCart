@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <body class="bg-gray-100 pt-16 sm:pt-20">
@@ -95,7 +95,7 @@
       </div>
     </section>
 
-    <!-- ✅ BUY BUTTON -->
+    
     <div class="flex justify-center">
       <button 
         class="bg-black text-white text-lg px-10 py-3 rounded-full hover:bg-gray-800 transition"
@@ -112,47 +112,40 @@
 
   <%- include('../partials/addressForm') %>
 
-  <script>
-    // Open Add Address Modal
-    function openAddressModal() {
-      document.getElementById('addAddressModal').classList.remove('hidden');
-    }
-
   
-    const addresses = <%- JSON.stringify(addresses || []) %>;
-    const container = document.getElementById('addressContainer');
-    const itemsPerPage = 2;
-    let currentPage = 1;
+<script>
+let selectedAddressId = null;
 
+function openAddressModal() {
+  document.getElementById('addAddressModal').classList.remove('hidden');
+}
+
+const addresses = <%- JSON.stringify(addresses || []) %>;
+const container = document.getElementById('addressContainer');
+const itemsPerPage = 2;
+let currentPage = 1;
 
 function renderAddresses() {
   container.innerHTML = '';
-
-  // ✅ Reverse order so newest address appears first
-  const orderedAddresses = [...addresses].reverse();
-
-  const start = (currentPage - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  const visible = orderedAddresses.slice(start, end);
+  const ordered = [...addresses].reverse();
+  const visible = ordered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   visible.forEach(addr => {
     const div = document.createElement('div');
-    div.className = "relative bg-[#e6f2ef] rounded-lg p-4 w-[45%] shadow-md hover:shadow-lg transition";
-
+    div.className = `
+      relative bg-[#e6f2ef] rounded-lg p-4 w-[45%] shadow-md 
+      hover:shadow-lg transition border-2 border-transparent
+    `;
     div.innerHTML = `
-      <!-- ✅ Toggle to select address -->
       <div class="absolute top-3 right-3">
         <input 
           type="radio" 
           name="selectedAddress" 
           value="${addr._id}" 
-          ${addr.isDefault ? "checked" : ""}
           onchange="selectAddress('${addr._id}')"
           class="w-4 h-4 cursor-pointer accent-green-600"
         >
       </div>
-
-      <!-- ✅ Address content -->
       <div class="text-sm leading-6 text-gray-700 mt-3">
         <p class="font-semibold">${addr.name}</p>
         <p>${addr.houseName}, ${addr.street}</p>
@@ -160,8 +153,6 @@ function renderAddresses() {
         <p>PIN: ${addr.pincode}</p>
         <p>Contact: ${addr.mobile}</p>
       </div>
-
-      <!-- ✅ Edit button bottom-right -->
       <button 
         onclick='editAddress(${JSON.stringify(addr)})'
         class="absolute bottom-3 right-3 bg-black text-white text-xs px-4 py-1 rounded-full hover:bg-gray-800 transition"
@@ -169,44 +160,76 @@ function renderAddresses() {
         Edit
       </button>
     `;
-
     container.appendChild(div);
   });
 }
 
-
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      if (currentPage * itemsPerPage < addresses.length) {
-        currentPage++;
-        renderAddresses();
-      }
-    });
-
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      if (currentPage > 1) {
-        currentPage--;
-        renderAddresses();
-      }
-    });
-
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentPage * itemsPerPage < addresses.length) {
+    currentPage++;
     renderAddresses();
+  }
+});
 
-    function submitCheckout() {
-      // Add your form submission logic here
-      alert("Proceeding to checkout...");
-    }
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderAddresses();
+  }
+});
 
-    async function selectAddress(addressId) {
+renderAddresses();
+
+async function selectAddress(addressId) {
+  selectedAddressId = addressId;
+  document.querySelectorAll('#addressContainer > div').forEach(div => {
+    div.classList.remove('border-green-600', 'bg-green-50');
+    div.classList.add('border-transparent');
+  });
+
+  const selectedCard = document.querySelector(`input[value='${addressId}']`).closest('div.relative');
+  if (selectedCard) {
+    selectedCard.classList.add('border-green-600', 'bg-green-50');
+  }
+
   try {
-    await axios.post('/set-default-address', { addressId });
-    addresses.forEach(a => a.isDefault = (a._id === addressId)); 
-  } catch (error) {
-    console.error("Error selecting address:", error);
-    alert("Something went wrong while updating default address.");
+    const res = await axios.post('/select-address', { addressId });
+    if (res.data.success) alert('✅ Address selected successfully!');
+  } catch (err) {
+    console.error(err);
+    alert('❌ Failed to select address.');
   }
 }
 
-    
-  </script>
+async function submitCheckout() {
+  const payment = document.querySelector('input[name="payment"]:checked').value;
+  if (!selectedAddressId) {
+    alert("⚠️ Please select a shipping address first.");
+    return;
+  }
+
+  const body = {
+    paymentMethod: payment,
+    addressId: selectedAddressId,
+    productIds: "<%= productIds %>",
+    variantIds: "<%= variantIds %>",
+    total: <%= total %>
+  };
+
+  try {
+    const res = await axios.post('/place-order', body);
+    if (res.data.success) {
+      alert("✅ Order placed successfully!");
+      window.location.href = "/order-success";
+    } else {
+      alert("❌ " + res.data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to place order.");
+  }
+}
+</script>
+
 </body>
 </html>

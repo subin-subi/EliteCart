@@ -58,31 +58,40 @@ const removeWishlist = async(req, res)=>{
 const addToCartFromWishlist = async (req, res) => {
   try {
     const userId = req.session.user;
-    const { productId, variantId } = req.body;
+    const { productId, variantId } = req.body || {};
+
+    console.log("Variant ID received:", variantId);
 
     if (!userId) {
-      return res.redirect("/login");
+      return res.status(401).json({ success: false, message: "Please log in first" });
     }
 
-    // ✅ Find the product
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).render("error", { message: "Product not found" });
+    if (!productId || !variantId) {
+      return res.status(400).json({ success: false, message: "Missing product or variant ID" });
+    }
 
-    // ✅ Find variant
+    // ✅ Find product and variant
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
     const variantIndex = product.variants.findIndex(
       (v) => v._id.toString() === variantId
     );
-    if (variantIndex === -1)
-      return res.status(404).render("error", { message: "Variant not found" });
+
+    if (variantIndex === -1) {
+      return res.status(404).json({ success: false, message: "Variant not found" });
+    }
 
     const variant = product.variants[variantIndex];
     const quantity = 1;
     const price = Number(variant.discountPrice || variant.price || 0);
     const total = price * quantity;
+    const maxLimit = Number(variant.stock || 10); // 👈 assuming variant.stock has the limit (default 10)
 
-   
+    // ✅ Find or create cart
     let cart = await Cart.findOne({ userId });
-
     if (!cart) {
       cart = new Cart({
         userId,
@@ -97,32 +106,48 @@ const addToCartFromWishlist = async (req, res) => {
       );
 
       if (existingItem) {
+        // ✅ Check stock limit before increasing
+        if (existingItem.quantity >= maxLimit) {
+          return res.status(400).json({
+            success: false,
+            message: `You can only add up to ${maxLimit} of this product.`,
+          });
+        }
+
         existingItem.quantity += 1;
         existingItem.total = existingItem.quantity * price;
       } else {
         cart.items.push({ productId, variantIndex, quantity, price, total });
       }
 
-      // Recalculate total
       cart.grandTotal = cart.items.reduce((acc, item) => acc + item.total, 0);
     }
 
     await cart.save();
 
-    // ✅ Remove from wishlist
-    await Wishlist.updateOne(
+        
+    const pullQuery = variantId
+      ? { productId, $or: [{ variantId }, { variantId: null }] }
+      : { productId };
+
+    const wishlistResult = await Wishlist.updateOne(
       { userId },
-      { $pull: { items: { productId, variantId } } }
+      { $pull: { items: pullQuery } }
     );
 
-  
-    res.redirect("/wishlist?addedFromWishlist=true");
+
+   
+    res.status(200).json({
+      success: true,
+      message: "Added to cart successfully and removed from wishlist",
+    });
 
   } catch (err) {
     console.error("Error adding to cart from wishlist:", err);
-    res.status(500).render("error", { message: "Something went wrong" });
+    res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
+
 
 
 
