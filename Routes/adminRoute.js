@@ -6,8 +6,9 @@ import brandController from "../controllers/adminController/brandController.js";
 import categoryController from "../controllers/adminController/categoryController.js";
 import userController from "../controllers/adminController/userController.js";
 import productController from "../controllers/adminController/productController.js";
-import  upload  from "../utils/multer.js";
 import addproductController from "../controllers/adminController/addproductController.js";
+import orderController from "../controllers/adminController/orderController.js";
+
 
 const router = express.Router();
 
@@ -39,6 +40,8 @@ router.patch("/unblock-category/:id", categoryController.unblockCategory);
 router.get("/userlist", adminMiddleware.checkSession, userController.getUserList);
 router.patch("/block-user/:id", adminMiddleware.checkSession, userController.blockUser);
 router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.unblockUser);
+
+router.get("/orders",orderController.getAdminOrders)
 
 
 

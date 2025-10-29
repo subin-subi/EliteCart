@@ -1,37 +1,45 @@
-import Order from "../models/orderModel.js";
-import Product from "../models/productModel.js";
+import User from "../../models/userModel.js";
+import Order from "../../models/orderModel.js";
+import Product from "../../models/productModel.js";
 
-export const getMyOrders = async (req, res) => {
+const getOrderDetail = async (req, res) => {
   try {
-    const userId = req.session.user; // assuming user session stores user ID
+    const userId = req.session.user;
+    if (!userId) return res.redirect("/login");
 
-    if (!userId) {
-      return res.redirect("/login");
-    }
+    const page = parseInt(req.query.page) || 1; // current page
+    const limit = 5; // number of orders per page
+    const skip = (page - 1) * limit;
 
-    // Fetch user's orders, latest first
+    const user = await User.findById(userId);
+
+    // Get total number of orders for pagination
+    const totalOrders = await Order.countDocuments({ userId });
+
+    // Fetch paginated orders
     const orders = await Order.find({ userId })
-      .populate("items.productId", "name images") // populate product details
-      .sort({ createdAt: -1 });
+      .populate({
+        path: "items.productId",
+        select: "name variants",
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    // Format data for EJS
-    const formattedOrders = orders.map(order => {
-      return {
-        _id: order._id,
-        orderId: order.orderId,
-        items: order.items,
-        totalAmount: order.grandTotal,
-        status: order.orderStatus,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
-        paymentMethod: order.paymentMethod,
-        paymentStatus: order.paymentStatus,
-      };
+    // Calculate total pages
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    res.render("user/orderDetail", {
+      user,
+      orders,
+      currentPage: page,
+      totalPages,
     });
-
-    res.render("user/myOrders", { orders: formattedOrders });
   } catch (error) {
-    console.error("Error loading orders:", error);
-    res.status(500).render("error", { message: "Failed to load orders" });
+    console.error(error);
+    res.status(500).render("error", { message: "Failed to load order details" });
   }
 };
+
+
+export default ({ getOrderDetail });

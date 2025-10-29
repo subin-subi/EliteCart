@@ -1,98 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Orders</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
- <!-- Navbar -->
+
+  <!-- Navbar -->
   <%- include("../partials/nav") %>
 
-  <!-- Sidebar -->
+  <div class="container mx-auto px-4 py-10 flex flex-col md:flex-row gap-6">
+
+    <!-- Sidebar -->
     <div class="hidden md:block">
       <%- include("../partials/userSidebar") %>
     </div>
 
-<!-- My Orders Section -->
-<div class="container mx-auto px-4 py-10 flex flex-col md:flex-row gap-6">
+    <!-- Orders Section -->
+    <div class="flex-1 border rounded-lg bg-white shadow-sm">
+      <div class="flex items-center justify-between border-b px-4 py-3 bg-gray-100 rounded-t-lg">
+        <h2 class="text-lg font-semibold">My Orders</h2>
+      </div>
 
-  <!-- Sidebar -->
-  <%- include('../partials/sidebar') %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="border-b bg-gray-300 text-gray-900">
+  <tr class="text-lg font-extrabold">
+    <th class="py-4 px-6 text-left uppercase tracking-wide">
+      Order ID
+    </th>
+    <th class="py-4 px-6 text-center uppercase tracking-wide">
+      Items
+    </th>
+    <th class="py-4 px-6 text-center uppercase tracking-wide">
+      Total
+    </th>
+    <th class="py-4 px-6 text-left uppercase tracking-wide">
+      Status
+    </th>
+    <th class="py-4 px-6 text-center uppercase tracking-wide">
+      Action
+    </th>
+  </tr>
+</thead>
 
-  <!-- Orders Section -->
-  <div class="flex-1 border rounded-lg bg-gray-50 shadow-sm">
-    <div class="flex items-center justify-between border-b px-4 py-3 bg-gray-100 rounded-t-lg">
-      <h2 class="text-lg font-semibold">My Orders</h2>
-      <select class="border rounded-md px-2 py-1 text-sm bg-white">
-        <option>Last 6 months</option>
-        <option>Last 1 year</option>
-        <option>All Orders</option>
-      </select>
-    </div>
+          <tbody>
+            <% if (orders && orders.length > 0) { %>
+              <% orders.forEach(order => { %>
+              <tr class="border-b hover:bg-gray-100 transition bg-white shadow-sm rounded-lg">
+  <!-- Order ID -->
+  <td class="py-5 px-4 text-lg font-bold text-gray-900 tracking-wide">
+    <%= order.orderId %>
+  </td>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="border-b bg-gray-200 text-gray-700">
-          <tr>
-            <th class="py-2 px-4 text-left">Order ID</th>
-            <th class="py-2 px-4 text-center">Items</th>
-            <th class="py-2 px-4 text-center">Total Amount</th>
-            <th class="py-2 px-4 text-left">Order Status</th>
-          </tr>
-        </thead>
+  <!-- Items -->
+  <td class="py-5 px-4 text-lg font-semibold text-center text-gray-800">
+    <%= order.items.length %>
+  </td>
 
-        <tbody>
-          <% if (orders && orders.length > 0) { %>
-            <% orders.forEach(order => { %>
-              <tr class="border-b hover:bg-gray-100 transition">
-                <td class="py-3 px-4 font-semibold text-gray-800">#<%= order.orderId %></td>
-                <td class="py-3 px-4 text-center"><%= order.items.length %></td>
-                <td class="py-3 px-4 text-center">₹ <%= order.totalAmount %></td>
-                <td class="py-3 px-4">
-                  <% if (order.status === "Placed") { %>
-                    <div class="flex items-center gap-2">
-                      <span class="h-2 w-2 bg-green-500 rounded-full"></span>
-                      <div>
-                        <p class="text-green-600 font-medium">Delivery expected by <%= order.deliveryDate %></p>
-                        <p class="text-gray-600 text-sm">Your order has been placed.</p>
-                      </div>
-                    </div>
-                  <% } else if (order.status === "Cancelled") { %>
-                    <div class="flex items-center gap-2">
-                      <span class="h-2 w-2 bg-red-500 rounded-full"></span>
-                      <div>
-                        <p class="text-red-600 font-medium">Cancelled on <%= order.cancelDate %></p>
-                        <p class="text-gray-600 text-sm">Your order has been cancelled.</p>
-                      </div>
-                    </div>
-                  <% } %>
-                  <button 
-                    onclick="window.location.href='/order/<%= order._id %>'"
-                    class="mt-2 bg-black text-white text-xs px-3 py-1 rounded hover:bg-gray-800">
-                    View Orders
-                  </button>
-                </td>
-              </tr>
-            <% }) %>
-          <% } else { %>
-            <tr>
-              <td colspan="4" class="text-center py-10 text-gray-500">
-                No orders found.
-              </td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <!-- Total -->
+  <td class="py-5 px-4 text-lg font-semibold text-center text-green-700">
+    ₹<%= order.grandTotal %>
+  </td>
+
+  <!-- Status -->
+  <td class="py-5 px-4 text-lg font-semibold text-gray-800">
+    <% 
+      const status = order.orderStatus; 
+      let statusColor = "text-gray-600"; 
+      if (status === "Pending") statusColor = "text-yellow-500";
+      else if (status === "Confirmed") statusColor = "text-blue-500";
+      else if (status === "Shipped") statusColor = "text-purple-500";
+      else if (status === "Out for Delivery") statusColor = "text-orange-500";
+      else if (status === "Delivered") statusColor = "text-green-600";
+      else if (status === "Cancelled") statusColor = "text-red-600";
+    %>
+    <span class="<%= statusColor %> font-extrabold"><%= status %></span>
+  </td>
+
+  <!-- Action -->
+  <td class="py-5 px-4 text-center">
+    <button 
+      onclick="toggleDetails('<%= order._id %>')" 
+      class="bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition font-semibold">
+      View Details
+    </button>
+  </td>
+</tr>
+
+                <!-- Hidden Drop-down Row -->
+                <tr id="details-<%= order._id %>" class="hidden bg-gray-50">
+                  <td colspan="5" class="p-4">
+                    <!-- Order Items -->
+  <div class="space-y-3">
+  <% order.items.forEach(item => { 
+      const variant = item.productId?.variants?.find(v => v._id.toString() === item.variantId.toString());
+  %>
+  
+  <div class="flex items-center justify-between gap-6 border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition">
+    
+    <!-- Product Image -->
+    <img 
+      src="<%= variant?.mainImage || variant?.subImages?.[0] || '/images/no-image.png' %>" 
+      alt="Product Image"
+      class="w-20 h-20 object-cover rounded-lg border"
+    />
+
+    <!-- Product Details -->
+    <div class="flex-1 grid grid-cols-6 items-center text-sm text-gray-800 gap-4">
+      <!-- Name -->
+      <div class="font-semibold">
+        <%= item.productId?.name || 'Product Name Not Found' %>
+      </div>
+
+      <!-- Quantity -->
+      <div class="text-center text-gray-700">
+        Qty: <span class="font-medium"><%= item.quantity %></span>
+      </div>
+
+      <!-- Price -->
+      <div class="text-center text-gray-700">
+        ₹<%= item.finalPrice %> <span class="text-gray-500 text-xs">each</span>
+      </div>
+
+      <!-- Total -->
+      <div class="text-center font-semibold text-gray-900">
+        ₹<%= item.total %>
+      </div>
+
+ <!-- Status -->
+<div class="text-center">
+  <% 
+    const status = order.orderStatus; 
+    let colorClass = "text-gray-500"; 
+    if (status === "Pending") colorClass = "text-yellow-500";
+    else if (status === "Confirmed") colorClass = "text-blue-500";
+    else if (status === "Shipped") colorClass = "text-purple-500";
+    else if (status === "Out for Delivery") colorClass = "text-orange-500";
+    else if (status === "Delivered") colorClass = "text-green-600";
+    else if (status === "Cancelled") colorClass = "text-red-600";
+  %>
+
+  <span class="<%= colorClass %> font-medium">
+    <%= status %>
+  </span>
 </div>
 
 
+      <!-- Return Button -->
+      <div class="text-right">
+        <% if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
+          <form action="/order/return/<%= order._id %>/<%= item._id %>" method="POST">
+           <button 
+  type="submit" 
+  class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+         text-white font-semibold text-sm px-5 py-2 rounded-lg 
+         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+         transition-all duration-300 ease-in-out">
+   Return
+</button>
+
+          </form>
+        <% } else { %>
+          <button 
+            class="bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-md cursor-not-allowed" 
+            disabled>
+            <%= item.returnStatus %>
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <% }) %>
+</div>
 
 
-     <!-- Footer -->
+                    <!-- Order Summary -->
+                    <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
+                      <h4 class="font-semibold mb-2">Order Summary</h4>
+                      <p class="text-sm text-gray-700">Subtotal: ₹<%= order.subtotal %></p>
+                      <p class="text-sm text-gray-700">Discount: ₹<%= order.discount %></p>
+                      <p class="text-sm text-gray-700">Shipping: ₹<%= order.shippingCharge %></p>
+                      <p class="font-semibold text-gray-900 mt-1">Grand Total: ₹<%= order.grandTotal %></p>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
+                      <h4 class="font-semibold mb-2">Delivery Address</h4>
+                      <p class="text-gray-700 text-sm"><%= order.address.name %></p>
+                      <p class="text-gray-700 text-sm">
+                        <%= order.address.house %>, <%= order.address.street %>, 
+                        <%= order.address.city %>, <%= order.address.state %> - 
+                        <%= order.address.pincode %>
+                      </p>
+                      <p class="text-gray-700 text-sm">Mobile: <%= order.address.mobile %></p>
+                    </div>
+
+                    <!-- Payment Info -->
+                    <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
+                      <h4 class="font-semibold mb-2">Payment Information</h4>
+                      <p class="text-sm text-gray-700">Method: <%= order.paymentMethod %></p>
+                      <p class="text-sm text-gray-700">Status: <%= order.paymentStatus %></p>
+                      <% if (order.razorpayPaymentId) { %>
+                        <p class="text-sm text-gray-700">Payment ID: <%= order.razorpayPaymentId %></p>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="text-center py-10 text-gray-500">No orders found.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+<!-- Pagination -->
+<% if (totalPages > 1) { %>
+  <div class="flex justify-center items-center gap-2 py-5">
+    <% if (currentPage > 1) { %>
+      <a href="?page=<%= currentPage - 1 %>" 
+         class="px-3 py-1 border rounded hover:bg-gray-200">
+        Prev
+      </a>
+    <% } else { %>
+      <span class="px-3 py-1 text-gray-400 border rounded cursor-not-allowed">Prev</span>
+    <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <a href="?page=<%= i %>"
+         class="px-3 py-1 border rounded 
+                <%= i === currentPage ? 'bg-black text-white' : 'hover:bg-gray-200' %>">
+        <%= i %>
+      </a>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+      <a href="?page=<%= currentPage + 1 %>" 
+         class="px-3 py-1 border rounded hover:bg-gray-200">
+        Next
+      </a>
+    <% } else { %>
+      <span class="px-3 py-1 text-gray-400 border rounded cursor-not-allowed">Next</span>
+    <% } %>
+  </div>
+<% } %>
+
+
+
+  <!-- Footer -->
   <%- include('../partials/footer') %>
 
+  <script>
+    function toggleDetails(orderId) {
+      const row = document.getElementById('details-' + orderId);
+      row.classList.toggle('hidden');
+    }
+  </script>
 </body>
 </html>

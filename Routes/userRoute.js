@@ -97,6 +97,6 @@ route.get("/wishlist",wishlistController.getWishlist)
 route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
 route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
 
-route.get("/my-orders",orderDetailController.getMyOrders)
+route.get("/orders",orderDetailController.getOrderDetail)
 
 export default route;
