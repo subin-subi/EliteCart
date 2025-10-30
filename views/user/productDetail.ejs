@@ -70,68 +70,88 @@
     <!-- Right Side -->
 <div class="relative bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100 flex flex-col justify-between md:h-[550px] md:w-[85%] lg:w-[80%] mx-auto">
 
-<div>
-    <!-- Wishlist Heart Icon -->
+  <!-- Wishlist Heart Icon -->
+  <button 
+    id="wishlistBtn"
+    data-product="<%= product._id %>"
+    class="absolute top-4 right-4 text-3xl transition transform hover:scale-110 z-10">
+      <i id="heartIcon" 
+        class="fa fa-heart <%= product.isInWishlist ? 'text-red-500' : 'text-gray-600' %>"></i>
+  </button>
+
+  <!-- Content Wrapper -->
+  <div class="flex flex-col justify-between h-full">
+
+    <!-- Product Info -->
+    <div>
+      <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+        <%= product.name %>
+      </h1>
+
+      <p id="priceText" class="text-2xl sm:text-3xl text-red-600 font-semibold mb-4">
+        ₹<%= (product.variants[0].discountPrice != null ? product.variants[0].discountPrice : product.variants[0].price).toLocaleString() %>
+      </p>
+
+<p 
+  id="productDescription" 
+  class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 line-clamp-3 overflow-hidden transition-all duration-300"
+>
+  <%= product.description %>
+</p>
+
 <button 
-  id="wishlistBtn"
-  data-product="<%= product._id %>"
-  class="absolute top-4 right-4 text-3xl transition transform hover:scale-110 z-10">
-    <i id="heartIcon" 
-     class="fa fa-heart <%= product.isInWishlist ? 'text-red-500' : 'text-gray-600' %>"></i>
+  id="toggleDescription" 
+  class="text-blue-600 font-semibold hover:underline focus:outline-none"
+>
+  Read more
 </button>
 
-
-    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900"><%= product.name %></h1>
-    <p id="priceText" class="text-2xl sm:text-3xl text-red-600 mt-3 font-semibold">
-      ₹<%= (product.variants[0].discountPrice != null ? product.variants[0].discountPrice : product.variants[0].price).toLocaleString() %>
-    </p>
-    <p class="text-gray-700 mt-6 text-base sm:text-lg leading-relaxed"><%= product.description %></p>
+<!-- Variant Dropdown -->
+<% if (product.variants && product.variants.length > 1) { %>
+  <div id="variantSection" class="mt-2">
+    <label for="variantSelect" class="block text-gray-700 font-medium mb-2">
+      Choose Volume:
+    </label>
+    <select 
+      id="variantSelect" 
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none">
+      <% product.variants.forEach((variant, index) => { %>
+        <option value="<%= variant._id %>"
+                data-price="<%= (variant.discountPrice != null ? variant.discountPrice : variant.price) %>"
+                data-image="<%= variant.mainImage || '/images/placeholder.png' %>"
+                data-stock="<%= variant.stock %>"
+                <%= index === 0 ? 'selected' : '' %>>
+          <%= variant.volume ? variant.volume + ' ml' : 'Default' %>
+        </option>
+      <% }) %>
+    </select>
   </div>
+<% } %>
 
-  <!-- Variant Dropdown -->
-  <% if (product.variants && product.variants.length > 1) { %>
-    <div class="mt-6">
-      <label for="variantSelect" class="block text-gray-700 font-medium mb-2">Choose Volume:</label>
-      <select id="variantSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none">
-        <% product.variants.forEach((variant, index) => { %>
-          <option value="<%= variant._id %>"
-                  data-price="<%= (variant.discountPrice != null ? variant.discountPrice : variant.price) %>"
-                  data-image="<%= variant.mainImage || '/images/placeholder.png' %>"
-                  data-stock="<%= variant.stock %>"
-                  <%= index === 0 ? 'selected' : '' %>>
-            <%= variant.volume ? variant.volume + ' ml' : 'Volume' %>
-          </option>
-        <% }) %>
-      </select>
-    </div>
-  <% } %>
-
-  <!-- Buttons -->
-  <div class="mt-8 flex flex-col gap-4">
-    <% if (product.variants[0].stock > 0) { %>
-     <button id="addToCartBtn"
-        data-product="<%= product._id %>"
-        data-variant="<%= product.variants[0]._id %>"
-        class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
-     <i class="fa fa-shopping-cart"></i> Add To Cart
+<!-- Action Buttons -->
+<div id="cartSection" class="mt-8 flex flex-col gap-4">
+  <% if (product.variants[0].stock > 0) { %>
+    <button 
+      id="addToCartBtn"
+      data-product="<%= product._id %>"
+      data-variant="<%= product.variants[0]._id %>"
+      class="w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+      <i class="fa fa-shopping-cart"></i> Add To Cart
     </button>
+  <% } else { %>
+    <button 
+      id="outOfStockBtn"
+      disabled
+      class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+      Out of Stock
+    </button>
+  <% } %>
+</div>
 
 
-      <a id="buyNowBtn"
-   href="#"
-   data-product="<%= product._id %>"
-   data-variant="<%= product.variants[0]._id %>"
-   class="w-full text-center inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
-   <i class="fa fa-bolt"></i> Buy Now
-</a>
-
-    <% } else { %>
-      <button id="outOfStockBtn" disabled class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
-        Out of Stock
-      </button>
-    <% } %>
   </div>
 </div>
+
   </div>
 
   <!-- Related Products -->
@@ -167,6 +187,33 @@
 
 
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const desc = document.getElementById("productDescription");
+    const toggleBtn = document.getElementById("toggleDescription");
+    const variantSection = document.getElementById("variantSection");
+    const cartSection = document.getElementById("cartSection");
+
+    toggleBtn.addEventListener("click", () => {
+      const expanded = !desc.classList.contains("line-clamp-3");
+
+      if (expanded) {
+        // Collapse
+        desc.classList.add("line-clamp-3");
+        toggleBtn.textContent = "Read more";
+        variantSection?.classList.remove("hidden");
+        cartSection?.classList.remove("hidden");
+      } else {
+        // Expand
+        desc.classList.remove("line-clamp-3");
+        toggleBtn.textContent = "Show less";
+        variantSection?.classList.add("hidden");
+        cartSection?.classList.add("hidden");
+      }
+    });
+  });
+
+
+
 // Thumbnails
 document.querySelectorAll(".thumbnail").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -208,16 +255,16 @@ mainImage.addEventListener("mouseleave", () => {
 
       const variantId = selectedOption.value;
       addToCartBtn.dataset.variant = variantId;
-      buyNowBtn.dataset.variant = variantId;
+      
 
       const stock = parseInt(selectedOption.getAttribute("data-stock"), 10);
       if (stock > 0) {
         addToCartBtn.style.display = "flex";
-        buyNowBtn.style.display = "flex";
+        
         if (outOfStockBtn) outOfStockBtn.style.display = "none";
       } else {
         addToCartBtn.style.display = "none";
-        buyNowBtn.style.display = "none";
+        
         if (outOfStockBtn) outOfStockBtn.style.display = "block";
       }
     });
@@ -250,31 +297,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Add to cart error:", err);
       alert("⚠️ Something went wrong!");
     }
-  });
-});
-
-
-//////////////////// BUY NOW BUTTON ////////////////////
-document.addEventListener("DOMContentLoaded", () => {
-  const buyNowBtn = document.getElementById("buyNowBtn");
-  const priceText = document.getElementById("priceText");
-
-  buyNowBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    const productId = buyNowBtn.dataset.product;
-    const variantId = buyNowBtn.dataset.variant;
-
-    if (!variantId) {
-      alert("Please select a variant first");
-      return;
-    }
-
-    
-    const total = priceText.textContent.replace(/[₹,]/g, "").trim();
-
-    
-    window.location.href = `/checkout?total=${total}&productId=${productId}&variant=${variantId}`;
   });
 });
 

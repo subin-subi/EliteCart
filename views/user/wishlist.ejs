@@ -103,9 +103,7 @@
   <input type="hidden" name="productId" value="<%= item.productId?._id %>">
   <input type="hidden" name="variantId" value="<%= item.variantId || variant?._id %>">
 
-<script>
-console.log("variantId sent:", "<%= item.variantId || variant?._id %>");
-</script>
+
 
   <button type="submit"
           class="bg-green-600 text-white w-full py-2 rounded-full hover:bg-green-700 transition text-sm font-medium">
@@ -130,7 +128,6 @@ console.log("variantId sent:", "<%= item.variantId || variant?._id %>");
   <script>
 
 
-
 document.querySelectorAll('.add-to-cart-form').forEach(form => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -153,11 +150,8 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
           timerProgressBar: true
         });
 
-        // 👇 Add this to auto-refresh wishlist after success
-        setTimeout(() => {
-          location.reload();
-        }, 1500);
-
+        // 🔄 Refresh after success
+        setTimeout(() => location.reload(), 1500);
       } else {
         Swal.fire({
           icon: "error",
@@ -168,23 +162,32 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
           showConfirmButton: false,
           timerProgressBar: true
         });
+
+        // 🔄 Refresh after backend error (non-success)
+        setTimeout(() => location.reload(), 2000);
       }
 
     } catch (error) {
       console.error("Axios error:", error);
+
+      const errMsg =
+        error.response?.data?.message || "Something went wrong";
+
       Swal.fire({
         icon: "error",
-        title: "Something went wrong",
+        title: errMsg,
         toast: true,
         position: "top-end",
         timer: 2000,
         showConfirmButton: false,
         timerProgressBar: true
       });
+
+      // 🔄 Refresh after 2 seconds even when Axios error (e.g., 400 Max limit)
+      setTimeout(() => location.reload(), 2000);
     }
   });
 });
-
 
 </script> 
 </body>

@@ -16,11 +16,11 @@ const getCartCheckout = async (req, res) => {
 
     const cart = await Cart.findOne({ userId }).populate("items.productId");
 
-    console.log(cart)
-
     if (!cart || cart.items.length === 0) {
-      return res.status(400).send("Cart is empty");
-    }
+  return res.status(400).render("partials/error", {
+    message: "Your cart is empty. Please add items before proceeding to checkout."
+  });
+}
 
     const cartItems = cart.items.map((item) => {
       const product = item.productId;
@@ -38,7 +38,11 @@ const getCartCheckout = async (req, res) => {
       };
     });
 
+    // Calculate total price
     const total = cart.grandTotal || cartItems.reduce((sum, i) => sum + i.total, 0);
+
+    // ✅ Dynamic Shipping Charge
+    const shippingCost = total > 1000 ? 0 : 50;
 
     // Extract productIds and variantIds for EJS
     const productIds = cartItems.map(i => i.productId).join(",");
@@ -46,12 +50,12 @@ const getCartCheckout = async (req, res) => {
 
     res.render("user/checkout", {
       user,
-      singleProduct: null,
       cart: cartItems,
       addresses,
       total,
-      productIds,   // ✅ Added
-      variantIds,   // ✅ Added
+      shippingCost,  // ✅ Pass to frontend
+      productIds,
+      variantIds,
     });
 
   } catch (error) {
@@ -60,54 +64,6 @@ const getCartCheckout = async (req, res) => {
   }
 };
 
-
-const getSingleCheckout = async (req, res) => {
-  try {
-    const userId = req.session.user;
-    const { total, productId, variant } = req.query;
-
-    const user = await User.findById(userId);
-const addresses = await Address.find({ userId });;
-
-    
-    const product = await Product.findById(productId).populate("variants");
-
-   
-    if (!product) {
-      console.log("❌ Product not found for ID:", productId);
-      return res.status(404).send("Product not found");
-    }
-
-    
-    const selectedVariant = product.variants.find(
-      (v) => v._id.toString() === variant
-    );
-
-    if (!selectedVariant) {
-      console.log("❌ Variant not found for ID:", variant);
-      return res.status(404).send("Variant not found");
-    }
-
-   
-    const singleProduct = {
-      name: product.name,
-      mainImage: selectedVariant?.mainImage || "",
-      volume: selectedVariant?.volume || 0,
-      price: selectedVariant?.discountPrice || selectedVariant?.price,
-    };
-
-    res.render("user/checkout", {
-      user,
-      singleProduct,
-      cart: null,
-      addresses,
-      total,
-    });
-  } catch (error) {
-    console.error("Single Checkout Error:", error);
-    res.status(500).send("Internal Server Error");
-  }
-};
 
 const selectAddres = async (req, res) => {
   try {
@@ -122,7 +78,9 @@ const selectAddres = async (req, res) => {
 
 
 const placeOrder = async (req, res) => {
+  console.log(req.body)
   try {
+    console.log("enrte")
     const userId = req.session.user;
     const { paymentMethod, addressId } = req.body;
 
@@ -170,7 +128,7 @@ const placeOrder = async (req, res) => {
       };
     });
 
-    // 🧾 Create order
+    
     const order = new Order({
       userId,
       items,
@@ -197,7 +155,9 @@ const placeOrder = async (req, res) => {
 
     res.json({ success: true, orderId: order._id });
   } catch (error) {
-    console.error("❌ Error placing order:", error);
+    
+    console.log("Error placing order!!!!:", error);
+  
     res.json({ success: false, message: "Error placing order" });
   }
 };
@@ -205,7 +165,6 @@ const placeOrder = async (req, res) => {
 
 
 export default {
-   getSingleCheckout,
   getCartCheckout,
   selectAddres,
   placeOrder

@@ -112,7 +112,7 @@ const updateQuantity = async (req, res) => {
     }
 
     
-    if (newQuantity > 10) {
+    if (newQuantity >= 10) {
       return res.json({ success: false, message: "Maximum quantity limit is 10" });
     }
 
