@@ -95,7 +95,7 @@ res.json({ success: true, message: "Product added to cart" });
 
 const updateQuantity = async (req, res) => {
   try {
-    const userId = req.session.user
+    const userId = req.session.user;
     const { itemId } = req.params;
     const { change } = req.body;
 
@@ -105,24 +105,29 @@ const updateQuantity = async (req, res) => {
     const item = cart.items.id(itemId);
     if (!item) return res.json({ success: false, message: "Item not found" });
 
-        const newQuantity = item.quantity + change;
+    const newQuantity = item.quantity + change;
 
-    if (item.quantity + change <= 1) {
+    if (newQuantity < 1) {
       return res.json({ success: false, message: "Minimum quantity is 1" });
     }
 
-    
-    if (newQuantity >= 10) {
+    if (newQuantity > 10) {
       return res.json({ success: false, message: "Maximum quantity limit is 10" });
     }
 
-    item.quantity += change;
+    item.quantity = newQuantity;
     item.total = item.price * item.quantity;
 
     cart.grandTotal = cart.items.reduce((acc, i) => acc + i.total, 0);
     await cart.save();
 
-    res.json({ success: true, grandTotal: cart.grandTotal, quantity: item.quantity });
+    res.json({
+      success: true,
+      quantity: item.quantity,
+      itemTotal: item.total,
+      grandTotal: cart.grandTotal
+    });
+
   } catch (err) {
     console.error("Update quantity error:", err);
     res.status(500).json({ success: false, message: "Something went wrong" });

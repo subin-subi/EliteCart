@@ -282,18 +282,42 @@ console.log(body)
     });
 
     const data = await res.json();
-console.log(data)
+
     if (res.ok && data.success) {
-      // SweetAlert-style popup for better UX
-      const confirm = window.confirm("✅ Order placed successfully!\n\nDo you want to view your order details?");
-      if (confirm) {
-        window.location.href = "/order-details";
-      } else {
-        window.location.href = "/shop";
-      }
+  Swal.fire({
+    title: "✅ Order Placed Successfully!",
+    text: "Your order has been placed successfully.",
+    icon: "success",
+    showCancelButton: true,
+    confirmButtonText: "🛒 View Order Details",
+    cancelButtonText: "🛍️ Go to Shop",
+    reverseButtons: true,
+    customClass: {
+      popup: "w-[500px] p-6 rounded-2xl", // 📏 Bigger popup size
+      title: "text-2xl font-bold text-green-600", // 💬 Stylish title
+      confirmButton: "bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700",
+      cancelButton: "bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600"
+    },
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = "/orders";
     } else {
-      alert("❌ " + (data.message || "Something went wrong"));
+      window.location.href = "/product";
     }
+  });
+} else {
+  Swal.fire({
+    icon: "error",
+    title: "❌ Failed to Place Order",
+    text: data.message || "Something went wrong. Please try again.",
+    confirmButtonText: "OK",
+    customClass: {
+      popup: "w-[400px] p-6 rounded-2xl",
+      confirmButton: "bg-red-600 text-white px-5 py-2 rounded-md hover:bg-red-700"
+    }
+  });
+}
+
   } catch (err) {
     console.error(err);
     alert("❌ Failed to place order. Please try again.");

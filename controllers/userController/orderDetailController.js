@@ -7,28 +7,33 @@ const getOrderDetail = async (req, res) => {
     const userId = req.session.user;
     if (!userId) return res.redirect("/login");
 
-    const page = parseInt(req.query.page) || 1; // current page
-    const limit = 5; // number of orders per page
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 5; 
     const skip = (page - 1) * limit;
 
     const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).render("error", { message: "User not found" });
+    }
 
-    // Get total number of orders for pagination
+    
     const totalOrders = await Order.countDocuments({ userId });
 
-    // Fetch paginated orders
+    
     const orders = await Order.find({ userId })
       .populate({
         path: "items.productId",
-        select: "name variants",
+        select: "name variants images", 
       })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean(); 
 
-    // Calculate total pages
-    const totalPages = Math.ceil(totalOrders / limit);
+  
+    const totalPages = Math.max(Math.ceil(totalOrders / limit), 1);
 
+    
     res.render("user/orderDetail", {
       user,
       orders,
@@ -36,7 +41,7 @@ const getOrderDetail = async (req, res) => {
       totalPages,
     });
   } catch (error) {
-    console.error(error);
+    console.error(" Error in getOrderDetail:", error);
     res.status(500).render("error", { message: "Failed to load order details" });
   }
 };

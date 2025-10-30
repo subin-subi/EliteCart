@@ -81,13 +81,29 @@
   </td>
 
   <!-- Action -->
-  <td class="py-5 px-4 text-center">
+ <td class="py-5 px-4 text-center space-x-3">
+  <button 
+    onclick="toggleDetails('<%= order._id %>')" 
+    class="bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition font-semibold">
+    View Details
+  </button>
+
+  <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered') { %>
+    <form action="/order/cancel/<%= order._id %>" method="POST" class="inline">
+      <button 
+        type="submit" 
+        class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-md font-semibold transition">
+        Cancel Order
+      </button>
+    </form>
+  <% } else { %>
     <button 
-      onclick="toggleDetails('<%= order._id %>')" 
-      class="bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition font-semibold">
-      View Details
+      class="bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-md cursor-not-allowed" 
+      disabled>
+      <%= order.orderStatus %>
     </button>
-  </td>
+  <% } %>
+</td>
 </tr>
 
                 <!-- Hidden Drop-down Row -->
@@ -149,28 +165,51 @@
 </div>
 
 
-      <!-- Return Button -->
-      <div class="text-right">
-        <% if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
-          <form action="/order/return/<%= order._id %>/<%= item._id %>" method="POST">
-           <button 
-  type="submit" 
-  class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
-         text-white font-semibold text-sm px-5 py-2 rounded-lg 
-         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
-         transition-all duration-300 ease-in-out">
-   Return
-</button>
+   <!-- Action Button (Cancel or Return) -->
+<div class="text-right">
+  <% 
+    const orderStatus = order.orderStatus; // renamed to avoid duplicate variable
+    const canCancel = ['Pending', 'Confirmed', 'Shipped', 'Out for Delivery'].includes(orderStatus);
+    const canReturn = orderStatus === 'Delivered';
+  %>
 
-          </form>
-        <% } else { %>
-          <button 
-            class="bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-md cursor-not-allowed" 
-            disabled>
-            <%= item.returnStatus %>
-          </button>
-        <% } %>
-      </div>
+  <% if (canCancel && item.cancelStatus === 'Not Cancelled') { %>
+    <!-- Cancel Button -->
+    <form action="/order/item-cancel/<%= order._id %>/<%= item._id %>" method="POST">
+      <button 
+        type="submit" 
+        class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+               text-white font-semibold text-sm px-5 py-2 rounded-lg 
+               shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+               transition-all duration-300 ease-in-out">
+        Cancel
+      </button>
+    </form>
+
+  <% } else if (canReturn && item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
+    <!-- Return Button -->
+    <form action="/order/return/<%= order._id %>/<%= item._id %>" method="POST">
+      <button 
+        type="submit" 
+        class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
+               text-white font-semibold text-sm px-5 py-2 rounded-lg 
+               shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+               transition-all duration-300 ease-in-out">
+        Return
+      </button>
+    </form>
+
+  <% } else { %>
+    <!-- Disabled or No Action -->
+    <button 
+      class="bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-md cursor-not-allowed" 
+      disabled>
+      <%= item.cancelStatus === 'Cancelled' ? 'Cancelled' : item.returnStatus %>
+    </button>
+  <% } %>
+</div>
+
+      
     </div>
   </div>
 
@@ -219,40 +258,51 @@
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
 
-
-<!-- Pagination -->
-<% if (totalPages > 1) { %>
-  <div class="flex justify-center items-center gap-2 py-5">
+      <% if (totalPages > 1) { %>
+  <div class="flex justify-center items-center mt-6 mb-8 space-x-2">
+    
     <% if (currentPage > 1) { %>
-      <a href="?page=<%= currentPage - 1 %>" 
-         class="px-3 py-1 border rounded hover:bg-gray-200">
-        Prev
+      <a href="?page=<%= currentPage - 1 %>"
+         class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-700 hover:bg-gray-200 transition">
+        ← Prev
       </a>
     <% } else { %>
-      <span class="px-3 py-1 text-gray-400 border rounded cursor-not-allowed">Prev</span>
+      <span class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed">
+        ← Prev
+      </span>
     <% } %>
 
     <% for (let i = 1; i <= totalPages; i++) { %>
       <a href="?page=<%= i %>"
-         class="px-3 py-1 border rounded 
-                <%= i === currentPage ? 'bg-black text-white' : 'hover:bg-gray-200' %>">
+         class="px-3 py-2 border rounded-lg font-medium transition
+                <%= i === currentPage 
+                    ? 'bg-black text-white border-black' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100' %>">
         <%= i %>
       </a>
     <% } %>
 
     <% if (currentPage < totalPages) { %>
-      <a href="?page=<%= currentPage + 1 %>" 
-         class="px-3 py-1 border rounded hover:bg-gray-200">
-        Next
+      <a href="?page=<%= currentPage + 1 %>"
+         class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-700 hover:bg-gray-200 transition">
+        Next →
       </a>
     <% } else { %>
-      <span class="px-3 py-1 text-gray-400 border rounded cursor-not-allowed">Next</span>
+      <span class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed">
+        Next →
+      </span>
     <% } %>
+
   </div>
 <% } %>
+
+
+
+
+    </div>
+    
+  </div>
 
 
 

@@ -73,20 +73,28 @@
             </div>
 
             <!-- Quantity + Delete -->
-            <div class="flex items-center space-x-4">
-              <div class="flex items-center border rounded-full px-3 py-1 bg-gray-100">
-                <button onclick="updateCartQuantity('<%= item._id %>', -1)" class="text-gray-600 hover:text-black">−</button>
-                <span class="mx-3"><%= item.productQuantity %></span>
-                <button onclick="updateCartQuantity('<%= item._id %>', 1)" class="text-gray-600 hover:text-black">+</button>
-              </div>
-<button 
-  onclick="removeFromCart('<%= item._id %>')" 
-  class="text-red-500 hover:text-red-700 z-50 relative"
->
-  <i class="ri-delete-bin-line text-lg"></i>
-</button>
+          <div class="flex items-center space-x-6">
+  <!-- Grand Total (moved before quantity controls) -->
+  <span class="text-gray-800 font-semibold w-20 text-center" id="total-<%= item._id %>">
+    ₹<%= item.total.toFixed(2) %>
+  </span>
 
-            </div>
+  <!-- Quantity controls -->
+  <div class="flex items-center border rounded-full px-3 py-1 bg-gray-100">
+    <button onclick="updateCartQuantity('<%= item._id %>', -1)" class="text-gray-600 hover:text-black">−</button>
+    <span class="mx-3" id="quantity-<%= item._id %>"><%= item.quantity %></span>
+    <button onclick="updateCartQuantity('<%= item._id %>', 1)" class="text-gray-600 hover:text-black">+</button>
+  </div>
+
+  <!-- Delete button (stays fixed on the right) -->
+  <button 
+    onclick="removeFromCart('<%= item._id %>')" 
+    class="text-red-500 hover:text-red-700 ml-auto"
+  >
+    <i class="ri-delete-bin-line text-lg"></i>
+  </button>
+</div>
+
           </div>
         <% }) %>
       <% } else { %>
@@ -95,39 +103,47 @@
 
     </div>
 
-    <!-- Order Summary -->
-    <div class="border rounded-xl p-6 shadow-sm h-fit">
-      <h3 class="font-semibold text-lg mb-4">Order Summary</h3>
+   <!-- Order Summary -->
+<div class="border rounded-xl p-6 shadow-sm h-fit">
+  <h3 class="font-semibold text-lg mb-4">Order Summary</h3>
 
-      <div class="flex justify-between text-sm mb-2">
-        <span>Subtotal</span>
-        <span>$<%= subtotal %></span>
-      </div>
-      <div class="flex justify-between text-sm mb-2">
-        <span>Delivery Fee</span>
-        <span class="text-green-600">Free</span>
-      </div>
+  <!-- Subtotal -->
+  <div class="flex justify-between text-sm mb-2">
+    <span>Subtotal</span>
+    <span class="font-semibold text-gray-800">₹<%= subtotal.toFixed(2) %></span>
+  </div>
 
-      <div class="border-t mt-4 pt-4 flex justify-between font-semibold text-base">
-        <span>Total</span>
-        <span>$<%= subtotal %></span>
-      </div>
+  <!-- Delivery Fee -->
+  <div class="flex justify-between text-sm mb-2">
+    <span>Delivery Fee</span>
+    <% if (subtotal > 1000) { %>
+      <span class="text-green-600 font-semibold">Free</span>
+    <% } else { %>
+      <span class="text-gray-800 font-semibold">₹50</span>
+    <% } %>
+  </div>
 
-     
-      <!-- Checkout Button -->
-   <a 
-  href="/checkout/cart?<%= 
-    'total=' + subtotal + 
-    '&productIds=' + cartItems.map(item => item.productId._id).join(',') + 
-    '&variantIds=' + cartItems.map(item => item.variant._id).join(',')
-  %>"
-  class="mt-6 w-full bg-black text-white py-3 rounded-full flex items-center justify-center hover:bg-gray-800"
->
-  Proceed to Checkout
-</a>
+  <!-- Total -->
+  <div class="border-t mt-4 pt-4 flex justify-between font-semibold text-base">
+    <span>Total</span>
+    <span class="font-bold text-black" id="grandTotal">
+      ₹<%= (subtotal + (subtotal > 1000 ? 0 : 50)).toFixed(2) %>
+    </span>
+  </div>
 
+  <!-- Checkout Button -->
+  <a 
+    href="/checkout/cart?<%= 
+      'total=' + (subtotal + (subtotal > 1000 ? 0 : 50)).toFixed(2) + 
+      '&productIds=' + cartItems.map(item => item.productId._id).join(',') + 
+      '&variantIds=' + cartItems.map(item => item.variant._id).join(',')
+    %>"
+    class="mt-6 w-full bg-black text-white py-3 rounded-full flex items-center justify-center hover:bg-gray-800"
+  >
+    Proceed to Checkout
+  </a>
+</div>
 
-    </div>
   </div>
 </section>
 
@@ -135,20 +151,44 @@
 
 
 <script>
-  async function updateCartQuantity(itemId, change) {
-    try {
-      const res = await axios.patch(`/cart/update-quantity/${itemId}`, { change });
-      if (res.data.success) {
-       
-        window.location.reload();
-      } else {
-        alert(res.data.message || "Failed to update quantity");
-      }
-    } catch (err) {
-      console.error("Update quantity error:", err);
-      alert("⚠️ Something went wrong!");
+
+async function updateCartQuantity(itemId, change) {
+  try {
+    const res = await axios.patch(`/cart/update-quantity/${itemId}`, { change });
+    const data = res.data;
+
+    if (data.success) {
+      // 🧮 Update quantity on page
+      const quantityEl = document.querySelector(`#quantity-${itemId}`);
+      const totalEl = document.querySelector(`#total-${itemId}`);
+      const grandTotalEl = document.querySelector(`#grandTotal`);
+
+      if (quantityEl) quantityEl.textContent = data.quantity;
+      if (totalEl) totalEl.textContent = `₹${data.itemTotal.toFixed(2)}`;
+      if (grandTotalEl) grandTotalEl.textContent = `₹${data.grandTotal.toFixed(2)}`;
+
+    } else {
+      Swal.fire({
+        icon: "warning",
+        title: data.message || "Quantity update failed",
+        toast: true,
+        position: "top-end",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     }
+  } catch (err) {
+    console.error("Update quantity error:", err);
+    Swal.fire({
+      icon: "error",
+      title: "⚠️ Something went wrong!",
+      toast: true,
+      position: "top-end",
+      timer: 2000,
+      showConfirmButton: false,
+    });
   }
+}
 
 async function removeFromCart(itemId) {
   try {

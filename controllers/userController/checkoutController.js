@@ -77,10 +77,10 @@ const selectAddres = async (req, res) => {
 
 
 
+
+
 const placeOrder = async (req, res) => {
-  console.log(req.body)
   try {
-    console.log("enrte")
     const userId = req.session.user;
     const { paymentMethod, addressId } = req.body;
 
@@ -97,13 +97,23 @@ const placeOrder = async (req, res) => {
 
     let subtotal = 0;
 
-    // ✅ Build order items properly using variantIndex
-    const items = cart.items.map((i) => {
+    // 🧾 Calculate item totals
+    const items = [];
+
+    for (const i of cart.items) {
       const product = i.productId;
       const variant = product.variants[i.variantIndex];
 
       if (!variant) {
         throw new Error(`Variant not found for product ${product._id}`);
+      }
+
+      // 🧮 Check stock availability before reducing
+      if (variant.stock < i.quantity) {
+        return res.json({
+          success: false,
+          message: `Not enough stock for ${product.name} (Available: ${variant.stock})`,
+        });
       }
 
       const variantId = variant._id;
@@ -116,19 +126,30 @@ const placeOrder = async (req, res) => {
 
       subtotal += total;
 
-      return {
+      // 🧾 Push order item
+      items.push({
         productId: product._id,
-        variantId, // ✅ now correctly fetched
+        variantId,
         quantity: i.quantity,
         basePrice,
         discountAmount: discount,
         finalPrice,
         total,
         appliedOffer: discount > 0 ? "Product Discount" : null,
-      };
-    });
+      });
 
-    
+      // 📉 Decrease stock quantity
+      await Product.updateOne(
+        { _id: product._id, "variants._id": variantId },
+        { $inc: { "variants.$.stock": -i.quantity } }
+      );
+    }
+
+    // 🚚 Shipping logic
+    const shippingCharge = subtotal >= 1000 ? 0 : 50;
+    const grandTotal = subtotal + shippingCharge;
+
+    // 📝 Create Order
     const order = new Order({
       userId,
       items,
@@ -144,23 +165,29 @@ const placeOrder = async (req, res) => {
       },
       paymentMethod,
       subtotal,
-      grandTotal: subtotal,
+      shippingCharge,
+      grandTotal,
       paymentStatus: paymentMethod === "COD" ? "Pending" : "Paid",
     });
 
     await order.save();
 
-    // 🧹 Clear the cart after order placement
+    // 🧹 Clear cart after order placement
     await Cart.deleteOne({ userId });
 
-    res.json({ success: true, orderId: order._id });
+    res.json({
+      success: true,
+      message: "Order placed successfully!",
+      orderId: order._id,
+      shippingCharge,
+      grandTotal,
+    });
   } catch (error) {
-    
-    console.log("Error placing order!!!!:", error);
-  
+    console.log("❌ Error placing order:", error);
     res.json({ success: false, message: "Error placing order" });
   }
 };
+
 
 
 
