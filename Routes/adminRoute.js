@@ -42,6 +42,9 @@ router.patch("/block-user/:id", adminMiddleware.checkSession, userController.blo
 router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.unblockUser);
 
 router.get("/orders",orderController.getAdminOrders)
+router.get("/orders/:id",orderController.getOrderdetail)
+router.post("/orders/update-status/:orderId", orderController.updateOrderStatus);
+
 
 
 

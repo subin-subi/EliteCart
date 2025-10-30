@@ -81,14 +81,16 @@
   </td>
 
   <!-- Action -->
- <td class="py-5 px-4 text-center space-x-3">
+<td class="py-5 px-4 text-center space-x-3">
+  <!-- View Details -->
   <button 
     onclick="toggleDetails('<%= order._id %>')" 
     class="bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition font-semibold">
     View Details
   </button>
 
-  <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered') { %>
+  <% if (order.orderStatus === 'Pending') { %>
+    <!-- Cancel Order -->
     <form action="/order/cancel/<%= order._id %>" method="POST" class="inline">
       <button 
         type="submit" 
@@ -96,14 +98,19 @@
         Cancel Order
       </button>
     </form>
-  <% } else { %>
-    <button 
-      class="bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-md cursor-not-allowed" 
-      disabled>
-      <%= order.orderStatus %>
-    </button>
+
+  <% } else if (order.orderStatus === 'Delivered') { %>
+    <!-- Return Order -->
+    <form action="/order/return/<%= order._id %>" method="POST" class="inline">
+      <button 
+        type="submit" 
+        class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md font-semibold transition">
+        Return
+      </button>
+    </form>
   <% } %>
 </td>
+
 </tr>
 
                 <!-- Hidden Drop-down Row -->
