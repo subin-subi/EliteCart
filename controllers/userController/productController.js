@@ -129,14 +129,29 @@ const getProductsPage = async (req, res) => {
 
 const getProductDetailPage = async (req, res) => {
   try {
+    const userId = req.session.user;
     const productId = req.params.id;
 
-    const product = await Product.findById(productId).lean(); 
+    const product = await Product.findById(productId).lean();
     if (!product) {
       return res.status(404).send("Product not found");
     }
 
-    
+    // Check if product is in user's wishlist
+    let isInWishlist = false;
+    if (userId) {
+      const wishlist = await Wishlist.findOne({ userId }).lean();
+      if (wishlist) {
+        isInWishlist = wishlist.items.some(
+          (item) => item.productId.toString() === productId
+        );
+      }
+    }
+
+    // Merge the wishlist info into product
+    product.isInWishlist = isInWishlist;
+
+    // --- Fetch Related Products ---
     let relatedProducts = await Product.find({
       category: product.category,
       _id: { $ne: product._id }
@@ -144,7 +159,6 @@ const getProductDetailPage = async (req, res) => {
       .limit(4)
       .lean();
 
-    
     if (relatedProducts.length < 4) {
       const brandProducts = await Product.find({
         brand: product.brand,
@@ -156,7 +170,6 @@ const getProductDetailPage = async (req, res) => {
       relatedProducts = [...relatedProducts, ...brandProducts];
     }
 
-    
     if (relatedProducts.length < 4) {
       const otherProducts = await Product.find({
         _id: { $ne: product._id, $nin: relatedProducts.map(p => p._id) }
@@ -179,12 +192,10 @@ const getProductDetailPage = async (req, res) => {
 
 
 
-
  const addToWishlist = async (req, res) => {
   try {
     const userId = req.session.user;
     const { productId, variantId } = req.body;
-console.log(productId)
     if (!userId) {
       return res.status(401).json({ success: false, message: "User not logged in" });
     }
