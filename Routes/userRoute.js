@@ -10,6 +10,9 @@ import cartController from "../controllers/userController/cartController.js";
 import checkoutController from "../controllers/userController/checkoutController.js";
 import wishlistController from "../controllers/userController/wishlistController.js";
 import orderDetailController from "../controllers/userController/orderDetailController.js"
+import walletController from "../controllers/userController/walletController.js";
+
+
 
 const route = Router();
 
@@ -98,5 +101,9 @@ route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
 route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
 
 route.get("/orders",orderDetailController.getOrderDetail)
+
+
+
+route.get("/wallet",walletController.getWallet)
 
 export default route;

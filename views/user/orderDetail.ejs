@@ -80,35 +80,36 @@
     <span class="<%= statusColor %> font-extrabold"><%= status %></span>
   </td>
 
-  <!-- Action -->
-<td class="py-5 px-4 text-center space-x-3">
-  <!-- View Details -->
-  <button 
-    onclick="toggleDetails('<%= order._id %>')" 
-    class="bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition font-semibold">
-    View Details
-  </button>
+ <!-- Action -->
+<td class="py-5 px-4 text-center">
+  <div class="flex justify-center items-center gap-3">
 
-  <% if (order.orderStatus === 'Pending') { %>
-    <!-- Cancel Order -->
-    <form action="/order/cancel/<%= order._id %>" method="POST" class="inline">
+    <!-- View Details (always fixed position) -->
+    <div class="w-28 flex justify-center">
       <button 
-        type="submit" 
-        class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-md font-semibold transition">
-        Cancel Order
+        onclick="toggleDetails('<%= order._id %>')" 
+        class="bg-black text-white text-sm px-4 py-2 w-full rounded-md hover:bg-gray-800 transition font-semibold">
+        View Details
       </button>
-    </form>
+    </div>
 
-  <% } else if (order.orderStatus === 'Delivered') { %>
-    <!-- Return Order -->
-    <form action="/order/return/<%= order._id %>" method="POST" class="inline">
-      <button 
-        type="submit" 
-        class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md font-semibold transition">
-        Return
-      </button>
-    </form>
-  <% } %>
+    <!-- Cancel (only when pending) -->
+    <div class="w-28 flex justify-center">
+      <% if (order.orderStatus === 'Pending') { %>
+        <form action="/order/cancel/<%= order._id %>" method="POST" class="inline">
+          <button 
+            type="submit" 
+            class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 w-full rounded-md font-semibold transition">
+            Cancel
+          </button>
+        </form>
+      <% } else { %>
+        <!-- Empty space to keep alignment -->
+        <div class="invisible px-4 py-2 w-full">Cancel</div>
+      <% } %>
+    </div>
+
+  </div>
 </td>
 
 </tr>
