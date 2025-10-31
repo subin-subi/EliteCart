@@ -76,13 +76,20 @@ const checkSession = async (req, res, next) => {
         }
     }
 
-
-const noCache = (req, res, next) => {
+const noBack = (req, res, next) => {
+  // Prevent caching
   res.header("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
   res.header("Pragma", "no-cache"); // HTTP 1.0
   res.header("Expires", "0"); // Proxies
+
+  // Prevent accessing previous page after logout
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
   next();
 };
+
 
 const requireLogin = (req, res, next) => {
   if (!req.session || !req.session.user) {
@@ -94,7 +101,7 @@ const requireLogin = (req, res, next) => {
 export default { 
     isLogin, 
     checkSession ,
-    noCache,
+    noBack,
     requireLogin,
     checkBlocked
 }

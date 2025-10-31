@@ -345,17 +345,29 @@ const postSignup = async (req, res) => {
     };
     
     const getLogout = (req, res) => {
-        // Destroy the session
-        req.session.destroy((err) => {
-            if (err) {
-                console.error("Error destroying session:", err);
-                return res.status(500).send("Error logging out");
-            }
-            
-            res.clearCookie('sessionId');
-            res.redirect('/signup');
-        });
-    };
+  try {
+    // Remove only user data first
+    req.session.user = null;
+
+    // Destroy the full session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+        return res.status(500).send("Error logging out");
+      }
+
+      
+      res.clearCookie("connect.sid"); 
+
+      
+      res.redirect("/signup");
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).send("Something went wrong during logout");
+  }
+};
+
 
  
 const checkSession = (req, res) => {

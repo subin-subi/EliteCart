@@ -188,16 +188,59 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-// Thumbnails
-document.querySelectorAll(".thumbnail").forEach(btn => {
-  btn.addEventListener("click", () => {
-    mainImage.src = btn.dataset.src;
-    document.querySelectorAll(".thumbnail").forEach(t => 
-      t.classList.remove("ring-2","ring-blue-500","border-blue-500")
-    );
-    btn.classList.add("ring-2","ring-blue-500","border-blue-500");
+document.addEventListener("DOMContentLoaded", () => {
+  const variantSelect = document.getElementById("variantSelect");
+  const mainImage = document.getElementById("mainImage");
+  const thumbnailsContainer = document.getElementById("thumbnails");
+
+  // Store all variants from EJS (so you can access subImages easily)
+  const allVariants = <%- JSON.stringify(product.variants) %>;
+
+  if (variantSelect) {
+    variantSelect.addEventListener("change", (e) => {
+      const selectedVariantId = e.target.value;
+      const selectedVariant = allVariants.find(v => v._id === selectedVariantId);
+
+      if (!selectedVariant) return;
+
+      // Update main image
+      mainImage.src = selectedVariant.mainImage || "/images/placeholder.png";
+
+      // Clear old thumbnails
+      thumbnailsContainer.innerHTML = "";
+
+      // Add new thumbnails
+      if (selectedVariant.subImages && selectedVariant.subImages.length > 0) {
+        selectedVariant.subImages.forEach((img, idx) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className =
+            "thumbnail w-full h-20 sm:h-28 md:h-32 rounded-lg overflow-hidden border-2 border-transparent focus:outline-none";
+          button.dataset.src = img;
+
+          button.innerHTML = `<img src="${img}" alt="thumb ${idx + 1}" class="w-full h-full object-cover">`;
+          
+          // Thumbnail click updates main image
+          button.addEventListener("click", () => {
+            mainImage.src = img;
+          });
+
+          thumbnailsContainer.appendChild(button);
+        });
+      } else {
+        thumbnailsContainer.innerHTML = `<p class="text-gray-500 text-sm">No images available</p>`;
+      }
+    });
+  }
+
+  // Existing thumbnail click event for the initial variant
+  document.querySelectorAll(".thumbnail").forEach(btn => {
+    btn.addEventListener("click", () => {
+      mainImage.src = btn.dataset.src;
+    });
   });
 });
+;
 
 // Image Zoom
 mainImage.addEventListener("mousemove", (e) => {

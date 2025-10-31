@@ -5,37 +5,57 @@ const getCart = async (req, res) => {
   try {
     const userId = req.session.user;
 
-    const cart = await Cart.findOne({ userId }).populate("items.productId").lean();
-    let cartItems = [];
-    let subtotal = 0;
-    if (!cart) return res.render("user/cart", 
-      { cartItems: [], subtotal: 0 });
+    const cart = await Cart.findOne({ userId })
+      .populate({
+        path: "items.productId",
+        populate: [
+          { path: "brand", select: "isActive" },
+          { path: "category", select: "isActive " },
+        ],
+      })
+      .lean();
 
-if(cart){
-  cartItems = cart.items.map(item =>{
-    const product = item.productId;
-    const variant = product.variants[item.variantIndex]
-return {
-  _id: item._id,
-  productId : product,
-  variant,
-  productQuantity: item.quantity,
-  total : item.total,
-}
+    // If no cart found
+    if (!cart) {
+      return res.render("user/cart", { cartItems: [], subtotal: 0 });
+    }
 
+    // ✅ Filter out blocked or hidden products
+    const cartItems = cart.items
+      .filter((item) => {
+        const product = item.productId;
+        if (!product) return false;
 
+        const isProductBlocked = product.isBlocked || product.status === "blocked";
+        const isBrandBlocked = product.brand?.isBlocked;
+        const isCategoryHidden = product.category?.isHidden;
+        const isCategoryInactive = product.category && !product.category.isActive;
 
-  })
+        // Remove item if any are blocked or inactive
+        return !isProductBlocked && !isBrandBlocked && !isCategoryHidden && !isCategoryInactive;
+      })
+      .map((item) => {
+        const product = item.productId;
+        const variant = product.variants[item.variantIndex];
+        return {
+          _id: item._id,
+          productId: product,
+          variant,
+          productQuantity: item.quantity,
+          total: item.total,
+        };
+      });
 
-  subtotal = cart.grandTotal
-}
-  
+    // ✅ Calculate subtotal only for visible items
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.total || 0), 0);
+
     res.render("user/cart", { cartItems, subtotal });
   } catch (err) {
-    console.log("Error loading cart:", err);
+    console.error("Error loading cart:", err);
     res.status(500).send("Something went wrong");
   }
 };
+
 
 
 const addToCart = async (req, res) => {
