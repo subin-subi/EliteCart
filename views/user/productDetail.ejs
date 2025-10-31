@@ -46,7 +46,10 @@
   <!-- Product Section -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
 
-   <!-- Left Side --> <div class="flex flex-col md:w-[90%] lg:w-[85%] mx-auto"> <!-- Main Image --> <div class="bg-white rounded-lg shadow overflow-hidden relative"> <img id="mainImage" src="<%= product.variants[0].mainImage || '/images/placeholder.png' %>" alt="<%= product.name %>" class="w-full h-[350px] sm:h-[450px] md:h-[550px] object-cover rounded-xl transition-transform duration-300 ease-in-out"> </div> <!-- Thumbnails --> <div id="thumbnails" class="mt-6 grid grid-cols-3 gap-4"> <% (product.variants[0].subImages || []).forEach(function(img, idx) { %> <button type="button" class="thumbnail w-full h-20 sm:h-28 md:h-32 rounded-lg overflow-hidden border-2 border-transparent focus:outline-none" data-src="<%= img %>"> <img src="<%= img %>" alt="thumb <%= idx+1 %>" class="w-full h-full object-cover"> </button> <% }) %> </div> </div>
+   <!-- Left Side --> <div class="flex flex-col md:w-[90%] lg:w-[85%] mx-auto"> <!-- Main Image --> <div class="bg-white rounded-lg shadow overflow-hidden relative"> <img id="mainImage" src="<%= product.variants[0].mainImage || '/images/placeholder.png' %>"
+       alt="<%= product.name %>" class="w-full h-[350px] sm:h-[450px] md:h-[550px] object-cover rounded-xl transition-transform duration-300 ease-in-out">
+     </div> <!-- Thumbnails --> <div id="thumbnails" class="mt-6 grid grid-cols-3 gap-4"> <% (product.variants[0].subImages || []).forEach(function(img, idx) { %> <button type="button" class="thumbnail w-full h-20 sm:h-28 md:h-32 rounded-lg overflow-hidden border-2 border-transparent focus:outline-none" data-src="<%= img %>"> 
+      <img src="<%= img %>" alt="thumb <%= idx+1 %>" class="w-full h-full object-cover"> </button> <% }) %> </div> </div>
 
     <!-- Right: Product Details -->
     <div class="relative bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100 flex flex-col justify-between md:h-[550px] md:w-[85%] lg:w-[80%] mx-auto">
