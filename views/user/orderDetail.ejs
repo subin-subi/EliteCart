@@ -33,6 +33,9 @@
     <th class="py-4 px-6 text-left uppercase tracking-wide">
       Order ID
     </th>
+    <th class="py-4 px-6 text-left uppercase tracking-wide">
+        Pdf  
+    </th>
     <th class="py-4 px-6 text-center uppercase tracking-wide">
       Items
     </th>
@@ -56,6 +59,20 @@
   <td class="py-5 px-4 text-lg font-bold text-gray-900 tracking-wide">
     <%= order.orderId %>
   </td>
+
+  <td class="py-5 px-4 text-lg font-bold text-gray-900 tracking-wide flex items-center gap-3">
+   Invoice (PDF)"
+
+  <!-- Download Invoice Button -->
+  <a 
+    href="/invoice/<%= order._id %>" 
+    target="_blank"
+    class="bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg shadow-md 
+           hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+    title="Download Invoice (PDF)">
+    <i class="fa-solid fa-file-arrow-down text-lg"></i>
+  </a>
+</td>
 
   <!-- Items -->
   <td class="py-5 px-4 text-lg font-semibold text-center text-gray-800">
@@ -155,7 +172,7 @@
 
       <!-- Total -->
       <div class="text-center font-semibold text-gray-900">
-        ₹<%= order.grandTotal  %>
+        ₹<%= item.total %>
       </div>
 
  <!-- Status -->
@@ -203,16 +220,16 @@
 
   <% } else if (canReturn && item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
     <!-- Return Button -->
-    <form action="/order/return/<%= order._id %>/<%= item._id %>" method="POST">
-      <button 
-        type="submit" 
-        class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
-               text-white font-semibold text-sm px-5 py-2 rounded-lg 
-               shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
-               transition-all duration-300 ease-in-out">
-        Return
-      </button>
-    </form>
+    <button 
+  type="button" 
+  onclick="openReturnPrompt('<%= order._id %>', '<%= item._id %>')"
+  class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
+         text-white font-semibold text-sm px-5 py-2 rounded-lg 
+         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+         transition-all duration-300 ease-in-out">
+  Return
+</button>
+
 
   <% } else { %>
     <!-- Disabled or No Action -->

@@ -102,3 +102,62 @@ document.getElementById("confirmCancelBtn").addEventListener("click", async () =
     });
   }
 });
+
+
+///////////////////////////////////////return///////////////////////////////
+
+async function openReturnPrompt(orderId, itemId) {
+  const { value: reason } = await Swal.fire({
+    title: "Return Request",
+    input: "textarea",
+    inputLabel: "Reason for returning this item",
+    inputPlaceholder: "Type your reason here...",
+    inputAttributes: { maxlength: 300 },
+    showCancelButton: true,
+    confirmButtonText: "Submit",
+    confirmButtonColor: "#16a34a",
+    cancelButtonColor: "#ef4444",
+    preConfirm: (value) => {
+      if (!value || value.trim().length < 10) {
+        Swal.showValidationMessage("⚠️ Please enter at least 10 characters.");
+      }
+      return value.trim();
+    }
+  });
+
+  if (reason) {
+    try {
+      const response = await fetch(`/order-return/${orderId}/${itemId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Return Requested!",
+          text: "Your return request has been submitted.",
+          confirmButtonColor: "#16a34a"
+        }).then(() => window.location.reload());
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Failed!",
+          text: result.message || "Could not process return.",
+          confirmButtonColor: "#ef4444"
+        });
+      }
+    } catch (err) {
+      console.error("Return request error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Server Error",
+        text: "Something went wrong. Please try again later.",
+        confirmButtonColor: "#ef4444"
+      });
+    }
+  }
+}

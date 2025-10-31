@@ -144,9 +144,67 @@ const cancelIndividualItem = async (req, res) => {
   }
 };
 
+const requestReturnItem = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const { reason } = req.body;
+    const userId = req.session.user;
+
+    // ✅ Check login
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Please log in first" });
+    }
+
+    // ✅ Validate reason
+    if (!reason || reason.trim().length < 10) {
+      return res.status(400).json({ success: false, message: "Reason must be at least 10 characters long" });
+    }
+
+    // ✅ Find order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    // ✅ Find specific item
+    const item = order.items.id(itemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Item not found in order" });
+    }
+
+    // ✅ Check if return already requested
+    if (item.returnStatus !== "Not Requested") {
+      return res.status(400).json({ success: false, message: "Return already requested for this item" });
+    }
+
+    // ✅ Allow return only if the whole order is delivered
+    if (order.orderStatus !== "Delivered") {
+      return res.status(400).json({ success: false, message: "You can only request a return for delivered orders" });
+    }
+
+    // ✅ Set return details
+    item.returnStatus = "Requested";
+    item.returnReason = reason.trim();
+    item.returnRequestDate = new Date();
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Return request submitted successfully. Admin will review it soon."
+    });
+
+  } catch (error) {
+    console.error("Error requesting return:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 export default ({ 
   getOrderDetail ,
   cancelFullOrder,
-  cancelIndividualItem
+  cancelIndividualItem,
+  requestReturnItem
 
 });

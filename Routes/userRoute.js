@@ -11,6 +11,7 @@ import checkoutController from "../controllers/userController/checkoutController
 import wishlistController from "../controllers/userController/wishlistController.js";
 import orderDetailController from "../controllers/userController/orderDetailController.js"
 import walletController from "../controllers/userController/walletController.js";
+import pdfController from "../controllers/userController/pdfController.js"
 
 
 
@@ -103,7 +104,11 @@ route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
 route.get("/orders",orderDetailController.getOrderDetail)
 route.post("/order-cancel/:orderId",orderDetailController.cancelFullOrder)
 route.post("/item-cancel/:orderId/:itemId",orderDetailController.cancelIndividualItem)
+route.post("/order-return/:orderId/:itemId",orderDetailController.requestReturnItem)
 
 route.get("/wallet",walletController.getWallet)
+
+route.get("/invoice/:orderId", pdfController.generateInvoice);
+
 
 export default route;
