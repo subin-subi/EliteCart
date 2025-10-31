@@ -39,59 +39,77 @@ return {
 
 
 const addToCart = async (req, res) => {
-  try { 
-    const userId = req.session.user
+  try {
+    const userId = req.session.user;
     const { productId, variantId } = req.body;
 
-
-    const product = await Product.findById(productId);
-if (!product) return res.status(404).json({ success: false, message: "Product not found" });
-
-const variantIndex = product.variants.findIndex(v => v._id.toString() === variantId);
-if (variantIndex === -1) return res.status(404).json({ success: false, message: "Variant not found" });
-
-const variant = product.variants[variantIndex];
-const quantity = 1;
-const price = Number(variant.discountPrice || variant.price || 0);
-const total = Number(price * quantity);
-
-
-let cart = await Cart.findOne({ userId });
-if (!cart) {
-  cart = new Cart({
-    userId,
-    items: [{ productId, variantIndex, quantity, price, total }],
-    grandTotal: total
-  });
-} else {
-  const existingItem = cart.items.find(
-    item => item.productId.toString() === productId && item.variantIndex === variantIndex
-  );
-
-  if (existingItem) {
-    existingItem.quantity += quantity;
-    existingItem.price = price; 
-    existingItem.total = existingItem.quantity * price; 
    
-  } else {
-    cart.items.push({ productId, variantIndex, quantity, price, total });
-  }
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Please log in first" });
+    }
 
-  cart.grandTotal = cart.items.reduce((acc, item) => acc + Number(item.total || 0), 0);
-}
+  
+    const product = await Product.findById(productId);
+    if (!product)
+      return res.status(404).json({ success: false, message: "Product not found" });
 
-cart.items.forEach(item => {
-  if (!item.price || !item.total) throw new Error("Item missing price or total");
-});
 
-await cart.save();
-res.json({ success: true, message: "Product added to cart" });
+    const variantIndex = product.variants.findIndex(v => v._id.toString() === variantId);
+    if (variantIndex === -1)
+      return res.status(404).json({ success: false, message: "Variant not found" });
+
+    const variant = product.variants[variantIndex];
+
+    
+    if (!variant.stock || variant.stock <= 0) {
+      return res.status(400).json({ success: false, message: "Out of stock" });
+    }
+
+    const quantity = 1;
+    const price = Number(variant.discountPrice || variant.price || 0);
+    const total = Number(price * quantity);
+
+    let cart = await Cart.findOne({ userId });
+    if (!cart) {
+      cart = new Cart({
+        userId,
+        items: [{ productId, variantIndex, quantity, price, total }],
+        grandTotal: total
+      });
+    } else {
+      const existingItem = cart.items.find(
+        item => item.productId.toString() === productId && item.variantIndex === variantIndex
+      );
+
+      if (existingItem) {
+       
+        if (existingItem.quantity + 1 > variant.stock) {
+          return res.status(400).json({ success: false, message: "Not enough stock" });
+        }
+        existingItem.quantity += quantity;
+        existingItem.price = price;
+        existingItem.total = existingItem.quantity * price;
+      } else {
+        cart.items.push({ productId, variantIndex, quantity, price, total });
+      }
+
+      cart.grandTotal = cart.items.reduce((acc, item) => acc + Number(item.total || 0), 0);
+    }
+
+
+    cart.items.forEach(item => {
+      if (!item.price || !item.total) throw new Error("Item missing price or total");
+    });
+
+    await cart.save();
+    res.json({ success: true, message: "Product added to cart" });
 
   } catch (err) {
     console.error("Add to cart error:", err);
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
+
 
 const updateQuantity = async (req, res) => {
   try {
@@ -107,14 +125,33 @@ const updateQuantity = async (req, res) => {
 
     const newQuantity = item.quantity + change;
 
+    // 1️⃣ Prevent below 1
     if (newQuantity < 1) {
       return res.json({ success: false, message: "Minimum quantity is 1" });
     }
 
+    // 2️⃣ Prevent above allowed max
     if (newQuantity > 10) {
       return res.json({ success: false, message: "Maximum quantity limit is 10" });
     }
 
+    // 3️⃣ Check stock availability
+    const product = await Product.findById(item.productId);
+    if (!product)
+      return res.json({ success: false, message: "Product not found" });
+
+    const variant = product.variants[item.variantIndex];
+    if (!variant)
+      return res.json({ success: false, message: "Variant not found" });
+
+    if (newQuantity > variant.stock) {
+      return res.json({
+        success: false,
+        message: `Only ${variant.stock} left in stock`
+      });
+    }
+
+    // 4️⃣ Update quantity and totals
     item.quantity = newQuantity;
     item.total = item.price * item.quantity;
 
@@ -133,6 +170,7 @@ const updateQuantity = async (req, res) => {
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
+
 
 
 const removeProduct = async(req, res)=>{
