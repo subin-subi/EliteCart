@@ -44,6 +44,7 @@ router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.u
 router.get("/orders",orderController.getAdminOrders)
 router.get("/orders/:id",orderController.getOrderdetail)
 router.post("/orders/update-status/:orderId", orderController.updateOrderStatus);
+router.post("/update-return-status",orderController.updateReturnStatus)
 
 
 
