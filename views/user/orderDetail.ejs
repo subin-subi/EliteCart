@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Orders</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
@@ -93,28 +95,30 @@
       </button>
     </div>
 
-    <!-- Cancel (only when pending) -->
-    <div class="w-28 flex justify-center">
-      <% if (order.orderStatus === 'Pending') { %>
-        <form action="/order/cancel/<%= order._id %>" method="POST" class="inline">
-          <button 
-            type="submit" 
-            class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 w-full rounded-md font-semibold transition">
-            Cancel
-          </button>
-        </form>
-      <% } else { %>
-        <!-- Empty space to keep alignment -->
-        <div class="invisible px-4 py-2 w-full">Cancel</div>
-      <% } %>
-    </div>
+<!-- Cancel (only when pending) -->
+<div class="w-28 flex justify-center">
+  <% if (order.orderStatus === 'Pending') { %>
+    <button 
+      onclick="openCancelModal('<%= order._id %>')" 
+      type="button"
+      class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 w-full rounded-md font-semibold transition">
+      Cancel
+    </button>
+  <% } else { %>
+    <div class="invisible px-4 py-2 w-full">Cancel</div>
+  <% } %>
+</div>
+
 
   </div>
 </td>
 
 </tr>
 
-                <!-- Hidden Drop-down Row -->
+
+<!-- /////////////////////////////// Hidden Drop-down Row //////////////////////////////// -->
+
+               
                 <tr id="details-<%= order._id %>" class="hidden bg-gray-50">
                   <td colspan="5" class="p-4">
                     <!-- Order Items -->
@@ -151,25 +155,28 @@
 
       <!-- Total -->
       <div class="text-center font-semibold text-gray-900">
-        ₹<%= item.total %>
+        ₹<%= order.grandTotal  %>
       </div>
 
  <!-- Status -->
 <div class="text-center">
   <% 
-    const status = order.orderStatus; 
-    let colorClass = "text-gray-500"; 
-    if (status === "Pending") colorClass = "text-yellow-500";
-    else if (status === "Confirmed") colorClass = "text-blue-500";
-    else if (status === "Shipped") colorClass = "text-purple-500";
-    else if (status === "Out for Delivery") colorClass = "text-orange-500";
-    else if (status === "Delivered") colorClass = "text-green-600";
-    else if (status === "Cancelled") colorClass = "text-red-600";
+    let colorClass = "text-gray-500";
+    let displayStatus = order.orderStatus;
+
+    if (item.cancelStatus === "Cancelled") {
+      displayStatus = "Cancelled";
+      colorClass = "text-red-600";
+    } else if (order.orderStatus === "Pending") colorClass = "text-yellow-500";
+    else if (order.orderStatus === "Confirmed") colorClass = "text-blue-500";
+    else if (order.orderStatus === "Shipped") colorClass = "text-purple-500";
+    else if (order.orderStatus === "Out for Delivery") colorClass = "text-orange-500";
+    else if (order.orderStatus === "Delivered") colorClass = "text-green-600";
   %>
 
-  <span class="<%= colorClass %> font-medium">
-    <%= status %>
-  </span>
+  <p class="font-semibold <%= colorClass %> text-sm md:text-base">
+    <%= displayStatus %>
+  </p>
 </div>
 
 
@@ -183,16 +190,16 @@
 
   <% if (canCancel && item.cancelStatus === 'Not Cancelled') { %>
     <!-- Cancel Button -->
-    <form action="/order/item-cancel/<%= order._id %>/<%= item._id %>" method="POST">
-      <button 
-        type="submit" 
-        class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
-               text-white font-semibold text-sm px-5 py-2 rounded-lg 
-               shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
-               transition-all duration-300 ease-in-out">
-        Cancel
-      </button>
-    </form>
+    <button 
+  type="button"
+  onclick="openCancelModal('<%= order._id %>', '<%= item._id %>')"
+  class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+         text-white font-semibold text-sm px-5 py-2 rounded-lg 
+         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+         transition-all duration-300 ease-in-out">
+  Cancel
+</button>
+
 
   <% } else if (canReturn && item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
     <!-- Return Button -->
@@ -304,24 +311,34 @@
 
   </div>
 <% } %>
-
-
-
-
     </div>
     
   </div>
 
+<!-- //////////////////////////cancel individual /////////////////////////// -->
+ <!-- Cancel Modal -->
+<div id="cancelModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div class="bg-white rounded-lg p-6 w-96 text-black">
+    <h2 class="text-lg font-semibold mb-3">Cancel Item</h2>
 
+    <textarea id="cancelReason" class="w-full border border-gray-300 rounded-md p-2 mb-3"
+      placeholder="Write reason (min 10 characters)"></textarea>
+
+    <div class="flex justify-end gap-2">
+      <button onclick="closeCancelModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">
+        Close
+      </button>
+      <button id="confirmCancelBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
 
   <!-- Footer -->
   <%- include('../partials/footer') %>
 
-  <script>
-    function toggleDetails(orderId) {
-      const row = document.getElementById('details-' + orderId);
-      row.classList.toggle('hidden');
-    }
-  </script>
+ <script src="/javascript/user/order.js"></script>
+
 </body>
 </html>

@@ -10,12 +10,11 @@ const orderSchema = new mongoose.Schema({
       quantity: { type: Number, required: true },
       
       // Price details (Snapshot at order time)
-      basePrice: { type: Number, required: true }, // Original price of variant
-      discountAmount: { type: Number, default: 0 }, // Per item discount
-      finalPrice: { type: Number, required: true }, // basePrice - discountAmount
-      total: { type: Number, required: true }, // finalPrice * quantity
+      basePrice: { type: Number, required: true },
+      discountAmount: { type: Number, default: 0 }, 
+      finalPrice: { type: Number, required: true }, 
 
-      appliedOffer: { type: String, default: null }, // Offer/Coupon name or code
+      appliedOffer: { type: String, default: null }, 
 
 
       cancelStatus: {

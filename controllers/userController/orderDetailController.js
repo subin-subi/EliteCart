@@ -47,4 +47,106 @@ const getOrderDetail = async (req, res) => {
 };
 
 
-export default ({ getOrderDetail });
+const cancelFullOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason } = req.body;
+    const userId = req.session.user;
+
+    const order = await Order.findById(orderId);
+    if (!order)
+      return res.status(404).json({ success: false, message: "Order not found" });
+
+    if (!["Pending", "Confirmed", "Processing"].includes(order.orderStatus)) {
+      return res.status(400).json({ success: false, message: "Order cannot be cancelled now." });
+    }
+
+    // Update order status
+    order.orderStatus = "Cancelled";
+
+    // Update each item cancel status and reason
+    order.items = order.items.map(item => ({
+      ...item.toObject(),
+      cancelStatus: "Cancelled",
+      cancelReason: reason
+    }));
+
+    // Restore stock for all variants
+    await Promise.all(
+      order.items.map(item =>
+        Product.updateOne(
+          { _id: item.productId, "variants._id": item.variantId },
+          { $inc: { "variants.$.stock": item.quantity } }
+        )
+      )
+    );
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Order cancelled and stock updated successfully"
+    });
+  } catch (error) {
+    console.error("Error cancelling full order:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const cancelIndividualItem = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const { reason } = req.body;
+    const userId = req.session.user;
+
+    const order = await Order.findById(orderId);
+    if (!order)
+      return res.status(404).json({ success: false, message: "Order not found" });
+
+    const item = order.items.id(itemId);
+    if (!item)
+      return res.status(404).json({ success: false, message: "Item not found" });
+
+    if (item.cancelStatus === "Cancelled")
+      return res.status(400).json({ success: false, message: "Item already cancelled" });
+
+    if (!["Pending", "Confirmed", "Processing"].includes(order.orderStatus))
+      return res.status(400).json({ success: false, message: "Cannot cancel at this stage" });
+
+    // ✅ Mark item as cancelled
+    item.cancelStatus = "Cancelled";
+    item.cancelReason = reason;
+
+    // ✅ Restore product stock
+    await Product.updateOne(
+      { _id: item.productId, "variants._id": item.variantId },
+      { $inc: { "variants.$.stock": item.quantity } }
+    );
+
+    // ✅ Safely adjust grandTotal
+    const itemTotal = Number(item.total) || 0;
+    order.grandTotal = Math.max(0, Number(order.grandTotal || 0) - itemTotal);
+
+    // ✅ Auto-cancel order if all items cancelled
+    const allCancelled = order.items.every(i => i.cancelStatus === "Cancelled");
+    if (allCancelled) order.orderStatus = "Cancelled";
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Item cancelled and stock restored successfully",
+    });
+
+  } catch (error) {
+    console.error("Error cancelling item:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export default ({ 
+  getOrderDetail ,
+  cancelFullOrder,
+  cancelIndividualItem
+
+});

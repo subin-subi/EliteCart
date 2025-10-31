@@ -101,8 +101,8 @@ route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
 route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
 
 route.get("/orders",orderDetailController.getOrderDetail)
-
-
+route.post("/order-cancel/:orderId",orderDetailController.cancelFullOrder)
+route.post("/item-cancel/:orderId/:itemId",orderDetailController.cancelIndividualItem)
 
 route.get("/wallet",walletController.getWallet)
 
