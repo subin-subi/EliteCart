@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body class="bg-gray-100 pt-16 sm:pt-20">
+  <%- include("../partials/nav") %>
+
+  <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
+    <h1 class="mt-16 ml-4 text-3xl md:text-4xl font-extrabold text-black tracking-tight border-b-4 border-black inline-block pb-2 uppercase">
+      Checkout
+    </h1>
+
+    <!-- === FLEX CONTAINER === -->
+    <section class="flex flex-col lg:flex-row gap-8">
+
+      <!-- 🛒 LEFT: Product Details -->
+      <div class="flex-1 bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+        <h2 class="text-2xl font-bold text-black mb-6 border-b pb-2">Order Summary</h2>
+
+        <% if (cart && cart.length > 0) { %>
+          <div class="space-y-5">
+            <% cart.forEach(item => { %>
+              <div class="flex items-center justify-between p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+                <div class="flex items-center gap-4">
+                  <img src="<%= item.mainImage %>" alt="<%= item.name %>" class="w-20 h-20 object-cover rounded-md shadow-sm">
+                  <div>
+                    <p class="text-lg font-semibold text-gray-900"><%= item.name %></p>
+                    <p class="text-sm text-gray-600">Volume: <%= item.volume %> ml</p>
+                    <p class="text-sm text-gray-500">Qty: <%= item.quantity %></p>
+                    <p class="text-sm text-gray-800 font-medium">Price: ₹<%= item.price.toLocaleString() %></p>
+                  </div>
+                </div>
+                <p class="text-lg font-semibold text-gray-900">₹<%= item.total.toLocaleString() %></p>
+              </div>
+            <% }) %>
+          </div>
+
+          <!-- 💰 Price Summary -->
+        <div class="mt-8 border-t pt-4 space-y-2 text-gray-800">
+  <!-- Subtotal -->
+  <div class="flex justify-between text-lg">
+    <span>Subtotal:</span>
+    <span>₹<%= cart.reduce((sum, item) => sum + item.total, 0).toLocaleString() %></span>
+  </div>
+
+  <!-- Shipping -->
+  <div class="flex justify-between text-lg">
+    <span>Shipping:</span>
+    <% if (shippingCost === 0) { %>
+      <span id="shippingCost" class="text-green-600 font-semibold">Free</span>
+    <% } else { %>
+      <span id="shippingCost">₹<%= shippingCost.toLocaleString() %></span>
+    <% } %>
+  </div>
+
+  <!-- Grand Total -->
+  <div class="flex justify-between text-xl font-bold border-t pt-3">
+    <span>Grand Total:</span>
+    <span>
+      ₹<%= (cart.reduce((sum, item) => sum + item.total, 0) + (shippingCost || 0)).toLocaleString() %>
+    </span>
+  </div>
+</div>
+
+          </div>
+        <% } else { %>
+          <p class="text-center text-gray-500 py-10">Your cart is empty.</p>
+        <% } %>
+      </div>
+
+      <!-- 📦 RIGHT: Address + Payment + Button -->
+      <div class="flex-1 flex flex-col gap-6">
+
+        <!-- 🏠 Shipping Address -->
+        <section class="bg-white p-6 rounded-lg shadow-md">
+          <h2 class="text-lg font-semibold mb-4 text-gray-800">Shipping Address</h2>
+
+          <% if (addresses && addresses.length > 0) { %>
+            <div id="addressContainer" class="flex flex-wrap gap-6"></div>
+            <div class="flex justify-center gap-3 mt-4">
+              <button id="prevBtn" class="px-4 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm">Prev</button>
+              <button id="nextBtn" class="px-4 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm">Next</button>
+            </div>
+          <% } else { %>
+            <div class="bg-red-100 text-red-600 rounded-lg p-4 text-sm">
+              No address found. Please add one.
+            </div>
+          <% } %>
+
+          <div class="mt-6 flex justify-between items-center">
+            <button 
+              onclick="openAddressModal()" 
+              class="bg-green-600 text-white text-sm px-5 py-2 rounded-full hover:bg-green-700 transition"
+            >
+              + Add New Address
+            </button>
+          </div>
+        </section>
+
+        <!-- 💳 Payment Options -->
+        <section class="bg-white p-6 rounded-lg shadow-md">
+          <h2 class="text-lg font-semibold mb-4 text-gray-800">Payment Options</h2>
+          <form id="payment-form" class="space-y-3 flex flex-col">
+            <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
+              <input type="radio" name="payment" value="UPI" class="w-4 h-4 accent-green-600">
+              <span>UPI</span>
+            </label>
+            <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
+              <input type="radio" name="payment" value="Wallet" class="w-4 h-4 accent-green-600">
+              <span>Wallet</span>
+            </label>
+            <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
+              <input type="radio" name="payment" value="COD" checked class="w-4 h-4 accent-green-600">
+              <span>Cash On Delivery</span>
+            </label>
+          </form>
+        </section>
+
+        <!-- 🛍️ Buy Now Button -->
+        <div class="flex justify-center">
+          <button 
+            class="bg-black text-white text-lg px-10 py-3 rounded-full hover:bg-gray-800 transition w-full"
+            onclick="submitCheckout()"
+          >
+            Buy Now
+          </button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <div class="pt-6">
+    <%- include("../partials/footer") %>
+  </div>
+
+  <%- include('../partials/addressForm') %>
+
+  <!-- Script remains same -->
+  
+
+<script>
+let selectedAddressId = null;
+
+function openAddressModal() {
+  document.getElementById('addAddressModal').classList.remove('hidden');
+}
+
+const addresses = <%- JSON.stringify(addresses || []) %>;
+const container = document.getElementById('addressContainer');
+const itemsPerPage = 2;
+let currentPage = 1;
+
+function renderAddresses() {
+  container.innerHTML = '';
+  const ordered = [...addresses].reverse();
+  const visible = ordered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  visible.forEach(addr => {
+    const div = document.createElement('div');
+    div.className = `
+      relative bg-[#e6f2ef] rounded-lg p-4 w-[45%] shadow-md 
+      hover:shadow-lg transition border-2 border-transparent
+    `;
+    div.innerHTML = `
+      <div class="absolute top-3 right-3">
+        <input 
+          type="radio" 
+          name="selectedAddress" 
+          value="${addr._id}" 
+          onchange="selectAddress('${addr._id}')"
+          class="w-4 h-4 cursor-pointer accent-green-600"
+        >
+      </div>
+      <div class="text-sm leading-6 text-gray-700 mt-3">
+        <p class="font-semibold">${addr.name}</p>
+        <p>${addr.houseName}, ${addr.street}</p>
+        <p>${addr.city}, ${addr.state}, ${addr.country}</p>
+        <p>PIN: ${addr.pincode}</p>
+        <p>Contact: ${addr.mobile}</p>
+      </div>
+      <button 
+        onclick='editAddress(${JSON.stringify(addr)})'
+        class="absolute bottom-3 right-3 bg-black text-white text-xs px-4 py-1 rounded-full hover:bg-gray-800 transition"
+      >
+        Edit
+      </button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentPage * itemsPerPage < addresses.length) {
+    currentPage++;
+    renderAddresses();
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderAddresses();
+  }
+});
+
+renderAddresses();
+
+async function selectAddress(addressId) {
+  selectedAddressId = addressId;
+  document.querySelectorAll('#addressContainer > div').forEach(div => {
+    div.classList.remove('border-green-600', 'bg-green-50');
+    div.classList.add('border-transparent');
+  });
+
+  const selectedCard = document.querySelector(`input[value='${addressId}']`).closest('div.relative');
+  if (selectedCard) {
+    selectedCard.classList.add('border-green-600', 'bg-green-50');
+  }
+
+  try {
+    const res = await axios.post('/select-address', { addressId });
+    if (res.data.success) showToast('✅ Address selected successfully!', 'success');
+  } catch (err) {
+     console.error(err);
+      showToast('❌ Failed to select address.', 'error');
+  }
+}
+
+
+
+function showToast(message, type = 'success') {
+  // Create toast div
+  const toast = document.createElement('div');
+  toast.textContent = message;
+
+  // Style for toast
+  toast.className = `fixed bottom-5 right-5 px-4 py-2 rounded-md shadow-lg text-white text-sm transition-all duration-500 z-50 ${
+    type === 'success' ? 'bg-green-600' : 'bg-red-600'
+  }`;
+
+  document.body.appendChild(toast);
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
+}
+
+  //////////////////////////////////////////////////////////////
+async function submitCheckout() {
+  console.log('triggered')
+  const payment = document.querySelector('input[name="payment"]:checked').value;
+  if (!selectedAddressId) {
+    alert("⚠️ Please select a shipping address first.");
+    return;
+  }
+
+   const body = {
+      paymentMethod: payment,
+      addressId: selectedAddressId,
+      productIds: "<%= productIds %>".split(","), // Convert to array
+      variantIds: "<%= variantIds %>".split(","), // Convert to array
+      total: Number(<%= total %>) // Make sure it’s a number
+    };
+
+console.log(body)
+  try {
+    const res = await fetch("/place-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+  Swal.fire({
+    title: "✅ Order Placed Successfully!",
+    text: "Your order has been placed successfully.",
+    icon: "success",
+    showCancelButton: true,
+    confirmButtonText: "🛒 View Order Details",
+    cancelButtonText: "🛍️ Go to Shop",
+    reverseButtons: true,
+    customClass: {
+      popup: "w-[500px] p-6 rounded-2xl", // 📏 Bigger popup size
+      title: "text-2xl font-bold text-green-600", // 💬 Stylish title
+      confirmButton: "bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700",
+      cancelButton: "bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600"
+    },
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = "/orders";
+    } else {
+      window.location.href = "/product";
+    }
+  });
+} else {
+  Swal.fire({
+    icon: "error",
+    title: "❌ Failed to Place Order",
+    text: data.message || "Something went wrong. Please try again.",
+    confirmButtonText: "OK",
+    customClass: {
+      popup: "w-[400px] p-6 rounded-2xl",
+      confirmButton: "bg-red-600 text-white px-5 py-2 rounded-md hover:bg-red-700"
+    }
+  });
+}
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to place order. Please try again.");
+  }
+}
+
+
+
+</script>
+
+</body>
+</html>

@@ -33,30 +33,27 @@ const postAdmin = async (req, res) => {
       return res.redirect('/admin/login?error=server');
     }
   };
+
+
 const getLogout = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.log("Session destroy err:", err);
-      return res.status(500).send("Session destroy err");
+  try {
+    
+    if (req.session.isAdmin) {
+      delete req.session.isAdmin;
     }
 
-    // Clear the session cookie
-    res.clearCookie('connect.sid', {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production'
-    });
-
-  
+    // Prevent caching
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-   
     res.redirect('/admin/login');
-  });
+  } catch (err) {
+    console.error('Admin logout error:', err);
+    res.status(500).send('Server error during logout');
+  }
 };
+
 
 export default { getAdmin, postAdmin, getLogout }

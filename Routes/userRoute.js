@@ -5,13 +5,21 @@ import userMiddleware from "../middleware/userMiddleware.js"
 import productController from "../controllers/userController/productController.js";
 import profileController from "../controllers/userController/personalDetailController.js"
 import passwordController from "../controllers/userController/passwordController.js";
+import addressController from "../controllers/userController/addressController.js"
+import cartController from "../controllers/userController/cartController.js";
+import checkoutController from "../controllers/userController/checkoutController.js";
+import wishlistController from "../controllers/userController/wishlistController.js";
+import orderDetailController from "../controllers/userController/orderDetailController.js"
+import walletController from "../controllers/userController/walletController.js";
+import pdfController from "../controllers/userController/pdfController.js"
+
 
 
 const route = Router();
 
 route.get("/check-session",authController.checkSession)
 
-route.get("/signup", userMiddleware.isLogin, authController.getSignUp);
+route.get("/signup", authController.getSignUp);
 
 route.post("/signup", authController.postSignup);
 
@@ -23,7 +31,7 @@ route.get("/test-otp", otpController.testOTP);
 
 route.get("/debug-otp/:email", otpController.debugOTP)  
 
-route.get('/login', userMiddleware.isLogin, authController.getLogin)
+route.get('/login', authController.getLogin)
 
 route.post("/login",authController.postLogin)
 
@@ -46,10 +54,13 @@ route.post("/logout", authController.getLogout)
 
 ////////////product Controller/////////////////////
 
-route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
-route.get("/search-products",userMiddleware.checkSession,productController.searchProduct)
+route.get("/product",userMiddleware.isLogin,productController.getProductsPage)
+route.get("/search-products",userMiddleware.checkBlocked,productController.searchProduct)
 
 route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
+route.post("/wishlist/add",productController.addToWishlist)
+
+
 
 route.get("/profile" , profileController.getProfile)
 route.post("/profile",profileController.editDetail)
@@ -60,10 +71,44 @@ route.post("/validateOtp", profileController.verifyOtp)
 route.post("/resendOtp",profileController.resendOtp)
 
 
+
 route.get("/change-password", passwordController.getPage)
+route.post("/changePassword",passwordController.changePassword)
+
+route.get("/address", addressController.getAddress)
+route.post("/add-Address", addressController.saveAddress)
+route.post("/set-default-address/:id", addressController.setDefaultAddress)
+route.patch("/block-address/:id", addressController.blockAddress);
+route.patch("/unblock-address/:id",addressController.unblockAddress );
+route.patch("/edit-Address/:id", addressController.editAddress)
 
 
 
+
+route.get("/cart" ,userMiddleware.isLogin, cartController.getCart)
+route.post("/cart/add", cartController.addToCart);
+route.patch("/cart/update-quantity/:itemId", cartController.updateQuantity )
+route.delete("/cart/remove/:itemId",cartController.removeProduct)
+
+
+
+route.get("/checkout/cart", checkoutController.getCartCheckout)
+route.post('/select-address',checkoutController.selectAddres)
+route.post('/place-order',checkoutController.placeOrder)
+
+
+route.get("/wishlist",wishlistController.getWishlist)
+route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
+route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
+
+route.get("/orders",orderDetailController.getOrderDetail)
+route.post("/order-cancel/:orderId",orderDetailController.cancelFullOrder)
+route.post("/item-cancel/:orderId/:itemId",orderDetailController.cancelIndividualItem)
+route.post("/order-return/:orderId/:itemId",orderDetailController.requestReturnItem)
+
+route.get("/wallet",walletController.getWallet)
+
+route.get("/invoice/:orderId", pdfController.generateInvoice);
 
 
 export default route;

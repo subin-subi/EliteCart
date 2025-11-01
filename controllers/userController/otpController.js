@@ -118,7 +118,7 @@ const resendOTP = async (req, res) => {
             });
         }
 
-        // Prevent multiple OTP requests
+        
         if (user.otpExpiresAt && Date.now() < user.otpExpiresAt) {
             return res.status(400).json({
                 success: false,
@@ -126,17 +126,17 @@ const resendOTP = async (req, res) => {
             });
         }
 
-        // Generate new OTP
+       
         const newOTP = generateOTP();
         
-        // Update user with new OTP
+        
         await userSchema.findByIdAndUpdate(user._id, {
             otp: newOTP,
             otpExpiresAt: Date.now() + 120000, 
             otpAttempts: 0
         });
 
-        // Send new OTP
+        
         await sendOTPEmail(email, newOTP);
 
         return res.json({
@@ -165,7 +165,7 @@ const sendForgotPasswordOTP = async (req, res) => {
             return res.status(400).json({ message: 'Email is required' });
         }
         
-        // Find user
+      
         const user = await userSchema.findOne({
             email: { $regex: new RegExp("^" + email + "$", "i") }
         });
@@ -187,7 +187,7 @@ const sendForgotPasswordOTP = async (req, res) => {
             });
         }
         
-        // Generate and save OTP
+        
         const otp = generateOTP();
         console.log('Generated OTP:', otp);
        
@@ -198,7 +198,7 @@ const sendForgotPasswordOTP = async (req, res) => {
         await user.save();
         
         
-        // Send OTP email
+       
         await sendOTPEmail(email, otp);
       
         
@@ -241,13 +241,13 @@ const verifyForgotPasswordOTP = async (req, res) => {
             return res.status(400).json({ message: 'Too many attempts. Please request a new OTP.' });
         }
 
-        // Increment attempts first
+
         user.otpAttempts += 1;
         await user.save();
 
         
         
-        // Trim whitespace and ensure both are strings
+       
         const storedOTP = String(user.otp).trim();
         const inputOTP = String(otp).trim();
         

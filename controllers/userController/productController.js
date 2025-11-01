@@ -1,7 +1,7 @@
 import Product from "../../models/productModel.js";
 import Brand from "../../models/brandModel.js";
 import Category from "../../models/categoryModel.js";
-
+import Wishlist from "../../models/wishlistModel.js";
 
 
 const getProductsPage = async (req, res) => {
@@ -25,18 +25,24 @@ const getProductsPage = async (req, res) => {
     else if (sort === 'priceHighToLow') sortOption = { 'variants.price': -1 };
     else if (sort === 'az') sortOption = { name: 1 };
     else if (sort === 'za') sortOption = { name: -1 };
-    else sortOption = { createdAt: -1 }; // default
-
+    else sortOption = { createdAt: -1 }; 
     // Fetch products
-    let products = await Product.find(filter)
-      .populate('category')
-      .populate('brand')
+   let products = await Product.find(filter)
+      .populate({
+        path: 'category',
+        match: { isActive: true, isHidden: false } 
+      })
+      .populate({
+        path: 'brand',
+        match: { isActive: true, isHidden: false } 
+      })
       .sort(sortOption)
       .skip(skip)
       .limit(limit)
       .lean();
+    
+ products = products.filter(product => product.category && product.brand);
 
-    // Filter variants & select only **one variant per product**
     products = products.map(product => {
       const validVariants = product.variants.filter(v => {
         if (v.isBlocked) return false;
@@ -123,14 +129,29 @@ const getProductsPage = async (req, res) => {
 
 const getProductDetailPage = async (req, res) => {
   try {
+    const userId = req.session.user;
     const productId = req.params.id;
 
-    const product = await Product.findById(productId).lean(); 
+    const product = await Product.findById(productId).lean();
     if (!product) {
       return res.status(404).send("Product not found");
     }
 
-    
+    // Check if product is in user's wishlist
+    let isInWishlist = false;
+    if (userId) {
+      const wishlist = await Wishlist.findOne({ userId }).lean();
+      if (wishlist) {
+        isInWishlist = wishlist.items.some(
+          (item) => item.productId.toString() === productId
+        );
+      }
+    }
+
+    // Merge the wishlist info into product
+    product.isInWishlist = isInWishlist;
+
+    // --- Fetch Related Products ---
     let relatedProducts = await Product.find({
       category: product.category,
       _id: { $ne: product._id }
@@ -138,7 +159,6 @@ const getProductDetailPage = async (req, res) => {
       .limit(4)
       .lean();
 
-    
     if (relatedProducts.length < 4) {
       const brandProducts = await Product.find({
         brand: product.brand,
@@ -150,7 +170,6 @@ const getProductDetailPage = async (req, res) => {
       relatedProducts = [...relatedProducts, ...brandProducts];
     }
 
-    
     if (relatedProducts.length < 4) {
       const otherProducts = await Product.find({
         _id: { $ne: product._id, $nin: relatedProducts.map(p => p._id) }
@@ -171,8 +190,54 @@ const getProductDetailPage = async (req, res) => {
   }
 };
 
+
+
+ const addToWishlist = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const { productId, variantId } = req.body;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "User not logged in" });
+    }
+
+    let wishlist = await Wishlist.findOne({ userId });
+
+    // Create wishlist if it doesn't exist
+    if (!wishlist) {
+      wishlist = new Wishlist({
+        userId,
+        items: [{ productId, variantId: variantId || null }],
+      });
+      await wishlist.save();
+      return res.json({ success: true, message: "Added to wishlist" });
+    }
+
+    // Check if item already exists
+    const exists = wishlist.items.some(
+      (item) =>
+        item.productId.toString() === productId &&
+        (variantId ? item.variantId?.toString() === variantId : true)
+    );
+
+    if (exists) {
+      return res.json({ success: true, alreadyExists: true });
+    }
+
+    // Add new item
+    wishlist.items.push({ productId, variantId: variantId || null });
+    await wishlist.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error adding to wishlist:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 export default {
   getProductsPage,
   getProductDetailPage,
-  searchProduct
+  searchProduct,
+ addToWishlist
 };

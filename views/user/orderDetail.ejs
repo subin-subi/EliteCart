@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Orders</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <%- include("../partials/nav") %>
+
+  <div class="container mx-auto px-4 py-10 flex flex-col md:flex-row gap-6">
+
+    <!-- Sidebar -->
+    <div class="hidden md:block">
+      <%- include("../partials/userSidebar") %>
+    </div>
+
+    <!-- Orders Section -->
+    <div class="flex-1 border rounded-lg bg-white shadow-sm">
+      <div class="flex items-center justify-between border-b px-4 py-3 bg-gray-100 rounded-t-lg">
+        <h2 class="text-lg font-semibold">My Orders</h2>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="border-b bg-gray-300 text-gray-900">
+  <tr class="text-lg font-extrabold">
+    <th class="py-4 px-6 text-left uppercase tracking-wide">
+      Order ID
+    </th>
+    <th class="py-4 px-6 text-left uppercase tracking-wide">
+        Pdf  
+    </th>
+    <th class="py-4 px-6 text-center uppercase tracking-wide">
+      Items
+    </th>
+    <th class="py-4 px-6 text-center uppercase tracking-wide">
+      Total
+    </th>
+    <th class="py-4 px-6 text-left uppercase tracking-wide">
+      Status
+    </th>
+    <th class="py-4 px-6 text-center uppercase tracking-wide">
+      Action
+    </th>
+  </tr>
+</thead>
+
+          <tbody>
+            <% if (orders && orders.length > 0) { %>
+              <% orders.forEach(order => { %>
+              <tr class="border-b hover:bg-gray-100 transition bg-white shadow-sm rounded-lg">
+  <!-- Order ID -->
+  <td class="py-5 px-4 text-lg font-bold text-gray-900 tracking-wide">
+    <%= order.orderId %>
+  </td>
+
+  <td class="py-5 px-4 text-lg font-bold text-gray-900 tracking-wide flex items-center gap-3">
+   Invoice (PDF)"
+
+  <!-- Download Invoice Button -->
+  <a 
+    href="/invoice/<%= order._id %>" 
+    target="_blank"
+    class="bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg shadow-md 
+           hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+    title="Download Invoice (PDF)">
+    <i class="fa-solid fa-file-arrow-down text-lg"></i>
+  </a>
+</td>
+
+  <!-- Items -->
+  <td class="py-5 px-4 text-lg font-semibold text-center text-gray-800">
+    <%= order.items.length %>
+  </td>
+
+  <!-- Total -->
+  <td class="py-5 px-4 text-lg font-semibold text-center text-green-700">
+    ₹<%= order.grandTotal %>
+  </td>
+
+  <!-- Status -->
+  <td class="py-5 px-4 text-lg font-semibold text-gray-800">
+    <% 
+      const status = order.orderStatus; 
+      let statusColor = "text-gray-600"; 
+      if (status === "Pending") statusColor = "text-yellow-500";
+      else if (status === "Confirmed") statusColor = "text-blue-500";
+      else if (status === "Shipped") statusColor = "text-purple-500";
+      else if (status === "Out for Delivery") statusColor = "text-orange-500";
+      else if (status === "Delivered") statusColor = "text-green-600";
+      else if (status === "Cancelled") statusColor = "text-red-600";
+    %>
+    <span class="<%= statusColor %> font-extrabold"><%= status %></span>
+  </td>
+
+ <!-- Action -->
+<td class="py-5 px-4 text-center">
+  <div class="flex justify-center items-center gap-3">
+
+    <!-- View Details (always fixed position) -->
+    <div class="w-28 flex justify-center">
+      <button 
+        onclick="toggleDetails('<%= order._id %>')" 
+        class="bg-black text-white text-sm px-4 py-2 w-full rounded-md hover:bg-gray-800 transition font-semibold">
+        View Details
+      </button>
+    </div>
+
+<!-- Cancel (only when pending) -->
+<div class="w-28 flex justify-center">
+  <% if (order.orderStatus === 'Pending') { %>
+    <button 
+      onclick="openCancelModal('<%= order._id %>')" 
+      type="button"
+      class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 w-full rounded-md font-semibold transition">
+      Cancel
+    </button>
+  <% } else { %>
+    <div class="invisible px-4 py-2 w-full">Cancel</div>
+  <% } %>
+</div>
+
+
+  </div>
+</td>
+
+</tr>
+
+
+<!-- /////////////////////////////// Hidden Drop-down Row //////////////////////////////// -->
+
+               
+                <tr id="details-<%= order._id %>" class="hidden bg-gray-50">
+                  <td colspan="5" class="p-4">
+                    <!-- Order Items -->
+  <div class="space-y-3">
+  <% order.items.forEach(item => { 
+      const variant = item.productId?.variants?.find(v => v._id.toString() === item.variantId.toString());
+  %>
+  
+  <div class="flex items-center justify-between gap-6 border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition">
+    
+    <!-- Product Image -->
+    <img 
+      src="<%= variant?.mainImage || variant?.subImages?.[0] || '/images/no-image.png' %>" 
+      alt="Product Image"
+      class="w-20 h-20 object-cover rounded-lg border"
+    />
+
+    <!-- Product Details -->
+    <div class="flex-1 grid grid-cols-6 items-center text-sm text-gray-800 gap-4">
+      <!-- Name -->
+      <div class="font-semibold">
+        <%= item.productId?.name || 'Product Name Not Found' %>
+      </div>
+
+      <!-- Quantity -->
+      <div class="text-center text-gray-700">
+        Qty: <span class="font-medium"><%= item.quantity %></span>
+      </div>
+
+      <!-- Price -->
+      <div class="text-center text-gray-700">
+        ₹<%= item.finalPrice %> <span class="text-gray-500 text-xs">each</span>
+      </div>
+
+      <!-- Total -->
+      <div class="text-center font-semibold text-gray-900">
+        ₹<%= item.total %>
+      </div>
+
+ <!-- Status -->
+<div class="text-center">
+  <% 
+    let colorClass = "text-gray-500";
+    let displayStatus = order.orderStatus;
+
+    if (item.cancelStatus === "Cancelled") {
+      displayStatus = "Cancelled";
+      colorClass = "text-red-600";
+    } else if (order.orderStatus === "Pending") colorClass = "text-yellow-500";
+    else if (order.orderStatus === "Confirmed") colorClass = "text-blue-500";
+    else if (order.orderStatus === "Shipped") colorClass = "text-purple-500";
+    else if (order.orderStatus === "Out for Delivery") colorClass = "text-orange-500";
+    else if (order.orderStatus === "Delivered") colorClass = "text-green-600";
+  %>
+
+  <p class="font-semibold <%= colorClass %> text-sm md:text-base">
+    <%= displayStatus %>
+  </p>
+</div>
+
+
+   <!-- Action Button (Cancel or Return) -->
+<div class="text-right">
+  <% 
+    const orderStatus = order.orderStatus; // renamed to avoid duplicate variable
+    const canCancel = ['Pending', 'Confirmed', 'Shipped', 'Out for Delivery'].includes(orderStatus);
+    const canReturn = orderStatus === 'Delivered';
+  %>
+
+  <% if (canCancel && item.cancelStatus === 'Not Cancelled') { %>
+    <!-- Cancel Button -->
+    <button 
+  type="button"
+  onclick="openCancelModal('<%= order._id %>', '<%= item._id %>')"
+  class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+         text-white font-semibold text-sm px-5 py-2 rounded-lg 
+         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+         transition-all duration-300 ease-in-out">
+  Cancel
+</button>
+
+
+  <% } else if (canReturn && item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
+    <!-- Return Button -->
+    <button 
+  type="button" 
+  onclick="openReturnPrompt('<%= order._id %>', '<%= item._id %>')"
+  class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
+         text-white font-semibold text-sm px-5 py-2 rounded-lg 
+         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+         transition-all duration-300 ease-in-out">
+  Return
+</button>
+
+
+  <% } else { %>
+    <!-- Disabled or No Action -->
+    <button 
+      class="bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-md cursor-not-allowed" 
+      disabled>
+      <%= item.cancelStatus === 'Cancelled' ? 'Cancelled' : item.returnStatus %>
+    </button>
+  <% } %>
+</div>
+
+      
+    </div>
+  </div>
+
+  <% }) %>
+</div>
+
+
+                    <!-- Order Summary -->
+                    <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
+                      <h4 class="font-semibold mb-2">Order Summary</h4>
+                      <p class="text-sm text-gray-700">Subtotal: ₹<%= order.subtotal %></p>
+                      <p class="text-sm text-gray-700">Discount: ₹<%= order.discount %></p>
+                      <p class="text-sm text-gray-700">Shipping: ₹<%= order.shippingCharge %></p>
+                      <p class="font-semibold text-gray-900 mt-1">Grand Total: ₹<%= order.grandTotal %></p>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
+                      <h4 class="font-semibold mb-2">Delivery Address</h4>
+                      <p class="text-gray-700 text-sm"><%= order.address.name %></p>
+                      <p class="text-gray-700 text-sm">
+                        <%= order.address.house %>, <%= order.address.street %>, 
+                        <%= order.address.city %>, <%= order.address.state %> - 
+                        <%= order.address.pincode %>
+                      </p>
+                      <p class="text-gray-700 text-sm">Mobile: <%= order.address.mobile %></p>
+                    </div>
+
+                    <!-- Payment Info -->
+                    <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
+                      <h4 class="font-semibold mb-2">Payment Information</h4>
+                      <p class="text-sm text-gray-700">Method: <%= order.paymentMethod %></p>
+                      <p class="text-sm text-gray-700">Status: <%= order.paymentStatus %></p>
+                      <% if (order.razorpayPaymentId) { %>
+                        <p class="text-sm text-gray-700">Payment ID: <%= order.razorpayPaymentId %></p>
+                      <% } %>
+                    </div>
+
+<% order.items.forEach(item => { %>
+  <% if (item.returnStatus !== "Not Requested" ) { %>
+    <div class="mt-4 bg-red-50 p-4 rounded-lg shadow-sm border border-red-300">
+      <h4 class="font-semibold text-red-700 mb-2">Return Request Details</h4>
+      <p class="text-sm text-gray-800"><span class="font-semibold">Product:</span> <%= item.productId.name %></p>
+      <p class="text-sm text-gray-800"><span class="font-semibold">Reason:</span> <%= item.returnReason || "No reason provided" %></p>
+      <p class="text-sm text-gray-800"><span class="font-semibold">Status:</span> <%= item.returnStatus %></p>
+    </div>
+  <% } %>
+<% }) %>
+
+
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="text-center py-10 text-gray-500">No orders found.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if (totalPages > 1) { %>
+  <div class="flex justify-center items-center mt-6 mb-8 space-x-2">
+    
+    <% if (currentPage > 1) { %>
+      <a href="?page=<%= currentPage - 1 %>"
+         class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-700 hover:bg-gray-200 transition">
+        ← Prev
+      </a>
+    <% } else { %>
+      <span class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed">
+        ← Prev
+      </span>
+    <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <a href="?page=<%= i %>"
+         class="px-3 py-2 border rounded-lg font-medium transition
+                <%= i === currentPage 
+                    ? 'bg-black text-white border-black' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100' %>">
+        <%= i %>
+      </a>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+      <a href="?page=<%= currentPage + 1 %>"
+         class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-700 hover:bg-gray-200 transition">
+        Next →
+      </a>
+    <% } else { %>
+      <span class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed">
+        Next →
+      </span>
+    <% } %>
+
+  </div>
+<% } %>
+    </div>
+    
+  </div>
+
+<!-- //////////////////////////cancel individual /////////////////////////// -->
+ <!-- Cancel Modal -->
+<div id="cancelModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div class="bg-white rounded-lg p-6 w-96 text-black">
+    <h2 class="text-lg font-semibold mb-3">Cancel Item</h2>
+
+    <textarea id="cancelReason" class="w-full border border-gray-300 rounded-md p-2 mb-3"
+      placeholder="Write reason (min 10 characters)"></textarea>
+
+    <div class="flex justify-end gap-2">
+      <button onclick="closeCancelModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">
+        Close
+      </button>
+      <button id="confirmCancelBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- Footer -->
+  <%- include('../partials/footer') %>
+
+ <script src="/javascript/user/order.js"></script>
+
+</body>
+</html>
