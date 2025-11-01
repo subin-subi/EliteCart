@@ -349,7 +349,7 @@ const postSignup = async (req, res) => {
     
     req.session.user = null;
 
-    // Destroy the full session
+    
     req.session.destroy((err) => {
       if (err) {
         console.error("Error destroying session:", err);
