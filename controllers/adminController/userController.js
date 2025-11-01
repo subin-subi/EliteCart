@@ -15,7 +15,6 @@ const getUserList = async (req, res) => {
         }
 
 
-        // Get total count for pagination
         const totalUsers = await User.countDocuments(searchQuery);
         const totalPages = Math.max(1, Math.ceil(totalUsers / limit));
 
@@ -81,7 +80,7 @@ const blockUser = async (req, res) => {
 };
 
 
-// Unblock User
+
 const unblockUser = async (req, res) => {
   try {
     const { id } = req.params;   

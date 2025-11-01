@@ -38,13 +38,13 @@ const getCartCheckout = async (req, res) => {
       };
     });
 
-    // Calculate total price
+   
     const total = cart.grandTotal || cartItems.reduce((sum, i) => sum + i.total, 0);
 
-    // ✅ Dynamic Shipping Charge
+    
     const shippingCost = total > 1000 ? 0 : 50;
 
-    // Extract productIds and variantIds for EJS
+   
     const productIds = cartItems.map(i => i.productId).join(",");
     const variantIds = cartItems.map(i => i.variantId).join(",");
 
@@ -53,7 +53,7 @@ const getCartCheckout = async (req, res) => {
       cart: cartItems,
       addresses,
       total,
-      shippingCost,  // ✅ Pass to frontend
+      shippingCost,  
       productIds,
       variantIds,
     });
@@ -89,7 +89,7 @@ const placeOrder = async (req, res) => {
       return res.json({ success: false, message: "Invalid address." });
     }
 
-    // 🛒 Get user's cart
+   
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
       return res.json({ success: false, message: "Cart is empty" });
@@ -97,7 +97,7 @@ const placeOrder = async (req, res) => {
 
     let subtotal = 0;
 
-    // 🧾 Calculate item totals
+    
     const items = [];
 
     for (const i of cart.items) {
@@ -108,7 +108,7 @@ const placeOrder = async (req, res) => {
         throw new Error(`Variant not found for product ${product._id}`);
       }
 
-      // 🧮 Check stock availability before reducing
+     
       if (variant.stock < i.quantity) {
         return res.json({
           success: false,
@@ -126,7 +126,7 @@ const placeOrder = async (req, res) => {
 
       subtotal += total;
 
-      // 🧾 Push order item
+
       items.push({
         productId: product._id,
         variantId,
@@ -138,18 +138,18 @@ const placeOrder = async (req, res) => {
         appliedOffer: discount > 0 ? "Product Discount" : null,
       });
 
-      // 📉 Decrease stock quantity
+      
       await Product.updateOne(
         { _id: product._id, "variants._id": variantId },
         { $inc: { "variants.$.stock": -i.quantity } }
       );
     }
 
-    // 🚚 Shipping logic
+   
     const shippingCharge = subtotal >= 1000 ? 0 : 50;
     const grandTotal = subtotal + shippingCharge;
 
-    // 📝 Create Order
+    
     const order = new Order({
       userId,
       items,
@@ -172,7 +172,7 @@ const placeOrder = async (req, res) => {
 
     await order.save();
 
-    // 🧹 Clear cart after order placement
+    
     await Cart.deleteOne({ userId });
 
     res.json({

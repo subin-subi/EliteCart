@@ -15,12 +15,12 @@ const getCart = async (req, res) => {
       })
       .lean();
 
-    // If no cart found
+    
     if (!cart) {
       return res.render("user/cart", { cartItems: [], subtotal: 0 });
     }
 
-    // ✅ Filter out blocked or hidden products
+   
     const cartItems = cart.items
       .filter((item) => {
         const product = item.productId;
@@ -31,7 +31,7 @@ const getCart = async (req, res) => {
         const isCategoryHidden = product.category?.isHidden;
         const isCategoryInactive = product.category && !product.category.isActive;
 
-        // Remove item if any are blocked or inactive
+       
         return !isProductBlocked && !isBrandBlocked && !isCategoryHidden && !isCategoryInactive;
       })
       .map((item) => {
@@ -46,7 +46,7 @@ const getCart = async (req, res) => {
         };
       });
 
-    // ✅ Calculate subtotal only for visible items
+    
     const subtotal = cartItems.reduce((sum, item) => sum + (item.total || 0), 0);
 
     res.render("user/cart", { cartItems, subtotal });
@@ -145,17 +145,17 @@ const updateQuantity = async (req, res) => {
 
     const newQuantity = item.quantity + change;
 
-    // 1️⃣ Prevent below 1
+    
     if (newQuantity < 1) {
       return res.json({ success: false, message: "Minimum quantity is 1" });
     }
 
-    // 2️⃣ Prevent above allowed max
+    
     if (newQuantity > 10) {
       return res.json({ success: false, message: "Maximum quantity limit is 10" });
     }
 
-    // 3️⃣ Check stock availability
+    
     const product = await Product.findById(item.productId);
     if (!product)
       return res.json({ success: false, message: "Product not found" });
@@ -171,7 +171,7 @@ const updateQuantity = async (req, res) => {
       });
     }
 
-    // 4️⃣ Update quantity and totals
+    
     item.quantity = newQuantity;
     item.total = item.price * item.quantity;
 

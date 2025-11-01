@@ -1,10 +1,6 @@
 import Category from "../../models/categoryModel.js";
 import Brand from "../../models/brandModel.js";
 import Product from "../../models/productModel.js";
-import fs from 'fs';
-import path from 'path';
-import { v2 as cloudinary } from 'cloudinary';
-
 
 const getProduct = async (req, res) => {
   try {
@@ -20,7 +16,7 @@ const getProduct = async (req, res) => {
 
     let searchQuery = {};
 
-    // Search by name
+   
     if (search) {
       searchQuery.name = { $regex: `${search}`, $options: "i" };
     }
@@ -93,7 +89,7 @@ const getProductById = async (req, res) => {
 
 
 ////////////////////////////////////////////////block/unblock//////////////////////////////////////////////////////////////
-// Toggle product isBlocked (block/unblock)
+
 const toggleProductStatus = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -125,7 +121,6 @@ const toggleProductStatus = async (req, res) => {
 };
 
 
-////////////////////////////////////////////////edit//////////////////////////////////////////////////////////////
 
 
 export default {

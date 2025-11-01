@@ -30,7 +30,7 @@ const editDetail = [
   upload.single('profileImage'),
   async (req, res) => {
     try {
-      const userId = req.session.user; // must be MongoDB _id
+      const userId = req.session.user; 
       if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
       const user = await User.findById(userId);
@@ -143,7 +143,7 @@ const verifyOtp = async (req, res) => {
     // OTP is valid
     user.isverified = true;
     user.otp = null;        
-    user.otpExpiresAt = null; // remove expiry
+    user.otpExpiresAt = null; 
     await user.save();
 
     return res.status(200).json({ success: true, message: "OTP verified successfully" });
@@ -192,7 +192,7 @@ const resendOtp = async (req, res) => {
     const newOtp = generateOTP();
 
     user.otp = newOtp;
-    user.otpExpiresAt = Date.now() + 2 * 60 * 1000; // 2 min
+    user.otpExpiresAt = Date.now() + 2 * 60 * 1000; 
     user.otpAttempts = 0;
     await user.save();
 

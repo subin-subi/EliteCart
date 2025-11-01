@@ -79,7 +79,7 @@ const checkSession = async (req, res, next) => {
 const noBack = (req, res, next) => {
   // Prevent caching
   res.header("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
-  res.header("Pragma", "no-cache"); // HTTP 1.0
+  res.header("Pragma", "no-cache");
   res.header("Expires", "0"); // Proxies
 
   // Prevent accessing previous page after logout

@@ -62,10 +62,10 @@ const cancelFullOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "Order cannot be cancelled now." });
     }
 
-    // Update order status
+    
     order.orderStatus = "Cancelled";
 
-    // Update each item cancel status and reason
+    
     order.items = order.items.map(item => ({
       ...item.toObject(),
       cancelStatus: "Cancelled",
@@ -114,21 +114,21 @@ const cancelIndividualItem = async (req, res) => {
     if (!["Pending", "Confirmed", "Processing"].includes(order.orderStatus))
       return res.status(400).json({ success: false, message: "Cannot cancel at this stage" });
 
-    // ✅ Mark item as cancelled
+   
     item.cancelStatus = "Cancelled";
     item.cancelReason = reason;
 
-    // ✅ Restore product stock
+   
     await Product.updateOne(
       { _id: item.productId, "variants._id": item.variantId },
       { $inc: { "variants.$.stock": item.quantity } }
     );
 
-    // ✅ Safely adjust grandTotal
+    
     const itemTotal = Number(item.total) || 0;
     order.grandTotal = Math.max(0, Number(order.grandTotal || 0) - itemTotal);
 
-    // ✅ Auto-cancel order if all items cancelled
+   
     const allCancelled = order.items.every(i => i.cancelStatus === "Cancelled");
     if (allCancelled) order.orderStatus = "Cancelled";
 

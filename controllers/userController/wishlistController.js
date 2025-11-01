@@ -68,7 +68,7 @@ const addToCartFromWishlist = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing product or variant ID" });
     }
 
-    // ✅ Find product and variant
+    
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
@@ -87,10 +87,10 @@ const addToCartFromWishlist = async (req, res) => {
     const total = price * quantity;
     const maxLimit = 10; 
 
-    // ✅ Get user's cart
+    
     let cart = await Cart.findOne({ userId });
 
-    // ✅ Create new cart if not exists
+   
     if (!cart) {
       cart = new Cart({
         userId,
@@ -98,7 +98,7 @@ const addToCartFromWishlist = async (req, res) => {
         grandTotal: total,
       });
     } else {
-      // ✅ Check if the variant already exists in the cart
+      
       const existingItem = cart.items.find(
         (item) =>
           item.productId.toString() === productId &&
@@ -106,9 +106,9 @@ const addToCartFromWishlist = async (req, res) => {
       );
 
       if (existingItem) {
-        // 🛑 Already reached 10 quantity
+       
         if (existingItem.quantity >= maxLimit) {
-          // ❌ Remove from wishlist since we can’t add more
+          
           await Wishlist.updateOne(
             { userId },
             { $pull: { items: { productId, $or: [{ variantId }, { variantId: null }] } } }
@@ -120,11 +120,11 @@ const addToCartFromWishlist = async (req, res) => {
           });
         }
 
-        // ✅ Increase quantity (but not beyond 10)
+       
         existingItem.quantity += 1;
         existingItem.total = existingItem.quantity * price;
       } else {
-        // ✅ Add new item
+        
         cart.items.push({ productId, variantIndex, quantity, price, total });
       }
 
@@ -133,7 +133,7 @@ const addToCartFromWishlist = async (req, res) => {
 
     await cart.save();
 
-    // ✅ Remove from wishlist after successful add
+   
     await Wishlist.updateOne(
       { userId },
       { $pull: { items: { productId, $or: [{ variantId }, { variantId: null }] } } }

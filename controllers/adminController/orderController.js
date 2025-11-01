@@ -287,34 +287,6 @@ const updateReturnStatus = async (req, res) => {
 
 
 
-// const getAllOrders = async (req, res) => {
-//   try {
-//     const { search } = req.query;
-//     let filter = {};
-
-//     if (search && search.trim() !== "") {
-//       const users = await User.find({ name: { $regex: search, $options: "i" } }, "_id");
-//       const userIds = users.map(u => u._id);
-
-//       filter = {
-//         $or: [
-//           { orderId: { $regex: search, $options: "i" } },
-//           { userId: { $in: userIds } }
-//         ]
-//       };
-//     }
-
-//     const orders = await Order.find(filter)
-//       .populate("userId", "name email")
-//       .sort({ createdAt: -1 });
-
-//     res.render("admin/orders", { orders });
-//   } catch (error) {
-//     console.error("Error fetching orders:", error);
-//     res.status(500).send("Internal Server Error");
-//   }
-// };
-
 export default({
   getAdminOrders,
   getOrderdetail,

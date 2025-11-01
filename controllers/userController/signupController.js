@@ -346,7 +346,7 @@ const postSignup = async (req, res) => {
     
     const getLogout = (req, res) => {
   try {
-    // Remove only user data first
+    
     req.session.user = null;
 
     // Destroy the full session

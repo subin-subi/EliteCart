@@ -8,7 +8,7 @@ const getAddress = async (req, res) => {
 
    
     const page = parseInt(req.query.page) || 1;
-    const limit = 3; // number of addresses per page
+    const limit = 3; 
     const skip = (page - 1) * limit;
 
     
@@ -187,7 +187,7 @@ const editAddress = async (req, res) => {
         pincode,
         mobile
       },
-      { new: true } // return the updated document
+      { new: true } 
     );
 
     if (!updatedAddress) {
