@@ -19,6 +19,8 @@ const route = Router();
 
 route.get("/check-session",authController.checkSession)
 
+route.get("/get-user-profile", authController.getProfileImg)
+
 route.get("/signup", authController.getSignUp);
 
 route.post("/signup", authController.postSignup);

@@ -58,9 +58,16 @@
 
       <!-- Profile Dropdown -->
       <div class="relative">
-        <button id="profileButton" class="hover:text-yellow-400 focus:outline-none text-white">
-          <i class="fa-regular fa-user text-xl"></i>
-        </button>
+      <button id="profileButton" class="relative hover:text-yellow-400 focus:outline-none flex items-center space-x-2">
+  <img
+    id="userProfileImage"
+    src="/images/pf.jpg"
+    alt="Profile"
+    class="w-8 h-8 rounded-full border-2 border-yellow-400 object-cover"
+  />
+  <span id="userName" class="hidden text-white text-sm font-medium"></span>
+</button>
+
 
         <!-- Dropdown Menu -->
         <div id="profileMenu"
@@ -219,6 +226,40 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 // Call when page loads
 document.addEventListener("DOMContentLoaded", updateCounts);
+
+
+///////////////////////////////////image //////////////////////////////////
+
+async function loadUserProfile() {
+  try {
+    const res = await fetch("/get-user-profile");
+    const data = await res.json();
+
+    const img = document.getElementById("userProfileImage");
+    const nameSpan = document.getElementById("userName");
+
+    if (data.loggedIn) {
+      // Show user image or default
+      img.src = data.profileImage || "/images/pf.jpg";
+
+      // Show name
+      if (data.name) {
+        nameSpan.textContent = data.name;
+        nameSpan.classList.remove("hidden");
+      }
+    } else {
+      // User not logged in — default image only
+      img.src = "/images/pf.jpg";
+      nameSpan.classList.add("hidden");
+    }
+  } catch (err) {
+    console.error("Error loading profile:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadUserProfile);
+
+
 
 </script>
 

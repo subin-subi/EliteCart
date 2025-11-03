@@ -379,7 +379,23 @@ const checkSession = (req, res) => {
 };
 
 
+const getProfileImg = async(req, res)=>{
+  try{
+    const userId = req.session.user;
+     if (!userId) return res.status(401).json({ loggedIn: false });
 
+     const user = await userSchema.findById(userId).select("profileImage name")
+ res.json({
+      loggedIn: true,
+      profileImage: user.profileImage || null,
+      name: user.name,
+    });
+
+  }catch (error) {
+    console.error(error);
+    res.status(500).json({ loggedIn: false });
+  }
+}
 
 
 
@@ -398,6 +414,10 @@ export default{
     getGoogleCallback,
     getLogout,
     homepage,
-    checkSession
+    checkSession,
+
+    getProfileImg 
+
+    
 
 }
