@@ -47,13 +47,12 @@ const getCart = async (req, res) => {
       }
     }
 
-    // 🧹 Remove invalid items from DB
+    //  Remove invalid items from DB
     if (removedItemIds.length > 0) {
       await Cart.updateOne(
         { _id: cart._id },
         { $pull: { items: { _id: { $in: removedItemIds } } } }
       );
-      console.log("🧹 Removed blocked items from cart:", removedItemIds);
     }
 
     // Calculate subtotal

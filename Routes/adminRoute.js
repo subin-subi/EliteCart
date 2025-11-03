@@ -8,7 +8,7 @@ import userController from "../controllers/adminController/userController.js";
 import productController from "../controllers/adminController/productController.js";
 import addproductController from "../controllers/adminController/addproductController.js";
 import orderController from "../controllers/adminController/orderController.js";
-
+import couponController from "../controllers/adminController/couponController.js"
 
 const router = express.Router();
 
@@ -66,4 +66,10 @@ router.get("/editProduct/:id",addproductController.getEditPage)
 router.post("/editProduct/:id",addproductController.editProduct)
 router.post("/addNewVariants/:id",addproductController.addNewVariants)
 
+
+
+
+router.get("/coupon", couponController.getCouponPage)
+router.post("/add-coupon", couponController.addCoupon)
+router.delete("/delete-coupon/:couponId",couponController.deleteCoupon)
 export default router;
