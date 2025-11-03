@@ -80,27 +80,77 @@
   function closeAddModal() { document.getElementById('addAddressModal').classList.add('hidden'); }
   function closeEditModal() { document.getElementById('editAddressModal').classList.add('hidden'); }
 
-  // Add Address
-  document.getElementById('addAddressForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const data = {
-      name: document.getElementById('addName').value,
-      houseName: document.getElementById('addHouse').value,
-      street: document.getElementById('addStreet').value,
-      city: document.getElementById('addCity').value,
-      state: document.getElementById('addState').value,
-      pincode: document.getElementById('addPincode').value,
-      country: document.getElementById('addCountry').value,
-      mobile: document.getElementById('addMobile').value
-    };
 
-    try {
-      const res = await axios.post('/add-Address', data);
-      if (res.data.success) {
-        Swal.fire('Success', 'Address added successfully!', 'success').then(() => window.location.reload());
-      }
-    } catch (err) { console.error(err); Swal.fire('Error', 'Something went wrong!', 'error'); }
-  });
+document.getElementById('addAddressForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById('addName').value.trim();
+  const houseName = document.getElementById('addHouse').value.trim();
+  const street = document.getElementById('addStreet').value.trim();
+  const city = document.getElementById('addCity').value.trim();
+  const state = document.getElementById('addState').value.trim();
+  const pincode = document.getElementById('addPincode').value.trim();
+  const country = document.getElementById('addCountry').value.trim();
+  const mobile = document.getElementById('addMobile').value.trim();
+
+  // 🧩 Validation checks
+  const nameRegex = /^[A-Za-z\s]{3,40}$/;
+  const mobileRegex = /^[6-9]\d{9}$/;
+  const pincodeRegex = /^\d{6}$/;
+
+  if (!name || !nameRegex.test(name)) {
+    return Swal.fire('Invalid Name', 'Please enter a valid full name (letters only, min 3 chars)', 'warning');
+  }
+
+  if (!houseName || houseName.length < 2) {
+    return Swal.fire('Invalid House Name', 'Please enter a valid house name.', 'warning');
+  }
+
+  if (street && street.length < 3) {
+    return Swal.fire('Invalid Street', 'Street name should be at least 3 characters.', 'warning');
+  }
+
+  if (!city || city.length < 2) {
+    return Swal.fire('Invalid City', 'Please enter a valid city name.', 'warning');
+  }
+
+  if (!state || state.length < 2) {
+    return Swal.fire('Invalid State', 'Please enter a valid state name.', 'warning');
+  }
+
+  if (!pincode || !pincodeRegex.test(pincode)) {
+    return Swal.fire('Invalid Pincode', 'Pincode must be a 6-digit number.', 'warning');
+  }
+
+  if (!country || country.length < 2) {
+    return Swal.fire('Invalid Country', 'Please enter a valid country name.', 'warning');
+  }
+
+  if (!mobile || !mobileRegex.test(mobile)) {
+    return Swal.fire('Invalid Mobile Number', 'Enter a valid 10-digit mobile number starting from 6–9.', 'warning');
+  }
+
+
+  const data = { name, houseName, street, city, state, pincode, country, mobile };
+
+  try {
+    const res = await axios.post('/add-Address', data);
+    if (res.data.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Address added successfully!',
+        timer: 2000,
+        showConfirmButton: false,
+      }).then(() => window.location.reload());
+    } else {
+      Swal.fire('Error', res.data.message || 'Failed to add address!', 'error');
+    }
+  } catch (err) {
+    console.error('Error adding address:', err);
+    Swal.fire('Error', 'Something went wrong while adding address!', 'error');
+  }
+});
+
 
 
   //////////////////////////// Prefill Edit form/////////////////////////
@@ -121,7 +171,6 @@
 document.getElementById('editAddressForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // Inputs
   const id = document.getElementById('editAddressId').value;
   const name = document.getElementById('editName').value.trim();
   const houseName = document.getElementById('editHouse').value.trim();
@@ -132,7 +181,6 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
   const country = document.getElementById('editCountry').value.trim();
   const mobile = document.getElementById('editMobile').value.trim();
 
-  // Error spans
   const errorFields = {
     name: document.getElementById('editNameError'),
     houseName: document.getElementById('editHouseError'),
@@ -144,65 +192,68 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
     mobile: document.getElementById('editMobileError')
   };
 
-  // Clear previous errors
   Object.values(errorFields).forEach(span => span.textContent = "");
 
   let isValid = true;
 
+  // Patterns
+  const namePattern = /^[A-Za-z]{3,}(?: [A-Za-z]+)*$/; // only letters and single spaces, min 3 letters
+  const housePattern = /^[A-Za-z0-9\s.-]{3,}$/;        // letters, numbers, dot, hyphen, space allowed
+  const cityPattern = /^[A-Za-z\s]{3,}$/;
+  const statePattern = /^[A-Za-z\s]{3,}$/;
+  const countryPattern = /^[A-Za-z\s]{3,}$/;
 
-  if (!name) {
-    errorFields.name.textContent = "Full name is required";
+  // Name
+  if (!namePattern.test(name)) {
+    errorFields.name.textContent = "Enter a valid name (min 3 letters, no numbers/symbols)";
     isValid = false;
   }
 
-
-  if (!houseName) {
-    errorFields.houseName.textContent = "House name is required";
+  // House Name
+  if (!housePattern.test(houseName)) {
+    errorFields.houseName.textContent = "Enter a valid house name (min 3 chars)";
     isValid = false;
   }
 
- 
-  if (street && street.length < 2) {
-    errorFields.street.textContent = "Street name is too short";
+  // Street (optional but check format if provided)
+  if (street && street.length < 3) {
+    errorFields.street.textContent = "Street name must be at least 3 characters";
     isValid = false;
   }
 
-
-  if (!city) {
-    errorFields.city.textContent = "City is required";
+  // City
+  if (!cityPattern.test(city)) {
+    errorFields.city.textContent = "Enter a valid city name (min 3 letters)";
     isValid = false;
   }
 
-
-  if (!state) {
-    errorFields.state.textContent = "State is required";
+  // State
+  if (!statePattern.test(state)) {
+    errorFields.state.textContent = "Enter a valid state name (min 3 letters)";
     isValid = false;
   }
 
-
+  // Pincode
   if (!/^\d{6}$/.test(pincode)) {
-    errorFields.pincode.textContent = "Pincode must be 6 digits";
+    errorFields.pincode.textContent = "Pincode must be exactly 6 digits";
     isValid = false;
   }
 
- 
-  if (!country) {
-    errorFields.country.textContent = "Country is required";
+  // Country
+  if (!countryPattern.test(country)) {
+    errorFields.country.textContent = "Enter a valid country name (min 3 letters)";
     isValid = false;
   }
 
-
-  if (!/^[0-9]{10}$/.test(mobile)) {
-    errorFields.mobile.textContent = "Mobile number must be 10 digits";
-    isValid = false;
-  } else if (/^0{10}$/.test(mobile)) {
-    errorFields.mobile.textContent = "Mobile number can't be all zeros";
+  // Mobile
+  if (!/^[6-9]\d{9}$/.test(mobile)) {
+    errorFields.mobile.textContent = "Enter a valid 10-digit mobile number starting from 6-9";
     isValid = false;
   }
 
-  if (!isValid) return; 
+  if (!isValid) return;
 
-  
+  // ✅ Send Request
   const data = { name, houseName, street, city, state, pincode, country, mobile };
 
   try {

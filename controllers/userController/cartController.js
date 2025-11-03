@@ -10,51 +10,63 @@ const getCart = async (req, res) => {
         path: "items.productId",
         populate: [
           { path: "brand", select: "isActive" },
-          { path: "category", select: "isActive " },
+          { path: "category", select: "isActive" },
         ],
-      })
-      .lean();
+      });
 
-    
     if (!cart) {
       return res.render("user/cart", { cartItems: [], subtotal: 0 });
     }
 
-   
-    const cartItems = cart.items
-      .filter((item) => {
-        const product = item.productId;
-        if (!product) return false;
+    // Filter and identify blocked items
+    const validItems = [];
+    const removedItemIds = [];
 
-        const isProductBlocked = product.isBlocked || product.status === "blocked";
-        const isBrandBlocked = product.brand?.isBlocked;
-        const isCategoryHidden = product.category?.isHidden;
-        const isCategoryInactive = product.category && !product.category.isActive;
+    for (const item of cart.items) {
+      const product = item.productId;
+      if (!product) {
+        removedItemIds.push(item._id);
+        continue;
+      }
 
-       
-        return !isProductBlocked && !isBrandBlocked && !isCategoryHidden && !isCategoryInactive;
-      })
-      .map((item) => {
-        const product = item.productId;
+      const isProductBlocked = product.isBlocked || product.status === "blocked";
+      const isBrandBlocked = product.brand && !product.brand.isActive;
+      const isCategoryInactive = product.category && !product.category.isActive;
+
+      if (isProductBlocked || isBrandBlocked || isCategoryInactive) {
+        removedItemIds.push(item._id);
+      } else {
         const variant = product.variants[item.variantIndex];
-        return {
+        validItems.push({
           _id: item._id,
           productId: product,
           variant,
           productQuantity: item.quantity,
           total: item.total,
-        };
-      });
+        });
+      }
+    }
 
-    
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.total || 0), 0);
+    // 🧹 Remove invalid items from DB
+    if (removedItemIds.length > 0) {
+      await Cart.updateOne(
+        { _id: cart._id },
+        { $pull: { items: { _id: { $in: removedItemIds } } } }
+      );
+      console.log("🧹 Removed blocked items from cart:", removedItemIds);
+    }
 
-    res.render("user/cart", { cartItems, subtotal });
+    // Calculate subtotal
+    const subtotal = validItems.reduce((sum, item) => sum + (item.total || 0), 0);
+
+    // Render page
+    res.render("user/cart", { cartItems: validItems, subtotal });
   } catch (err) {
     console.error("Error loading cart:", err);
     res.status(500).send("Something went wrong");
   }
 };
+
 
 
 

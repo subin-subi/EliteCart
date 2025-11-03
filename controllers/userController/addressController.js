@@ -45,35 +45,7 @@ const user = await User.findById(userId)
 
     const { name, houseName, street, city, state, country, pincode, mobile } = req.body;
 
-    // -------------------- Basic Validation --------------------
-    if (!name || !houseName || !street || !city || !state || !country || !pincode || !mobile) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    if (name.length < 3) {
-      return res.status(400).json({
-        success: false,
-        message: "Name should be at least 3 characters",
-      });
-    }
-
-    if (!/^\d{6}$/.test(pincode)) {
-      return res.status(400).json({
-        success: false,
-        message: "Pincode must be a valid 6-digit number",
-      });
-    }
-
-    if (!/^\d{10}$/.test(mobile)) {
-      return res.status(400).json({
-        success: false,
-        message: "Mobile number must be a valid 10-digit number",
-      });
-    }
-
+   
     
     // -------------------- Save to DB --------------------
     const newAddress = new Address({

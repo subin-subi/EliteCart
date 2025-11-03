@@ -294,25 +294,59 @@ document.addEventListener("DOMContentLoaded", () => {
   addToCartBtn.addEventListener("click", async (e) => {
     e.preventDefault();
 
-   
     const productId = addToCartBtn.dataset.product;
     const variantId = addToCartBtn.dataset.variant;
 
     if (!variantId) {
-      alert("Please select a variant first");
+      Swal.fire({
+        icon: "warning",
+        title: "Please select a variant first",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+      });
       return;
     }
 
     try {
       const res = await axios.post("/cart/add", { productId, variantId });
+
       if (res.data.success) {
-         window.location.href = "/cart";
+        
+        Swal.fire({
+          icon: "success",
+          title: "Added to Cart!",
+          text: "The item was successfully added to your cart.",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+        });
+
+       
       } else {
-        alert("❌ Failed to add product");
+        Swal.fire({
+          icon: "error",
+          title: "Failed!",
+          text: res.data.message || "Failed to add product",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+        });
       }
     } catch (err) {
       console.error("Add to cart error:", err);
-      alert("⚠️ Something went wrong!");
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: "Something went wrong while adding to cart.",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+      });
     }
   });
 });

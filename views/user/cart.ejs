@@ -4,15 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <link
-  href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"
-  rel="stylesheet"
-/>
 
+  <script src="https://cdn.tailwindcss.com"></script>  
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
 </head>
+
 <body class="bg-gray-100 pt-16 sm:pt-20">
   
+
+
+
 <!-- cart.ejs -->
  <%- include("../partials/nav") %>
 
@@ -79,12 +81,25 @@
     ₹<%= item.total.toFixed(2) %>
   </span>
 
-  <!-- Quantity controls -->
-  <div class="flex items-center border rounded-full px-3 py-1 bg-gray-100">
-    <button onclick="updateCartQuantity('<%= item._id %>', -1)" class="text-gray-600 hover:text-black">−</button>
-    <span class="mx-3" id="quantity-<%= item._id %>"><%= item.quantity %></span>
-    <button onclick="updateCartQuantity('<%= item._id %>', 1)" class="text-gray-600 hover:text-black">+</button>
-  </div>
+
+
+<!-- Quantity controls -->
+<div class="flex items-center border rounded-full px-3 py-1 bg-gray-100 shrink-0">
+  <button onclick="updateCartQuantity('<%= item._id %>', -1)" 
+          class="text-gray-600 hover:text-black text-lg px-2">−</button>
+
+<span id="cartQuantity-<%= item._id %>" 
+      class="mx-3 text-black font-semibold text-base min-w-[24px] text-center inline-block">
+  <%= item.quantity %>
+</span>
+
+
+  <button onclick="updateCartQuantity('<%= item._id %>', 1)" 
+          class="text-gray-600 hover:text-black text-lg px-2">+</button>
+</div>
+
+
+
 
   <!-- Delete button (stays fixed on the right) -->
   <button 
@@ -158,15 +173,16 @@ async function updateCartQuantity(itemId, change) {
     const data = res.data;
 
     if (data.success) {
-      // 🧮 Update quantity on page
-      const quantityEl = document.querySelector(`#quantity-${itemId}`);
+      const quantityEl = document.querySelector(`#cartQuantity-${itemId}`);
       const totalEl = document.querySelector(`#total-${itemId}`);
       const grandTotalEl = document.querySelector(`#grandTotal`);
 
-      if (quantityEl) quantityEl.textContent = data.quantity;
+      if (quantityEl) {
+        quantityEl.textContent = data.quantity;
+        quantityEl.classList.remove("hidden"); // make sure it's visible
+      }
       if (totalEl) totalEl.textContent = `₹${data.itemTotal.toFixed(2)}`;
       if (grandTotalEl) grandTotalEl.textContent = `₹${data.grandTotal.toFixed(2)}`;
-
     } else {
       Swal.fire({
         icon: "warning",
@@ -190,6 +206,9 @@ async function updateCartQuantity(itemId, change) {
   }
 }
 
+
+
+/////////////////////////////////////remove from cart ///////////////////////
 async function removeFromCart(itemId) {
   try {
     const confirmResult = await Swal.fire({
