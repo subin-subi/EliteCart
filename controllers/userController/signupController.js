@@ -379,6 +379,10 @@ const checkSession = (req, res) => {
 };
 
 
+
+
+
+
 export default{
     getSignUp,
     postSignup,

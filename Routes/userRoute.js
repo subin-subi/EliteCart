@@ -100,6 +100,7 @@ route.post('/place-order',checkoutController.placeOrder)
 route.get("/wishlist",wishlistController.getWishlist)
 route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
 route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
+route.get('/get-counts',wishlistController.notificationCount)
 
 route.get("/orders",orderDetailController.getOrderDetail)
 route.post("/order-cancel/:orderId",orderDetailController.cancelFullOrder)

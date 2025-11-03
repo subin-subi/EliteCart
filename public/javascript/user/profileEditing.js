@@ -263,11 +263,12 @@ async function submitProfileForm(formOrFormData) {
   try {
     let formData;
 
-  if (formOrFormData instanceof FormData) {
-    formData = formOrFormData; // Use already-prepared FormData
-  } else {
-    formData = new FormData(formOrFormData); // Create FormData from form element
-  }
+    if (formOrFormData instanceof FormData) {
+      formData = formOrFormData;
+    } else {
+      formData = new FormData(formOrFormData);
+    }
+
     const croppedImageBase64 = document.getElementById("croppedImageInput").value;
     if (croppedImageBase64) formData.append("croppedImage", croppedImageBase64);
 
@@ -276,18 +277,19 @@ async function submitProfileForm(formOrFormData) {
       withCredentials: true,
     });
 
-    if (data.success) {
-      Swal.fire("Success", "Profile updated successfully!", "success").then(() => {
-        window.location.reload();
-      });
-    } else {
-      Swal.fire("Error", data.message || "Failed to update profile", "error");
-    }
+    Swal.fire(
+      "Success",
+      data.message || "Profile updated successfully!",
+      "success"
+    ).then(() => window.location.reload());
+    
   } catch (error) {
-    console.error(error);
-    Swal.fire("Error", "Something went wrong while updating profile", "error");
+    console.error("Axios error:", error);
+    const backendMsg = error.response?.data?.message;
+    Swal.fire("Error", backendMsg || "Something went wrong while updating profile", "error");
   }
 }
+
 
 window.addEventListener('click', (e) => {
   if (e.target === modal && !otpModal.classList.contains('flex')) {

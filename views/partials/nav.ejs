@@ -29,15 +29,32 @@
 
     <!-- Right: Icons + Profile Dropdown -->
     <div class="flex items-center space-x-8">
+   
       <!-- Icons -->
       <div class="hidden sm:flex items-center space-x-6 text-white text-xl">
-        <a href="/wishlist" class="hover:text-yellow-400">
-          <i class="fa-regular fa-heart"></i>
-        </a>
-        <a href="/cart" class="hover:text-yellow-400">
-          <i class="fa-solid fa-cart-shopping"></i>
-        </a>
-      </div>
+  <!-- Wishlist Icon -->
+  <div class="relative">
+    <a href="/wishlist" class="hover:text-yellow-400">
+      <i class="fa-regular fa-heart"></i>
+    </a>
+    <span id="wishlistCount"
+      class="hidden absolute -top-2 -right-3 bg-red-500 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+      0
+    </span>
+  </div>
+
+  <!-- Cart Icon -->
+  <div class="relative">
+    <a href="/cart" class="hover:text-yellow-400">
+      <i class="fa-solid fa-cart-shopping"></i>
+    </a>
+    <span id="cartCount"
+      class="hidden absolute -top-2 -right-3 bg-red-500 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+      0
+    </span>
+  </div>
+</div>
+
 
       <!-- Profile Dropdown -->
       <div class="relative">
@@ -111,22 +128,33 @@
   });
 
   // Session check
-  document.addEventListener("DOMContentLoaded", async function () {
-    try {
-      const response = await fetch('/check-session');
-      const data = await response.json();
+document.addEventListener("DOMContentLoaded", async function () {
+  const response = await fetch('/check-session');
+  const data = await response.json();
 
-      if (data.isLoggedIn) {
-        guestMenu.classList.add("hidden");
-        userMenu.classList.remove("hidden");
-      } else {
-        guestMenu.classList.remove("hidden");
-        userMenu.classList.add("hidden");
-      }
-    } catch (error) {
-      console.error("Session check error:", error);
-    }
-  });
+  if (data.isLoggedIn) {
+    // Hide guest, show user menu
+    guestMenu.classList.add("hidden");
+    userMenu.classList.remove("hidden");
+
+    // Update profile details
+    document.getElementById("userAvatar").src = data.profilePic;
+    document.getElementById("userAvatar").classList.remove("hidden");
+
+    document.getElementById("userName").textContent = data.name;
+    document.getElementById("userName").classList.remove("hidden");
+
+    document.getElementById("defaultUserIcon").classList.add("hidden");
+  } else {
+    // Not logged in
+    guestMenu.classList.remove("hidden");
+    userMenu.classList.add("hidden");
+
+    document.getElementById("userAvatar").classList.add("hidden");
+    document.getElementById("userName").classList.add("hidden");
+    document.getElementById("defaultUserIcon").classList.remove("hidden");
+  }
+});
 
   // Logout with confirmation
   if (logoutBtn) {
@@ -155,6 +183,43 @@
       });
     });
   }
+
+
+
+  ////////////////////////whishlist / cart count //////////////////////////////
+
+
+  async function updateCounts() {
+  try {
+    const response = await fetch('/get-counts'); // Example endpoint
+    const data = await response.json();
+
+    const wishlistBadge = document.getElementById("wishlistCount");
+    const cartBadge = document.getElementById("cartCount");
+
+    // Wishlist count
+    if (data.wishlistCount > 0) {
+      wishlistBadge.textContent = data.wishlistCount;
+      wishlistBadge.classList.remove("hidden");
+    } else {
+      wishlistBadge.classList.add("hidden");
+    }
+
+    // Cart count
+    if (data.cartCount > 0) {
+      cartBadge.textContent = data.cartCount;
+      cartBadge.classList.remove("hidden");
+    } else {
+      cartBadge.classList.add("hidden");
+    }
+  } catch (error) {
+    console.error("Error fetching counts:", error);
+  }
+}
+
+// Call when page loads
+document.addEventListener("DOMContentLoaded", updateCounts);
+
 </script>
 
 </body>
