@@ -64,64 +64,83 @@
       </button>
 
       <div class="flex flex-col justify-between h-full">
-        <div>
-          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            <%= product.name %>
-          </h1>
+       <div>
+  <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+    <%= product.name %>
+  </h1>
 
-          <p id="priceText" class="text-2xl sm:text-3xl text-red-600 font-semibold mb-4">
-            ₹<%= (product.variants[0].discountPrice != null ? product.variants[0].discountPrice : product.variants[0].price).toLocaleString() %>
-          </p>
+  <p id="priceText" class="text-2xl sm:text-3xl text-red-600 font-semibold mb-4">
+    ₹<%= (product.variants[0].discountPrice != null 
+          ? product.variants[0].discountPrice 
+          : product.variants[0].price).toLocaleString() %>
+  </p>
 
-          <p id="productDescription" class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 line-clamp-3">
-            <%= product.description %>
-          </p>
+  <p id="productDescription" class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 line-clamp-3">
+    <%= product.description %>
+  </p>
 
-          <button id="toggleDescription" class="text-blue-600 font-semibold hover:underline">
-            Read more
-          </button>
+  <button id="toggleDescription" class="text-blue-600 font-semibold hover:underline">
+    Read more
+  </button>
 
-          <!-- Variant Dropdown -->
-          <% if (product.variants && product.variants.length > 1) { %>
-            <div class="mt-4">
-              <label for="variantSelect" class="block text-gray-700 font-medium mb-2">
-                Choose Volume:
-              </label>
-              <select 
-                id="variantSelect" 
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none">
-                <% product.variants.forEach((variant, index) => { %>
-                  <option value="<%= variant._id %>"
-                          data-price="<%= (variant.discountPrice != null ? variant.discountPrice : variant.price) %>"
-                          data-image="<%= variant.mainImage || '/images/placeholder.png' %>"
-                          data-stock="<%= variant.stock %>"
-                          <%= index === 0 ? 'selected' : '' %>>
-                    <%= variant.volume ? variant.volume + ' ml' : 'Default' %>
-                  </option>
-                <% }) %>
-              </select>
-            </div>
-          <% } %>
+  <!-- Variant Dropdown (only if more than one variant exists) -->
+  <% if (product.variants && product.variants.length > 1) { %>
+    <div class="mt-4">
+      <label for="variantSelect" class="block text-gray-700 font-medium mb-2">
+        Choose Volume:
+      </label>
+      <select 
+        id="variantSelect" 
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none">
+        <% product.variants.forEach((variant, index) => { %>
+          <option 
+            value="<%= variant._id %>"
+            data-price="<%= (variant.discountPrice != null ? variant.discountPrice : variant.price) %>"
+            data-stock="<%= variant.stock %>"
+            <%= index === 0 ? 'selected' : '' %>>
+            <%= variant.volume ? variant.volume + ' ml' : 'Default' %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+  <% } %>
 
-          <!-- Add to Cart -->
-          <div class="mt-8">
-            <% if (product.variants[0].stock > 0) { %>
-              <button 
-                id="addToCartBtn"
-                data-product="<%= product._id %>"
-                data-variant="<%= product.variants[0]._id %>"
-                class="w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
-                <i class="fa fa-shopping-cart"></i> Add To Cart
-              </button>
-            <% } else { %>
-              <button 
-                disabled
-                class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
-                Out of Stock
-              </button>
-            <% } %>
-          </div>
-        </div>
+  <!-- Add to Cart / Out of Stock -->
+  <div class="mt-8">
+    <% if (product.variants[0].stock > 0) { %>
+      <button 
+        id="addToCartBtn"
+        data-product="<%= product._id %>"
+        data-variant="<%= product.variants[0]._id %>"
+        class="w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+        <i class="fa fa-shopping-cart"></i> Add To Cart
+      </button>
+
+      <button 
+        id="outOfStockBtn"
+        disabled
+        class="hidden w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+        Out of Stock
+      </button>
+    <% } else { %>
+      <button 
+        id="addToCartBtn"
+        data-product="<%= product._id %>"
+        data-variant="<%= product.variants[0]._id %>"
+        class="hidden w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+        <i class="fa fa-shopping-cart"></i> Add To Cart
+      </button>
+
+      <button 
+        id="outOfStockBtn"
+        disabled
+        class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+        Out of Stock
+      </button>
+    <% } %>
+  </div>
+</div>
+
       </div>
     </div>
   </div>
