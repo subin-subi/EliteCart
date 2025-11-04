@@ -33,6 +33,30 @@
     }
   }
 
+
+function toggleEditDiscountInput() {
+  const type = document.getElementById('editDiscountType').value;
+  const discountInput = document.getElementById('editDiscountValue');
+  const label = document.querySelector('label[for="editDiscountValue"]');
+
+  if (type === 'percentage') {
+    discountInput.placeholder = 'Enter percentage (e.g. 10 for 10%)';
+    discountInput.max = 100;
+    discountInput.min = 1;
+  } else if (type === 'flat') {
+    discountInput.placeholder = 'Enter flat amount (e.g. 200 for ₹200)';
+    discountInput.removeAttribute('max');
+    discountInput.removeAttribute('min');
+  } else {
+    discountInput.placeholder = 'Enter discount value';
+  }
+}
+
+
+
+/////////////////////////adding coupon///////////////////////////////////////////////////
+
+
 document.getElementById('addCouponForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -266,6 +290,7 @@ document.getElementById('editCouponForm').addEventListener('submit', async (e) =
 
   // === Submit Form ===
   try {
+   
     const response = await axios.post(`/admin/edit-coupon/${data.couponId}`, data);
     const result = response.data;
 

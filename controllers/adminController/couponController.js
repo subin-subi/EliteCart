@@ -2,15 +2,43 @@
 import Coupon from "../../models/couponModel.js"
 
 
-const getCouponPage = async(req, res)=>{
-   try{
-const coupons = await Coupon.find().lean()
-       res.render("admin/coupon",{coupons})
-   }  catch (err) {
+const getCouponPage = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5;
+    const skip = (page - 1) * limit;
+
+    const search = req.query.search ? req.query.search.trim() : "";
+
+  
+    const query = search
+      ? { code: { $regex: search, $options: "i" } } 
+      : {};
+
+    
+    const totalCoupons = await Coupon.countDocuments(query);
+    const totalPages = Math.ceil(totalCoupons / limit);
+
+    
+    const coupons = await Coupon.find(query)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.render("admin/coupon", {
+      coupons,
+      currentPage: page,
+      totalPages,
+      search,
+    });
+
+  } catch (err) {
     console.log("Error loading coupon page:", err);
     res.status(500).send("Server Error");
   }
-}
+};
+
 
 
 
@@ -85,6 +113,7 @@ const editCoupon = async (req, res) => {
       description
     } = req.body;
 
+    
     // === Server-side Validation ===
     if (!code || code.trim().length < 6 || code.trim().length > 12) {
       return res.status(400).json({ success: false, message: "Coupon code must be 6–12 characters long." });
@@ -127,10 +156,10 @@ const editCoupon = async (req, res) => {
       couponId,
       {
         code: code.trim(),
-        minAmount,
-        maxAmount,
+       minPurchaseAmount: minAmount,
+        maxDiscountAmount:maxAmount,
         discountType,
-        discount,
+        discountValue :discount,
         startDate,
         expiryDate,
         description: description.trim(),

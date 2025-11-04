@@ -36,15 +36,27 @@
     + Add Coupon
   </button>
 
-  <!-- Right: Search Bar -->
-  <div class="relative w-full sm:w-80">
+<!-- Right: Search Bar -->
+<!-- Right: Search Bar -->
+<div class="relative w-full sm:w-80">
+  <form method="GET" action="/admin/coupon" class="relative">
     <input
       type="text"
+      name="search"
+      value="<%= typeof search !== 'undefined' ? search : '' %>"
       placeholder="Search Coupons..."
-      class="w-full pl-10 pr-4 py-2.5 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-white placeholder-gray-400"
+      class="w-full pr-10 pl-4 py-2.5 border border-gray-700 rounded-xl 
+             focus:outline-none focus:ring-2 focus:ring-blue-500 
+             bg-gray-800 text-white placeholder-gray-400"
     />
-    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-  </div>
+    <button type="submit"
+      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400">
+      <i class="fas fa-search text-lg"></i>
+    </button>
+  </form>
+</div>
+
+
 </div>
 
 
@@ -67,7 +79,16 @@
   <% coupons.forEach(coupon => { %>
     <tr class="border-b border-gray-800 hover:bg-gray-900 transition">
       <td class="py-3 px-4"><%= coupon.code %></td>
-      <td class="py-3 px-4"><%= coupon.discountValue %>%</td>
+
+      <td class="py-3 px-4">
+  <% if (coupon.discountType === 'percentage') { %>
+    <%= coupon.discountValue %>%
+  <% } else { %>
+    ₹<%= coupon.discountValue %>
+  <% } %>
+</td>
+
+
       <td class="py-3 px-4"><%= coupon.startDate.toLocaleDateString() %></td>
       <td class="py-3 px-4"><%= coupon.expiryDate.toLocaleDateString() %></td>
       <td class="py-3 px-4">₹<%= coupon.maxDiscountAmount %></td>
@@ -106,6 +127,37 @@
 
  
     </div>
+
+
+<!-- ///////////////////////////////////////pagination///////////////////////////////////////////////////// -->
+
+<!-- Pagination -->
+<div class="flex justify-center items-center space-x-2 mt-6">
+  <% if (currentPage > 1) { %>
+    <a href="?page=<%= currentPage - 1 %>" 
+       class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+       Prev
+    </a>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <a href="?page=<%= i %>" 
+       class="px-4 py-2 rounded-lg 
+       <%= i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700' %>">
+       <%= i %>
+    </a>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+    <a href="?page=<%= currentPage + 1 %>" 
+       class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+       Next
+    </a>
+  <% } %>
+</div>
+
+
+
   </main>
 
 <!-- ///////////////////// Coupon Adding Modal  //////////////////// -->
@@ -381,8 +433,6 @@
     </form>
   </div>
 </div>
-
-
 
 
 
