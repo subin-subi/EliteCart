@@ -47,20 +47,116 @@ console.log(code, discountType, discount, startDate, expiryDate, maxAmount, minA
   }
 };
 
-const deleteCoupon = async(req, res)=>{
-    try{
+const deleteCoupon = async (req, res) => {
+  try {
+    const couponId = req.params.couponId;
 
-        const couponId = req.params.couponId
-        await Coupon.findByIdAndDelete(couponId)
-        res.json({ success: true });
-    }catch (err) {
+    const deletedCoupon = await Coupon.findByIdAndUpdate(
+      couponId,
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!deletedCoupon) {
+      return res.json({ success: false, message: "Coupon not found" });
+    }
+
+    res.json({ success: true, message: "Coupon deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting coupon:", err);
     res.json({ success: false, message: "Server error" });
   }
-}
+};
 
+
+
+
+const editCoupon = async (req, res) => {
+  try {
+    const { couponId } = req.params;
+    const {
+      code,
+      minAmount,
+      maxAmount,
+      discountType,
+      discount,
+      startDate,
+      expiryDate,
+      description
+    } = req.body;
+
+    // === Server-side Validation ===
+    if (!code || code.trim().length < 6 || code.trim().length > 12) {
+      return res.status(400).json({ success: false, message: "Coupon code must be 6–12 characters long." });
+    }
+
+    if (!minAmount || isNaN(minAmount) || Number(minAmount) <= 0) {
+      return res.status(400).json({ success: false, message: "Please enter a valid minimum amount." });
+    }
+
+    if (!maxAmount || isNaN(maxAmount) || Number(maxAmount) <= Number(minAmount)) {
+      return res.status(400).json({ success: false, message: "Maximum amount must be greater than minimum amount." });
+    }
+
+    if (!discountType || !["percentage", "flat"].includes(discountType)) {
+      return res.status(400).json({ success: false, message: "Invalid discount type." });
+    }
+
+    if (!discount || isNaN(discount) || Number(discount) <= 0) {
+      return res.status(400).json({ success: false, message: "Please enter a valid discount value." });
+    }
+
+    if (discountType === "percentage" && Number(discount) > 90) {
+      return res.status(400).json({ success: false, message: "Percentage discount cannot exceed 90%." });
+    }
+
+    if (!startDate || !expiryDate) {
+      return res.status(400).json({ success: false, message: "Start and expiry dates are required." });
+    }
+
+    if (new Date(expiryDate) <= new Date(startDate)) {
+      return res.status(400).json({ success: false, message: "Expiry date must be after start date." });
+    }
+
+    if (!description || description.trim().length < 10) {
+      return res.status(400).json({ success: false, message: "Description must be at least 10 characters long." });
+    }
+
+    // === Update Coupon ===
+    const updatedCoupon = await Coupon.findByIdAndUpdate(
+      couponId,
+      {
+        code: code.trim(),
+        minAmount,
+        maxAmount,
+        discountType,
+        discount,
+        startDate,
+        expiryDate,
+        description: description.trim(),
+      },
+      { new: true }
+    );
+
+    if (!updatedCoupon) {
+      return res.status(404).json({ success: false, message: "Coupon not found." });
+    }
+
+    res.json({
+      success: true,
+      message: "Coupon updated successfully!",
+      coupon: updatedCoupon
+    });
+
+  } catch (err) {
+    console.error("Error updating coupon:", err);
+    res.status(500).json({ success: false, message: "Server error while updating coupon." });
+  }
+};
 
 export default ({
     getCouponPage,
      addCoupon,
-    deleteCoupon
+    deleteCoupon,
+    editCoupon
 })

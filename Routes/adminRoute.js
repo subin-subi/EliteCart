@@ -72,4 +72,5 @@ router.post("/addNewVariants/:id",addproductController.addNewVariants)
 router.get("/coupon", couponController.getCouponPage)
 router.post("/add-coupon", couponController.addCoupon)
 router.delete("/delete-coupon/:couponId",couponController.deleteCoupon)
+router.post("/edit-coupon/:couponId",couponController.editCoupon)
 export default router;
