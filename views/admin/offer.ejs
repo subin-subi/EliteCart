@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-900 text-white flex">
+      <!-- Sidebar -->
+  <%- include('../partials/sidebar', { path: '/admin/coupon' }) %>
+  
+   <main class="flex-1 ml-64 p-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8 bg-gray-900 p-4 rounded-xl shadow-lg">
+    <!-- Left: Page Title -->
+    <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-wide text-center sm:text-left">
+      💸 Offers
+    </h1>
+
+    <!-- Center: Add Offer Button -->
+    <button
+      onclick="openAddOfferModal()"
+      class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl 
+      font-semibold text-base sm:text-lg hover:scale-105 transition-all duration-200 shadow-md w-full sm:w-auto">
+      + Add Offer
+    </button>
+
+    <!-- Right: Search Bar -->
+    <div class="relative w-full sm:w-80">
+      <form method="GET" action="/admin/offer" class="relative">
+        <input
+          type="text"
+          name="search"
+          value="<%= typeof search !== 'undefined' ? search : '' %>"
+          placeholder="Search Offers..."
+          class="w-full pr-10 pl-4 py-2.5 border border-gray-700 rounded-xl 
+                 focus:outline-none focus:ring-2 focus:ring-green-500 
+                 bg-gray-800 text-white placeholder-gray-400"
+        />
+        <button type="submit"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-green-400">
+          <i class="fas fa-search text-lg"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Offers Table -->
+  <div class="bg-[#0b0b0b] border border-gray-700 rounded-2xl p-4">
+    <% if (offers && offers.length > 0) { %>
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="border-b border-gray-700 text-gray-300 text-base font-semibold">
+            <th class="py-3 px-4">Offer Name</th>
+            <th class="py-3 px-4">Offer Type</th>
+            <th class="py-3 px-4">Discount (%)</th>
+            <th class="py-3 px-4">Start Date</th>
+            <th class="py-3 px-4">End Date</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% offers.forEach(offer => { %>
+            <tr class="border-b border-gray-800 hover:bg-gray-900 transition">
+              <td class="py-3 px-4"><%= offer.name %></td>
+              <td class="py-3 px-4"><%= offer.offerType %></td>
+              <td class="py-3 px-4"><%= offer.discountPercent %>%</td>
+              <td class="py-3 px-4"><%= offer.startAt.toLocaleDateString() %></td>
+              <td class="py-3 px-4"><%= offer.endAt.toLocaleDateString() %></td>
+              <td class="py-3 px-4">
+                <% if (!offer.isNonBlocked) { %>
+                  <span class="text-red-500 font-semibold text-sm">Blocked</span>
+                <% } else if (offer.isActive) { %>
+                  <span class="text-green-400 font-semibold text-sm">Active</span>
+                <% } else { %>
+                  <span class="text-yellow-400 font-semibold text-sm">Inactive</span>
+                <% } %>
+              </td>
+              <td class="py-3 px-4 flex justify-center space-x-2">
+                <% if (!offer.isNonBlocked) { %>
+                  <span class="text-red-500 font-semibold text-sm">Offer Deleted</span>
+                <% } else { %>
+                 <button 
+              class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-sm font-medium"
+              onclick='openEditOfferModal(<%- JSON.stringify(offer) %>)'>
+               Edit
+            </button>
+
+                  <button
+                    class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm font-medium"
+                    onclick="deleteOffer('<%= offer._id %>')">
+                    Delete
+                  </button>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p class="text-center text-gray-400 py-6">No offers found.</p>
+    <% } %>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-center items-center space-x-2 mt-6">
+    <% if (currentPage > 1) { %>
+      <a href="?page=<%= currentPage - 1 %>" 
+         class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">Prev</a>
+    <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <a href="?page=<%= i %>" 
+         class="px-4 py-2 rounded-lg 
+         <%= i === currentPage ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700' %>">
+         <%= i %>
+      </a>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+      <a href="?page=<%= currentPage + 1 %>" 
+         class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">Next</a>
+    <% } %>
+  </div>
+</main>
+ 
+<!-- ///////////////////// Add Offer Modal //////////////////// -->
+<div id="addOfferModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center hidden z-50">
+  <div class="bg-[#0b0b0b] text-white w-full max-w-3xl rounded-2xl shadow-xl border border-gray-700 p-6 relative">
+
+    <!-- Close Button -->
+    <button type="button" onclick="closeAddOfferModal()" 
+            class="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl font-bold">
+      &times;
+    </button>
+
+    <!-- Modal Header -->
+    <h2 class="text-2xl font-bold mb-6 text-center text-white">Add New Offer</h2>
+
+    <!-- Form -->
+    <form id="addOfferForm" class="grid grid-cols-2 gap-6">
+
+      <!-- Offer Name -->
+      <div class="col-span-2">
+        <label class="block mb-2 text-sm text-gray-400">Offer Name</label>
+        <input 
+          type="text" 
+          id="offerName" 
+          name="name" 
+          placeholder="Enter offer name"
+          class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+        <span id="offerNameError" class="text-red-500 text-xs mt-1 block"></span>
+      </div>
+
+     
+
+     
+
+      <!-- Start Date -->
+      <div class="relative mb-4">
+  <label class="block mb-2 text-sm text-gray-400">Start Date</label>
+  <input
+    id="startDate"
+    name="startDate"
+    type="text"
+    placeholder="Select start date"
+    class="w-full pl-10 pr-4 py-2 bg-black border border-gray-600 rounded-lg 
+          focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+  />
+  <i class="fa-regular fa-calendar-days absolute left-3 top-10 text-gray-400 cursor-pointer"></i>
+  <span id="startDateError" class="text-red-500 text-xs mt-1 block"></span>
+</div>
+
+
+<!-- Expiry Date -->
+<div class="relative">
+  <label class="block mb-2 text-sm text-gray-400">Expiry Date</label>
+  <input
+    id="expiryDate"
+    name="expiryDate" 
+    type="text"
+    placeholder="Select expiry date"
+    class="w-full pl-10 pr-4 py-2 bg-black border border-gray-600 rounded-lg 
+          focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+  />
+  <i class="fa-regular fa-calendar-days absolute left-3 top-10 text-gray-400 cursor-pointer"></i>
+  <span id="expiryDateError" class="text-red-500 text-xs mt-1 block"></span>
+</div>
+
+
+
+
+       <!-- Discount percentage -->
+      <div>
+        <label class="block mb-2 text-sm text-gray-400">Discount Percentage</label>
+        <input 
+          type="number" 
+          id="discountPercent" 
+          name="discountPercent" 
+          min="1" max="90"
+          placeholder="Enter discount percentage"
+          class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+        <span id="discountPercentError" class="text-red-500 text-xs mt-1 block"></span>
+      </div>
+
+     
+
+      <!-- Offer Type Selection -->
+<div>
+  <label class="block mb-2 text-sm text-gray-400">Offer Type</label>
+  <select id="offerType" name="offerType"
+    class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+    onchange="updateOfferSelection()">
+    <option value="">Select Offer Type</option>
+    <option value="PRODUCT">Product Offer</option>
+    <option value="CATEGORY">Category Offer</option>
+  </select>
+</div>
+
+<!-- Offer Selection Dropdown -->
+<div id="offerSelectionContainer" class="hidden mt-4">
+  <label id="offerSelectionLabel" class="block mb-2 text-sm text-gray-400">Select Item</label>
+  <select id="offerSelection" name="selectionId"
+    class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+    <option value="">Select</option>
+
+    <!-- Product Options -->
+    <% if (products && products.length) { %>
+      <% products.forEach(product => { %>
+        <option value="<%= product._id %>" data-type="PRODUCT" class="product-option hidden">
+          <%= product.name %>
+        </option>
+      <% }) %>
+    <% } %>
+
+    <!-- Category Options -->
+    <% if (categories && categories.length) { %>
+      <% categories.forEach(category => { %>
+        <option value="<%= category._id %>" data-type="CATEGORY" class="category-option hidden">
+          <%= category.name %>
+        </option>
+      <% }) %>
+    <% } %>
+  </select>
+</div>
+
+      <!-- Description -->
+      <div class="col-span-2">
+        <label class="block mb-2 text-sm text-gray-400">Offer Description</label>
+        <textarea id="description" name="description" placeholder="Enter offer description"
+                  class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"></textarea>
+      </div>
+
+      <!-- Submit Buttons -->
+      <div class="col-span-2 flex justify-end space-x-4">
+        <button type="button" onclick="closeAddOfferModal()"
+                class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+          Cancel
+        </button>
+        <button type="submit"
+                class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:scale-105 transition-all duration-200">
+          Add Offer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ///////////////////////////// Editing Offer Modal /////////////////////////////////////////////// -->
+
+<div id="editOfferModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center hidden z-50">
+  <div class="bg-[#0b0b0b] text-white w-full max-w-3xl rounded-2xl shadow-xl border border-gray-700 p-6 relative">
+
+    <!-- Close Button -->
+    <button type="button" onclick="closeEditOfferModal()" 
+            class="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl font-bold">
+      &times;
+    </button>
+
+    <!-- Modal Header -->
+    <h2 class="text-2xl font-bold mb-6 text-center text-white">Edit Offer</h2>
+
+    <!-- Form -->
+    <form id="editOfferForm" class="grid grid-cols-2 gap-6">
+      
+      <!-- Hidden ID -->
+      <input type="hidden" id="editOfferId" name="offerId">
+
+      <!-- Offer Name -->
+      <div class="col-span-2">
+        <label class="block mb-2 text-sm text-gray-400">Offer Name</label>
+        <input 
+          type="text" 
+          id="editOfferName" 
+          name="name" 
+          placeholder="Enter offer name"
+          class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+        <span id="editOfferNameError" class="text-red-500 text-xs mt-1 block"></span>
+      </div>
+
+      <!-- Start Date -->
+      <div class="relative mb-4">
+        <label class="block mb-2 text-sm text-gray-400">Start Date</label>
+        <input
+          id="editStartDate"
+          name="startAt"
+          type="text"
+          placeholder="Select start date"
+          class="w-full pl-10 pr-4 py-2 bg-black border border-gray-600 rounded-lg 
+                focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+        />
+        <i class="fa-regular fa-calendar-days absolute left-3 top-10 text-gray-400 cursor-pointer"></i>
+        <span id="editStartDateError" class="text-red-500 text-xs mt-1 block"></span>
+      </div>
+
+      <!-- Expiry Date -->
+      <div class="relative">
+        <label class="block mb-2 text-sm text-gray-400">Expiry Date</label>
+        <input
+          id="editExpiryDate"
+          name="endAt"
+          type="text"
+          placeholder="Select expiry date"
+          class="w-full pl-10 pr-4 py-2 bg-black border border-gray-600 rounded-lg 
+                focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+        />
+        <i class="fa-regular fa-calendar-days absolute left-3 top-10 text-gray-400 cursor-pointer"></i>
+        <span id="editExpiryDateError" class="text-red-500 text-xs mt-1 block"></span>
+      </div>
+
+      <!-- Discount Percentage -->
+      <div>
+        <label class="block mb-2 text-sm text-gray-400">Discount Percentage</label>
+        <input 
+          type="number" 
+          id="editDiscountPercent" 
+          name="discountPercent" 
+          min="1" max="90"
+          placeholder="Enter discount percentage"
+          class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+        <span id="editDiscountPercentError" class="text-red-500 text-xs mt-1 block"></span>
+      </div>
+
+      <!-- Offer Type -->
+      <div>
+        <label class="block mb-2 text-sm text-gray-400">Offer Type</label>
+        <select id="editOfferType" name="offerType"
+          class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+          onchange="updateEditOfferSelection()">
+          <option value="">Select Offer Type</option>
+          <option value="PRODUCT">Product Offer</option>
+          <option value="CATEGORY">Category Offer</option>
+        </select>
+      </div>
+
+      <!-- Offer Selection Dropdown -->
+      <div id="editOfferSelectionContainer" class="hidden mt-4">
+        <label id="editOfferSelectionLabel" class="block mb-2 text-sm text-gray-400">Select Item</label>
+        <select id="editOfferSelection" name="selectionId"
+          class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+          <option value="">Select</option>
+
+          <!-- Product Options -->
+          <% if (products && products.length) { %>
+            <% products.forEach(product => { %>
+              <option value="<%= product._id %>" data-type="PRODUCT" class="edit-product-option hidden">
+                <%= product.name %>
+              </option>
+            <% }) %>
+          <% } %>
+
+          <!-- Category Options -->
+          <% if (categories && categories.length) { %>
+            <% categories.forEach(category => { %>
+              <option value="<%= category._id %>" data-type="CATEGORY" class="edit-category-option hidden">
+                <%= category.name %>
+              </option>
+            <% }) %>
+          <% } %>
+        </select>
+      </div>
+
+      <!-- Description -->
+      <div class="col-span-2">
+        <label class="block mb-2 text-sm text-gray-400">Offer Description</label>
+        <textarea id="editDescription" name="description" placeholder="Enter offer description"
+                  class="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg 
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"></textarea>
+        <span id="editDescriptionError" class="text-red-500 text-xs mt-1 block"></span>
+      </div>
+
+      <!-- Buttons -->
+      <div class="col-span-2 flex justify-end space-x-4">
+        <button type="button" onclick="closeEditOfferModal()"
+                class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+          Cancel
+        </button>
+        <button type="submit"
+                class="bg-gradient-to-r from-green-500 to-teal-600 text-white px-6 py-2 rounded-lg font-semibold hover:scale-105 transition-all duration-200">
+          Update Offer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script src="/javascript/admin/offer.js"></script>
+
+
+<!-- Flatpickr -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  flatpickr("#startDate", { dateFormat: "Y-m-d", minDate: "today" });
+  flatpickr("#expiryDate", { dateFormat: "Y-m-d", minDate: "today" });
+</script>
+
+
+<script>
+
+  flatpickr("#startDate", {
+    dateFormat: "Y-m-d",
+    minDate: "today"
+  });
+
+  flatpickr("#expiryDate", {
+    dateFormat: "Y-m-d",
+    minDate: "today"
+  });
+
+
+   flatpickr("#editStartDate", {
+    dateFormat: "Y-m-d",
+    minDate: "today"
+  });
+  flatpickr("#editExpiryDate", {
+    dateFormat: "Y-m-d",
+    minDate: "today"
+  });
+</script>
+</body>
+</html>

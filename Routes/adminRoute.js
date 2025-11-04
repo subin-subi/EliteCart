@@ -9,6 +9,9 @@ import productController from "../controllers/adminController/productController.
 import addproductController from "../controllers/adminController/addproductController.js";
 import orderController from "../controllers/adminController/orderController.js";
 import couponController from "../controllers/adminController/couponController.js"
+import offerController from "../controllers/adminController/offerController.js"
+
+
 
 const router = express.Router();
 
@@ -49,10 +52,6 @@ router.post("/update-return-status",orderController.updateReturnStatus)
 
 
 
-
-
-
-
  router.get("/products", productController.getProduct);
 router.patch("/products/:id/toggle-block", productController.toggleProductStatus);
 router.get("/product/:id", productController.getProductById);
@@ -73,4 +72,11 @@ router.get("/coupon", couponController.getCouponPage)
 router.post("/add-coupon", couponController.addCoupon)
 router.delete("/delete-coupon/:couponId",couponController.deleteCoupon)
 router.post("/edit-coupon/:couponId",couponController.editCoupon)
+
+
+router.get("/offer",offerController.getOfferPage)
+router.post("/add-offer",offerController.addOffer)
+router.delete("/delete-offer/:offerId",offerController.deleteOffer)
+router.post("/edit-offer",offerController.editOffer)
+
 export default router;
