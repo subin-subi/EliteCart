@@ -2,7 +2,7 @@ import Product from "../../models/productModel.js";
 import Brand from "../../models/brandModel.js";
 import Category from "../../models/categoryModel.js";
 import Wishlist from "../../models/wishlistModel.js";
-
+import Offer from "../../models/offerModel.js";
 
 const getProductsPage = async (req, res) => {
   try {
@@ -10,88 +10,144 @@ const getProductsPage = async (req, res) => {
 
     // Base filter
     const filter = { isBlocked: { $ne: true } };
-    if (category && category !== 'all') filter.category = category;
-    if (brand && brand !== 'all') filter.brand = brand;
-    if (search && search.trim()) filter.name = { $regex: search.trim(), $options: 'i' };
+    if (category && category !== "all") filter.category = category;
+    if (brand && brand !== "all") filter.brand = brand;
+    if (search && search.trim()) filter.name = { $regex: search.trim(), $options: "i" };
 
-    // Pagination
-    const currentPage = Math.max(parseInt(page || '1', 10), 1);
+    // Pagination setup
+    const currentPage = Math.max(parseInt(page || "1", 10), 1);
     const limit = 12;
     const skip = (currentPage - 1) * limit;
 
-    // Sorting
-    let sortOption = {};
-    if (sort === 'priceLowToHigh') sortOption = { 'variants.price': 1 };
-    else if (sort === 'priceHighToLow') sortOption = { 'variants.price': -1 };
-    else if (sort === 'az') sortOption = { name: 1 };
-    else if (sort === 'za') sortOption = { name: -1 };
-    else sortOption = { createdAt: -1 }; 
+    // Fetch active offers
+    const now = new Date();
+    const activeOffers = await Offer.find({
+      isActive: true,
+      isNonBlocked: true,
+      startAt: { $lte: now },
+      endAt: { $gte: now },
+    }).lean();
+
     // Fetch products
-   let products = await Product.find(filter)
+    let products = await Product.find(filter)
       .populate({
-        path: 'category',
-        match: { isActive: true, isHidden: false } 
+        path: "category",
+        match: { isActive: true, isHidden: false },
       })
       .populate({
-        path: 'brand',
-        match: { isActive: true, isHidden: false } 
+        path: "brand",
+        match: { isActive: true, isHidden: false },
       })
-      .sort(sortOption)
-      .skip(skip)
-      .limit(limit)
       .lean();
-    
- products = products.filter(product => product.category && product.brand);
 
-    products = products.map(product => {
-      const validVariants = product.variants.filter(v => {
-        if (v.isBlocked) return false;
-        if (minPrice && v.price < Number(minPrice)) return false;
-        if (maxPrice && v.price > Number(maxPrice)) return false;
-        if (stock === 'inStock' && v.stock <= 0) return false;
-        if (stock === 'outOfStock' && v.stock > 0) return false;
-        return true;
-      });
+    // Filter out invalid category/brand
+    products = products.filter((product) => product.category && product.brand);
 
-      if (validVariants.length === 0) return null;
+    // Apply offer & price logic
+    products = products
+      .map((product) => {
+        const validVariants = product.variants.filter((v) => {
+          if (v.isBlocked) return false;
+          if (minPrice && v.price < Number(minPrice)) return false;
+          if (maxPrice && v.price > Number(maxPrice)) return false;
+          if (stock === "inStock" && v.stock <= 0) return false;
+          if (stock === "outOfStock" && v.stock > 0) return false;
+          return true;
+        });
 
-      let selectedVariant;
-      if (sort === 'priceLowToHigh') {
-        selectedVariant = validVariants.reduce((prev, curr) => prev.price < curr.price ? prev : curr);
-      } else if (sort === 'priceHighToLow') {
-        selectedVariant = validVariants.reduce((prev, curr) => prev.price > curr.price ? prev : curr);
-      } else {
-        selectedVariant = validVariants[0]; 
-      }
+        if (validVariants.length === 0) return null;
 
-      return { ...product, variants: [selectedVariant] };
-    }).filter(p => p !== null);
+        // Get applicable offers
+        const productOffers = activeOffers.filter(
+          (offer) =>
+            offer.offerType === "PRODUCT" &&
+            offer.productId?.toString() === product._id.toString()
+        );
 
+        const categoryOffers = activeOffers.filter(
+          (offer) =>
+            offer.offerType === "CATEGORY" &&
+            offer.categoryId?.toString() === product.category._id.toString()
+        );
 
-    const totalProducts = await Product.countDocuments(filter);
+        // Find maximum discount %
+        let discountPercent = 0;
+        if (productOffers.length > 0) {
+          const maxProductDiscount = Math.max(
+            ...productOffers.map((offer) => offer.discountPercent)
+          );
+          discountPercent = Math.max(discountPercent, maxProductDiscount);
+        }
+        if (categoryOffers.length > 0) {
+          const maxCategoryDiscount = Math.max(
+            ...categoryOffers.map((offer) => offer.discountPercent)
+          );
+          discountPercent = Math.max(discountPercent, maxCategoryDiscount);
+        }
 
+        // Apply discount to all variants
+        const updatedVariants = validVariants.map((v) => {
+          const discountPrice =
+            discountPercent > 0
+              ? v.price - (v.price * discountPercent) / 100
+              : v.price;
+
+          return {
+            ...v,
+            discountPercent,
+            discountPrice: Math.round(discountPrice),
+          };
+        });
+
+        return {
+          ...product,
+          variants: updatedVariants,
+        };
+      })
+      .filter((p) => p !== null);
+
+    //  Sort logic based on discounted price
+    if (sort === "priceLowToHigh") {
+      products.sort((a, b) => a.variants[0].discountPrice - b.variants[0].discountPrice);
+    } else if (sort === "priceHighToLow") {
+      products.sort((a, b) => b.variants[0].discountPrice - a.variants[0].discountPrice);
+    } else if (sort === "az") {
+      products.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === "za") {
+      products.sort((a, b) => b.name.localeCompare(a.name));
+    } else {
+      products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    // Pagination
+    const totalProducts = products.length;
+    const paginatedProducts = products.slice(skip, skip + limit);
+
+    // Fetch categories & brands
     const [categories, brands] = await Promise.all([
       Category.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean(),
-      Brand.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean()
+      Brand.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean(),
     ]);
 
-    res.render('user/product', {
-      products,
+    // Render
+    res.render("user/product", {
+      products: paginatedProducts,
       categories,
       brands,
       filters: { category, brand, minPrice, maxPrice, stock, search, sort },
       pagination: {
         currentPage,
         totalPages: Math.max(Math.ceil(totalProducts / limit), 1),
-        totalProducts
-      }
+        totalProducts,
+      },
     });
-
   } catch (error) {
-    console.error('Error loading products page:', error);
-    res.status(500).send('Server Error');
+    console.error("Error loading products page:", error);
+    res.status(500).send("Server Error");
   }
 };
+
+
 
 
 
