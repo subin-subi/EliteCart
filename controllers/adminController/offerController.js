@@ -165,40 +165,61 @@ const toggleOffer = async (req, res) => {
       return res.json({ success: false, message: 'Offer has expired and is now deactivated.' });
     }
 
-    // If not expired, toggle status normally
+    // Toggle offer status
     offer.isActive = isActive;
     await offer.save();
 
-     let products = [];
+    let products = [];
 
     if (offer.offerType === "PRODUCT" && offer.productId) {
-      // Single product
       const product = await Product.findById(offer.productId);
       if (product) products.push(product);
-
     } else if (offer.offerType === "CATEGORY" && offer.categoryId) {
-      // All products in category
       products = await Product.find({ category: offer.categoryId });
     }
 
-    // Update variants for each product
+    // Fetch all active offers
+    const activeOffers = await Offer.find({ isActive: true, isNonBlocked: true }).lean();
+
     for (const product of products) {
       product.variants = product.variants.map(v => {
         if (isActive) {
+         
           return {
             ...v.toObject(),
             discountPrice: Math.round(v.price - (v.price * offer.discountPercent) / 100),
           };
         } else {
-          return {
-            ...v.toObject(),
-            discountPrice: null,
-          };
+          // Find another active offer for this product
+          const otherOffers = activeOffers.filter(o => {
+            if (o._id.toString() === offerId) return false; // skip current toggled offer
+            if (o.offerType === "PRODUCT" && o.productId?.toString() === product._id.toString()) return true;
+            if (o.offerType === "CATEGORY" && o.categoryId?.toString() === product.category.toString()) return true;
+            return false;
+          });
+
+          if (otherOffers.length > 0) {
+            // Apply the best offer
+            const bestOffer = otherOffers.reduce((max, o) =>
+              o.discountPercent > max.discountPercent ? o : max
+            );
+            return {
+              ...v.toObject(),
+              discountPrice: Math.round(v.price - (v.price * bestOffer.discountPercent) / 100),
+            };
+          } else {
+            // No other offer, reset discountPrice
+            return {
+              ...v.toObject(),
+              discountPrice: null,
+            };
+          }
         }
       });
 
       await product.save();
     }
+
     return res.json({ success: true, message: `Offer ${isActive ? "activated" : "deactivated"} successfully.` });
 
   } catch (error) {
@@ -206,6 +227,7 @@ const toggleOffer = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 
 
 

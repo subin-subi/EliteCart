@@ -68,8 +68,19 @@
     Volume: <%= item.variant.volume %> ml
   </p>
   <p class="font-semibold mt-2">
-    ₹<%= item.variant.discountPrice || item.variant.price %>
-  </p>
+  <% if (item.discountPercent > 0) { %>
+    <span class="line-through text-gray-400 mr-2">₹<%= item.variant.price %></span>
+    <span class="text-green-500">₹<%= item.offerPrice %></span>
+  <% } else { %>
+    ₹<%= item.variant.price %>
+  <% } %>
+</p>
+
+<!-- Optional: show offer name -->
+<% if (item.appliedOfferName) { %>
+  <p class="text-sm text-blue-400">Offer: <%= item.appliedOfferName %></p>
+<% } %>
+
 </div>
 
             </div>
