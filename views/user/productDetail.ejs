@@ -52,124 +52,172 @@
       <img src="<%= img %>" alt="thumb <%= idx+1 %>" class="w-full h-full object-cover"> </button> <% }) %> </div> </div>
 
     <!-- Right: Product Details -->
-    <div class="relative bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100 flex flex-col justify-between md:h-[550px] md:w-[85%] lg:w-[80%] mx-auto">
-      
-      <!-- Wishlist Icon -->
-      <button 
-        id="wishlistBtn"
-        data-product="<%= product._id %>"
-        class="absolute top-4 right-4 text-3xl transition transform hover:scale-110 z-10">
-          <i id="heartIcon" 
-            class="fa fa-heart <%= product.isInWishlist ? 'text-red-500' : 'text-gray-600' %>"></i>
-      </button>
-
-      <div class="flex flex-col justify-between h-full">
-       <div>
-  <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-    <%= product.name %>
-  </h1>
-
-  <p id="priceText" class="text-2xl sm:text-3xl text-red-600 font-semibold mb-4">
-    ₹<%= (product.variants[0].discountPrice != null 
-          ? product.variants[0].discountPrice 
-          : product.variants[0].price).toLocaleString() %>
-  </p>
-
-  <p id="productDescription" class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 line-clamp-3">
-    <%= product.description %>
-  </p>
-
-  <button id="toggleDescription" class="text-blue-600 font-semibold hover:underline">
-    Read more
+   <div class="relative bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100 flex flex-col justify-between md:h-[550px] md:w-[85%] lg:w-[80%] mx-auto">
+  
+  <!-- Wishlist Icon -->
+  <button 
+    id="wishlistBtn"
+    data-product="<%= product._id %>"
+    class="absolute top-4 right-4 text-3xl transition transform hover:scale-110 z-10">
+      <i id="heartIcon" 
+        class="fa fa-heart <%= product.isInWishlist ? 'text-red-500' : 'text-gray-600' %>"></i>
   </button>
 
-  <!-- Variant Dropdown (only if more than one variant exists) -->
-  <% if (product.variants && product.variants.length > 1) { %>
-    <div class="mt-4">
-      <label for="variantSelect" class="block text-gray-700 font-medium mb-2">
-        Choose Volume:
-      </label>
-      <select 
-        id="variantSelect" 
-        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none">
-        <% product.variants.forEach((variant, index) => { %>
-          <option 
-            value="<%= variant._id %>"
-            data-price="<%= (variant.discountPrice != null ? variant.discountPrice : variant.price) %>"
-            data-stock="<%= variant.stock %>"
-            <%= index === 0 ? 'selected' : '' %>>
-            <%= variant.volume ? variant.volume + ' ml' : 'Default' %>
-          </option>
-        <% }) %>
-      </select>
+  <div class="flex flex-col justify-between h-full">
+    <div>
+      <!-- Product Name -->
+      <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+        <%= product.name %>
+      </h1>
+
+      <!-- ✅ Price Section -->
+      <% 
+        const mainVariant = product.variants[0];
+        const hasDiscount = mainVariant.discountPrice && mainVariant.discountPrice < mainVariant.price;
+      %>
+
+      <div id="priceSection" class="mb-4 flex items-center space-x-3">
+        <% if (hasDiscount) { %>
+          <span class="text-2xl sm:text-3xl font-semibold text-red-600">
+            ₹<%= mainVariant.discountPrice.toLocaleString() %>
+          </span>
+          <span class="text-gray-500 line-through text-lg">
+            ₹<%= mainVariant.price.toLocaleString() %>
+          </span>
+          <span class="text-green-600 font-medium text-sm">
+            (<%= Math.round(((mainVariant.price - mainVariant.discountPrice) / mainVariant.price) * 100) %>% OFF)
+          </span>
+        <% } else { %>
+          <span class="text-2xl sm:text-3xl font-semibold text-gray-900">
+            ₹<%= mainVariant.price.toLocaleString() %>
+          </span>
+        <% } %>
+      </div>
+
+      <!-- Description -->
+      <p id="productDescription" class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 line-clamp-3">
+        <%= product.description %>
+      </p>
+
+      <button id="toggleDescription" class="text-blue-600 font-semibold hover:underline">
+        Read more
+      </button>
+
+      <!-- Variant Dropdown -->
+      <% if (product.variants && product.variants.length > 1) { %>
+        <div class="mt-4">
+          <label for="variantSelect" class="block text-gray-700 font-medium mb-2">
+            Choose Volume:
+          </label>
+          <select 
+            id="variantSelect" 
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none">
+            <% product.variants.forEach((variant, index) => { %>
+              <option 
+                value="<%= variant._id %>"
+                data-price="<%= (variant.discountPrice != null ? variant.discountPrice : variant.price) %>"
+                data-stock="<%= variant.stock %>"
+                <%= index === 0 ? 'selected' : '' %>>
+                <%= variant.volume ? variant.volume + ' ml' : 'Default' %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+      <% } %>
+
+      <!-- Add to Cart / Out of Stock -->
+      <div class="mt-8">
+        <% if (mainVariant.stock > 0) { %>
+          <button 
+            id="addToCartBtn"
+            data-product="<%= product._id %>"
+            data-variant="<%= mainVariant._id %>"
+            class="w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+            <i class="fa fa-shopping-cart"></i> Add To Cart
+          </button>
+
+          <button 
+            id="outOfStockBtn"
+            disabled
+            class="hidden w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+            Out of Stock
+          </button>
+        <% } else { %>
+          <button 
+            id="addToCartBtn"
+            data-product="<%= product._id %>"
+            data-variant="<%= mainVariant._id %>"
+            class="hidden w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+            <i class="fa fa-shopping-cart"></i> Add To Cart
+          </button>
+
+          <button 
+            id="outOfStockBtn"
+            disabled
+            class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+            Out of Stock
+          </button>
+        <% } %>
+      </div>
     </div>
-  <% } %>
+  </div>
+</div>
 
-  <!-- Add to Cart / Out of Stock -->
-  <div class="mt-8">
-    <% if (product.variants[0].stock > 0) { %>
-      <button 
-        id="addToCartBtn"
-        data-product="<%= product._id %>"
-        data-variant="<%= product.variants[0]._id %>"
-        class="w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
-        <i class="fa fa-shopping-cart"></i> Add To Cart
-      </button>
+  </div>
 
-      <button 
-        id="outOfStockBtn"
-        disabled
-        class="hidden w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
-        Out of Stock
-      </button>
+  <!-- 🔥 Full-Width Related Products -->
+<div class="mt-24 w-full">
+  <h2 class="text-3xl font-bold text-center mb-10">You May Also Like</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+    <% if (relatedProducts && relatedProducts.length > 0) { %>
+      <% relatedProducts.forEach(rp => { %>
+        <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition p-5 text-center relative">
+
+          <!-- 🔹 Offer Badge -->
+          <% if (rp.appliedOffer) { %>
+            <div class="absolute top-3 left-3 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+              <%= rp.appliedOffer.discountPercent %>% OFF
+            </div>
+          <% } %>
+
+          <img src="<%= rp.variants[0]?.mainImage %>"
+               alt="<%= rp.name %>"
+               class="w-full h-56 object-cover rounded-lg mb-4 hover:scale-105 transition-transform duration-300">
+
+          <h3 class="text-lg font-semibold mb-1"><%= rp.name %></h3>
+
+          <!-- 🔹 Offer Name (below product title) -->
+          <!-- <% if (rp.appliedOffer) { %>
+            <p class="text-green-600 font-medium mb-2">
+              <%= rp.appliedOffer.name %>
+            </p>
+          <% } %> -->
+
+          <!-- 🔹 Price Section -->
+          <% const variant = rp.variants[0]; %>
+          <% if (variant && variant.discountPercent > 0) { %>
+            <p class="mb-3">
+              <span class="line-through text-gray-500">₹<%= variant.price.toLocaleString() %></span>
+              <span class="text-red-600 font-bold ml-2">₹<%= variant.discountPrice.toLocaleString() %></span>
+            </p>
+          <% } else { %>
+            <p class="text-gray-700 font-medium mb-3">
+              ₹<%= variant?.price?.toLocaleString() %>
+            </p>
+          <% } %>
+
+          <a href="/productDetail/<%= rp._id %>"
+             class="inline-block px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition">
+            View Details
+          </a>
+        </div>
+      <% }) %>
     <% } else { %>
-      <button 
-        id="addToCartBtn"
-        data-product="<%= product._id %>"
-        data-variant="<%= product.variants[0]._id %>"
-        class="hidden w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
-        <i class="fa fa-shopping-cart"></i> Add To Cart
-      </button>
-
-      <button 
-        id="outOfStockBtn"
-        disabled
-        class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
-        Out of Stock
-      </button>
+      <p class="text-center col-span-full text-gray-500">No related products found.</p>
     <% } %>
   </div>
 </div>
 
-      </div>
-    </div>
-  </div>
-
-  <!-- 🔥 Full-Width Related Products -->
-  <div class="mt-24 w-full">
-    <h2 class="text-3xl font-bold text-center mb-10">You May Also Like</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-      <% if (relatedProducts && relatedProducts.length > 0) { %>
-        <% relatedProducts.forEach(rp => { %>
-          <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition p-5 text-center">
-            <img src="<%= rp.variants[0]?.mainImage %>"
-                 alt="<%= rp.name %>"
-                 class="w-full h-56 object-cover rounded-lg mb-4 hover:scale-105 transition-transform duration-300">
-            <h3 class="text-lg font-semibold mb-2"><%= rp.name %></h3>
-            <p class="text-gray-700 font-medium mb-3">
-              ₹<%= (rp.variants[0]?.discountPrice != null ? rp.variants[0].discountPrice : rp.variants[0]?.price) %>
-            </p>
-            <a href="/productDetail/<%= rp._id %>"
-               class="inline-block px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition">
-              View Details
-            </a>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <p class="text-center col-span-full text-gray-500">No related products found.</p>
-      <% } %>
-    </div>
-  </div>
 
   <div id="toast" class="hidden fixed bottom-6 right-6 bg-black text-white px-6 py-3 rounded-lg shadow-lg text-sm"></div>
 </section>

@@ -188,12 +188,85 @@ const getProductDetailPage = async (req, res) => {
     const userId = req.session.user;
     const productId = req.params.id;
 
-    const product = await Product.findById(productId).lean();
+    // 🟢 Fetch product
+    const product = await Product.findById(productId)
+      .populate("category")
+      .populate("brand")
+      .lean();
+
     if (!product) {
       return res.status(404).send("Product not found");
     }
 
-    // Check if product is in user's wishlist
+    const now = new Date();
+
+    // 🟢 Active offers
+    const activeOffers = await Offer.find({
+      isActive: true,
+      isNonBlocked: true,
+      startAt: { $lte: now },
+      endAt: { $gte: now },
+    }).lean();
+
+    // 🧩 Offers for main product
+    const productOffers = activeOffers.filter(
+      (offer) =>
+        offer.offerType === "PRODUCT" &&
+        offer.productId?.toString() === product._id.toString()
+    );
+
+    const categoryOffers = activeOffers.filter(
+      (offer) =>
+        offer.offerType === "CATEGORY" &&
+        offer.categoryId?.toString() === product.category._id.toString()
+    );
+
+    // 🧮 Highest discount
+    let discountPercent = 0;
+    let appliedOffer = null; // 🔹 Added to store the offer name
+
+    if (productOffers.length > 0) {
+      const bestProductOffer = productOffers.reduce((max, offer) =>
+        offer.discountPercent > max.discountPercent ? offer : max
+      );
+      discountPercent = bestProductOffer.discountPercent;
+      appliedOffer = bestProductOffer;
+    }
+
+    if (categoryOffers.length > 0) {
+      const bestCategoryOffer = categoryOffers.reduce((max, offer) =>
+        offer.discountPercent > max.discountPercent ? offer : max
+      );
+      if (bestCategoryOffer.discountPercent > discountPercent) {
+        discountPercent = bestCategoryOffer.discountPercent;
+        appliedOffer = bestCategoryOffer;
+      }
+    }
+
+    // 🧾 Apply discount
+    product.variants = product.variants.map((variant) => {
+      let discountPrice = variant.price;
+      if (discountPercent > 0) {
+        discountPrice = Math.round(
+          variant.price - (variant.price * discountPercent) / 100
+        );
+      }
+      return {
+        ...variant,
+        discountPrice,
+        discountPercent,
+      };
+    });
+
+    // 🔹 Attach offer name
+    if (appliedOffer) {
+      product.appliedOffer = {
+        name: appliedOffer.name,
+        discountPercent: appliedOffer.discountPercent,
+      };
+    }
+
+    // ❤️ Wishlist check
     let isInWishlist = false;
     if (userId) {
       const wishlist = await Wishlist.findOne({ userId }).lean();
@@ -203,39 +276,96 @@ const getProductDetailPage = async (req, res) => {
         );
       }
     }
-
-    // Merge the wishlist info into product
     product.isInWishlist = isInWishlist;
 
-    // --- Fetch Related Products ---
+    // 🟢 Related products (category → brand → random)
     let relatedProducts = await Product.find({
-      category: product.category,
-      _id: { $ne: product._id }
+      category: product.category._id,
+      _id: { $ne: product._id },
     })
       .limit(4)
       .lean();
 
     if (relatedProducts.length < 4) {
       const brandProducts = await Product.find({
-        brand: product.brand,
-        _id: { $ne: product._id, $nin: relatedProducts.map(p => p._id) }
+        brand: product.brand._id,
+        _id: { $ne: product._id, $nin: relatedProducts.map((p) => p._id) },
       })
         .limit(4 - relatedProducts.length)
         .lean();
-
       relatedProducts = [...relatedProducts, ...brandProducts];
     }
 
     if (relatedProducts.length < 4) {
       const otherProducts = await Product.find({
-        _id: { $ne: product._id, $nin: relatedProducts.map(p => p._id) }
+        _id: { $ne: product._id, $nin: relatedProducts.map((p) => p._id) },
       })
         .limit(4 - relatedProducts.length)
         .lean();
-
       relatedProducts = [...relatedProducts, ...otherProducts];
     }
 
+    // 🧾 Apply offer logic to related products
+    relatedProducts = relatedProducts.map((p) => {
+      const productOffers = activeOffers.filter(
+        (offer) =>
+          offer.offerType === "PRODUCT" &&
+          offer.productId?.toString() === p._id.toString()
+      );
+
+      const categoryOffers = activeOffers.filter(
+        (offer) =>
+          offer.offerType === "CATEGORY" &&
+          offer.categoryId?.toString() === p.category?.toString()
+      );
+
+      let discountPercent = 0;
+      let appliedOffer = null; // 🔹 Added
+
+      if (productOffers.length > 0) {
+        const bestProductOffer = productOffers.reduce((max, offer) =>
+          offer.discountPercent > max.discountPercent ? offer : max
+        );
+        discountPercent = bestProductOffer.discountPercent;
+        appliedOffer = bestProductOffer;
+      }
+
+      if (categoryOffers.length > 0) {
+        const bestCategoryOffer = categoryOffers.reduce((max, offer) =>
+          offer.discountPercent > max.discountPercent ? offer : max
+        );
+        if (bestCategoryOffer.discountPercent > discountPercent) {
+          discountPercent = bestCategoryOffer.discountPercent;
+          appliedOffer = bestCategoryOffer;
+        }
+      }
+
+      // 🔹 Apply discount and attach offer name
+      p.variants = p.variants.map((variant) => {
+        let discountPrice = variant.price;
+        if (discountPercent > 0) {
+          discountPrice = Math.round(
+            variant.price - (variant.price * discountPercent) / 100
+          );
+        }
+        return {
+          ...variant,
+          discountPrice,
+          discountPercent,
+        };
+      });
+
+      if (appliedOffer) {
+        p.appliedOffer = {
+          name: appliedOffer.name,
+          discountPercent: appliedOffer.discountPercent,
+        };
+      }
+
+      return p;
+    });
+
+    // ✅ Render
     res.render("user/productDetail", {
       product,
       relatedProducts,
@@ -245,6 +375,7 @@ const getProductDetailPage = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
+
 
 
 
