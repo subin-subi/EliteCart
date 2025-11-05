@@ -1,35 +1,105 @@
+import Cart from "../../models/cartModel.js";
 import Product from "../../models/productModel.js";
 import Wishlist from "../../models/wishlistModel.js";
-import Cart from "../../models/cartModel.js";
+import Offer from "../../models/offerModel.js"
+
 
 const getWishlist = async (req, res) => {
   try {
     const userId = req.session.user;
     if (!userId) return res.redirect("/login");
 
-    // Populate only product details
     const wishlist = await Wishlist.findOne({ userId })
-      .populate("items.productId")
+      .populate({
+        path: "items.productId",
+        populate: [
+          { path: "category", select: "name" },
+          { path: "brand", select: "name" }
+        ],
+      })
       .lean();
 
-    // Attach variant details manually
-    if (wishlist && wishlist.items.length > 0) {
-      wishlist.items = wishlist.items.map(item => {
-        const product = item.productId;
-        if (product && product.variants && item.variantId) {
-          const variant = product.variants.find(v => v._id.toString() === item.variantId.toString());
-          item.variant = variant || null;
-        } else {
-          item.variant = null;
-        }
-        return item;
-      });
+    if (!wishlist || wishlist.items.length === 0) {
+      return res.render("user/wishlist", { userid: userId, wishlist: { items: [] } });
     }
 
+    
+    const now = new Date();
+    const activeOffers = await Offer.find({
+      isActive: true,
+      isNonBlocked: true,
+      startAt: { $lte: now },
+      endAt: { $gte: now },
+    }).lean();
+
+    // Map items to attach variant and offer info
+    wishlist.items = wishlist.items.map(item => {
+      const product = item.productId;
+      if (!product || !product.variants || product.variants.length === 0) {
+        item.variant = null;
+        return item;
+      }
+
+      // Pick variant
+      const variant = item.variantId
+        ? product.variants.find(v => v._id.toString() === item.variantId.toString())
+        : product.variants[0];
+
+      // Find applicable product and category offers
+      const productOffers = activeOffers.filter(
+        offer => offer.offerType === "PRODUCT" && offer.productId?.toString() === product._id.toString()
+      );
+      const categoryOffers = activeOffers.filter(
+        offer => offer.offerType === "CATEGORY" && offer.categoryId?.toString() === product.category._id.toString()
+      );
+
+      // Pick the best discount
+      let discountPercent = 0;
+      let appliedOffer = null;
+
+      if (productOffers.length > 0) {
+        const bestProductOffer = productOffers.reduce((max, o) =>
+          o.discountPercent > max.discountPercent ? o : max
+        );
+        discountPercent = bestProductOffer.discountPercent;
+        appliedOffer = bestProductOffer;
+      }
+
+      if (categoryOffers.length > 0) {
+        const bestCategoryOffer = categoryOffers.reduce((max, o) =>
+          o.discountPercent > max.discountPercent ? o : max
+        );
+        if (bestCategoryOffer.discountPercent > discountPercent) {
+          discountPercent = bestCategoryOffer.discountPercent;
+          appliedOffer = bestCategoryOffer;
+        }
+      }
+
+      // Calculate discount price
+      const discountPrice = discountPercent > 0
+        ? Math.round(variant.price - (variant.price * discountPercent) / 100)
+        : variant.price;
+
+      item.variant = {
+        ...variant,
+        discountPrice,
+        discountPercent,
+      };
+
+      // Attach offer info if exists
+      if (appliedOffer) {
+        item.appliedOffer = {
+          name: appliedOffer.name,
+          discountPercent: appliedOffer.discountPercent,
+        };
+      }
+
+      return item;
+    });
 
     res.render("user/wishlist", {
       userid: userId,
-      wishlist: wishlist || { items: [] }
+      wishlist,
     });
 
   } catch (err) {
@@ -37,6 +107,7 @@ const getWishlist = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
+
 
 
 const removeWishlist = async(req, res)=>{

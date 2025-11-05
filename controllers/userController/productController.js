@@ -188,7 +188,7 @@ const getProductDetailPage = async (req, res) => {
     const userId = req.session.user;
     const productId = req.params.id;
 
-    // 🟢 Fetch product
+   
     const product = await Product.findById(productId)
       .populate("category")
       .populate("brand")
@@ -200,7 +200,7 @@ const getProductDetailPage = async (req, res) => {
 
     const now = new Date();
 
-    // 🟢 Active offers
+    
     const activeOffers = await Offer.find({
       isActive: true,
       isNonBlocked: true,
@@ -208,7 +208,7 @@ const getProductDetailPage = async (req, res) => {
       endAt: { $gte: now },
     }).lean();
 
-    // 🧩 Offers for main product
+    //  Offers for main product
     const productOffers = activeOffers.filter(
       (offer) =>
         offer.offerType === "PRODUCT" &&
@@ -221,7 +221,7 @@ const getProductDetailPage = async (req, res) => {
         offer.categoryId?.toString() === product.category._id.toString()
     );
 
-    // 🧮 Highest discount
+
     let discountPercent = 0;
     let appliedOffer = null; // 🔹 Added to store the offer name
 
@@ -243,7 +243,7 @@ const getProductDetailPage = async (req, res) => {
       }
     }
 
-    // 🧾 Apply discount
+    
     product.variants = product.variants.map((variant) => {
       let discountPrice = variant.price;
       if (discountPercent > 0) {
@@ -258,7 +258,7 @@ const getProductDetailPage = async (req, res) => {
       };
     });
 
-    // 🔹 Attach offer name
+  
     if (appliedOffer) {
       product.appliedOffer = {
         name: appliedOffer.name,
@@ -266,7 +266,7 @@ const getProductDetailPage = async (req, res) => {
       };
     }
 
-    // ❤️ Wishlist check
+    //  Wishlist check
     let isInWishlist = false;
     if (userId) {
       const wishlist = await Wishlist.findOne({ userId }).lean();
@@ -278,7 +278,7 @@ const getProductDetailPage = async (req, res) => {
     }
     product.isInWishlist = isInWishlist;
 
-    // 🟢 Related products (category → brand → random)
+    //  Related products (category → brand → random)
     let relatedProducts = await Product.find({
       category: product.category._id,
       _id: { $ne: product._id },
@@ -305,7 +305,7 @@ const getProductDetailPage = async (req, res) => {
       relatedProducts = [...relatedProducts, ...otherProducts];
     }
 
-    // 🧾 Apply offer logic to related products
+    //  Apply offer logic to related products
     relatedProducts = relatedProducts.map((p) => {
       const productOffers = activeOffers.filter(
         (offer) =>
@@ -320,7 +320,7 @@ const getProductDetailPage = async (req, res) => {
       );
 
       let discountPercent = 0;
-      let appliedOffer = null; // 🔹 Added
+      let appliedOffer = null; 
 
       if (productOffers.length > 0) {
         const bestProductOffer = productOffers.reduce((max, offer) =>
@@ -340,7 +340,7 @@ const getProductDetailPage = async (req, res) => {
         }
       }
 
-      // 🔹 Apply discount and attach offer name
+      //  Apply discount and attach offer name
       p.variants = p.variants.map((variant) => {
         let discountPrice = variant.price;
         if (discountPercent > 0) {
@@ -365,7 +365,7 @@ const getProductDetailPage = async (req, res) => {
       return p;
     });
 
-    // ✅ Render
+  
     res.render("user/productDetail", {
       product,
       relatedProducts,

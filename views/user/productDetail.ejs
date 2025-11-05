@@ -70,29 +70,30 @@
         <%= product.name %>
       </h1>
 
-      <!-- ✅ Price Section -->
-      <% 
-        const mainVariant = product.variants[0];
-        const hasDiscount = mainVariant.discountPrice && mainVariant.discountPrice < mainVariant.price;
-      %>
+     <!-- Price Section -->
+<%
+  const mainVariant = product.variants[0];
+  const hasDiscount = mainVariant.discountPrice !== null && mainVariant.discountPrice < mainVariant.price;
+  const finalPrice = hasDiscount ? mainVariant.discountPrice : mainVariant.price;
+%>
 
-      <div id="priceSection" class="mb-4 flex items-center space-x-3">
-        <% if (hasDiscount) { %>
-          <span class="text-2xl sm:text-3xl font-semibold text-red-600">
-            ₹<%= mainVariant.discountPrice.toLocaleString() %>
-          </span>
-          <span class="text-gray-500 line-through text-lg">
-            ₹<%= mainVariant.price.toLocaleString() %>
-          </span>
-          <span class="text-green-600 font-medium text-sm">
-            (<%= Math.round(((mainVariant.price - mainVariant.discountPrice) / mainVariant.price) * 100) %>% OFF)
-          </span>
-        <% } else { %>
-          <span class="text-2xl sm:text-3xl font-semibold text-gray-900">
-            ₹<%= mainVariant.price.toLocaleString() %>
-          </span>
-        <% } %>
-      </div>
+<div id="priceSection" class="mb-4 flex items-center space-x-3">
+  <% if (hasDiscount) { %>
+    <span class="text-2xl sm:text-3xl font-semibold text-red-600">
+      ₹<%= finalPrice.toLocaleString() %>
+    </span>
+    <span class="text-gray-500 line-through text-lg">
+      ₹<%= mainVariant.price.toLocaleString() %>
+    </span>
+    <span class="text-green-600 font-medium text-sm">
+      (<%= Math.round(((mainVariant.price - finalPrice) / mainVariant.price) * 100) %>% OFF)
+    </span>
+  <% } else { %>
+    <span class="text-2xl sm:text-3xl font-semibold text-gray-900">
+      ₹<%= finalPrice.toLocaleString() %>
+    </span>
+  <% } %>
+</div>
 
       <!-- Description -->
       <p id="productDescription" class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 line-clamp-3">

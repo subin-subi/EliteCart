@@ -139,28 +139,34 @@ document.addEventListener("DOMContentLoaded", async function () {
   const response = await fetch('/check-session');
   const data = await response.json();
 
-  if (data.isLoggedIn) {
-    // Hide guest, show user menu
-    guestMenu.classList.add("hidden");
-    userMenu.classList.remove("hidden");
+if (data.isLoggedIn) {
+  guestMenu?.classList.add("hidden");
+  userMenu?.classList.remove("hidden");
 
-    // Update profile details
-    document.getElementById("userAvatar").src = data.profilePic;
-    document.getElementById("userAvatar").classList.remove("hidden");
+  const avatar = document.getElementById("userAvatar");
+  const nameEl = document.getElementById("userName");
+  const icon = document.getElementById("defaultUserIcon");
 
-    document.getElementById("userName").textContent = data.name;
-    document.getElementById("userName").classList.remove("hidden");
-
-    document.getElementById("defaultUserIcon").classList.add("hidden");
-  } else {
-    // Not logged in
-    guestMenu.classList.remove("hidden");
-    userMenu.classList.add("hidden");
-
-    document.getElementById("userAvatar").classList.add("hidden");
-    document.getElementById("userName").classList.add("hidden");
-    document.getElementById("defaultUserIcon").classList.remove("hidden");
+  if (avatar) {
+    avatar.src = data.profilePic || "/images/default-avatar.png";
+    avatar.classList.remove("hidden");
   }
+
+  if (nameEl) {
+    nameEl.textContent = data.name || "User";
+    nameEl.classList.remove("hidden");
+  }
+
+  icon?.classList.add("hidden");
+} else {
+  guestMenu?.classList.remove("hidden");
+  userMenu?.classList.add("hidden");
+
+  document.getElementById("userAvatar")?.classList.add("hidden");
+  document.getElementById("userName")?.classList.add("hidden");
+  document.getElementById("defaultUserIcon")?.classList.remove("hidden");
+}
+
 });
 
   // Logout with confirmation

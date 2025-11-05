@@ -87,11 +87,28 @@
         <% } %>
       </div>
 
-      <div class="flex items-center justify-between mt-3">
-        <p class="text-lg font-semibold text-gray-800">
-          ₹<%= variant?.discountPrice || variant?.price || '—' %>
-        </p>
-      </div>
+    <div class="flex items-center justify-between mt-3">
+  <% if (item.variant) { %>
+    <% if (item.variant.discountPrice && item.variant.discountPrice < item.variant.price) { %>
+      <p class="text-lg font-semibold text-red-600">
+        ₹<%= item.variant.discountPrice.toLocaleString() %>
+      </p>
+      <p class="text-sm text-gray-500 line-through ml-2">
+        ₹<%= item.variant.price.toLocaleString() %>
+      </p>
+      <span class="text-green-600 text-sm ml-1">
+        (<%= Math.round(((item.variant.price - item.variant.discountPrice) / item.variant.price) * 100) %>% OFF)
+      </span>
+    <% } else { %>
+      <p class="text-lg font-semibold text-gray-800">
+        ₹<%= item.variant.price.toLocaleString() %>
+      </p>
+    <% } %>
+  <% } else { %>
+    <p class="text-lg text-gray-500">—</p>
+  <% } %>
+</div>
+
 
       <!-- Buttons -->
       <div class="mt-4 grid grid-cols-2 gap-3">
@@ -183,7 +200,7 @@ document.querySelectorAll('.add-to-cart-form').forEach(form => {
         timerProgressBar: true
       });
 
-      // 🔄 Refresh after 2 seconds even when Axios error (e.g., 400 Max limit)
+      //Refresh after 2 seconds even when Axios error (e.g., 400 Max limit)
       setTimeout(() => location.reload(), 2000);
     }
   });
