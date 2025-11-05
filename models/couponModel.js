@@ -47,6 +47,11 @@ const couponSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  
+  isNonBlocked:{
+    type:Boolean,
+    default:true
+  },
   usedBy: [
     {
       userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

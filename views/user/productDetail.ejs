@@ -165,7 +165,7 @@
 
   </div>
 
-  <!-- 🔥 Full-Width Related Products -->
+  <!--   Related Products -->
 <div class="mt-24 w-full">
   <h2 class="text-3xl font-bold text-center mb-10">You May Also Like</h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -186,13 +186,7 @@
 
           <h3 class="text-lg font-semibold mb-1"><%= rp.name %></h3>
 
-          <!-- 🔹 Offer Name (below product title) -->
-          <!-- <% if (rp.appliedOffer) { %>
-            <p class="text-green-600 font-medium mb-2">
-              <%= rp.appliedOffer.name %>
-            </p>
-          <% } %> -->
-
+         
           <!-- 🔹 Price Section -->
           <% const variant = rp.variants[0]; %>
           <% if (variant && variant.discountPercent > 0) { %>

@@ -2,6 +2,8 @@ import Offer from "../../models/offerModel.js";
 import Product from "../../models/productModel.js";
 import Category from "../../models/categoryModel.js";
 
+
+
  const getOfferPage = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -54,17 +56,27 @@ import Category from "../../models/categoryModel.js";
 
 
 
-const addOffer = async(req, res)=>{
-  try{
- const { name, offerType, selectionId, discountPercent, startAt, endAt, description } = req.body;
- const offerData = {
+const addOffer = async (req, res) => {
+  try {
+    const {
+      name,
+      offerType,
+      selectionId,
+      discountPercent,
+      startAt,
+      endAt,
+      description,
+    } = req.body;
+
+    const offerData = {
       name,
       offerType,
       discountPercent,
       startAt,
       endAt,
       isActive: true,
-      description
+      isNonBlocked: true,
+      description,
     };
 
     if (offerType === "PRODUCT") offerData.productId = selectionId;
@@ -73,12 +85,57 @@ const addOffer = async(req, res)=>{
     const newOffer = new Offer(offerData);
     await newOffer.save();
 
-    res.json({ success: true, message: "Offer added successfully!" });
-  }catch (err) {
+    // Apply offer to related products
+    if (offerType === "PRODUCT") {
+      await applyBestOffer(selectionId);
+    } else if (offerType === "CATEGORY") {
+      const products = await Product.find({ category: selectionId });
+      for (const product of products) {
+        await applyBestOffer(product._id);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Offer added and products updated successfully with best discount!",
+    });
+  } catch (err) {
     console.error("Error adding offer:", err);
     res.json({ success: false, message: "Failed to add offer." });
   }
-}
+};
+
+
+// using inside addOffer
+const applyBestOffer = async (productId) => {
+  const product = await Product.findById(productId).populate("category");
+  if (!product) return;
+
+  
+  const offers = await Offer.find({
+    isActive: true,
+    $or: [{ productId }, { categoryId: product.category._id }],
+  });
+
+    if (offers.length === 0) {
+    product.variants.forEach((variant) => (variant.discountPrice = null));
+    await product.save();
+    return;
+  }
+  
+  const maxDiscount = Math.max(...offers.map((offer) => offer.discountPercent));
+
+  
+  product.variants.forEach((variant) => {
+    const newDiscountPrice = Math.round(
+      variant.price - (variant.price * maxDiscount) / 100
+    );
+    variant.discountPrice = newDiscountPrice;
+  });
+
+  await product.save();
+};
+
 
 
 
@@ -117,7 +174,6 @@ const editOffer = async (req, res) => {
       description,
     } = req.body;
 
-    // 🧩 Validate required data
     if (!offerId)
       return res.status(400).json({ success: false, message: "Offer ID is required." });
 
@@ -126,12 +182,12 @@ const editOffer = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Please fill all required fields." });
 
-    // 🔍 Find offer
+
     const existingOffer = await Offer.findById(offerId);
     if (!existingOffer)
       return res.status(404).json({ success: false, message: "Offer not found." });
 
-    // 🧠 Update fields
+   
     existingOffer.name = name.trim();
     existingOffer.offerType = offerType;
     existingOffer.discountPercent = discountPercent;
@@ -139,7 +195,7 @@ const editOffer = async (req, res) => {
     existingOffer.endAt = new Date(endAt);
     existingOffer.description = description.trim();
 
-    // ✅ Assign correct ID field
+    
     if (offerType === "PRODUCT") {
       existingOffer.productId = selectionId;
       existingOffer.categoryId = null;
@@ -148,10 +204,10 @@ const editOffer = async (req, res) => {
       existingOffer.productId = null;
     }
 
-    // 💾 Save updated offer
+ 
     await existingOffer.save();
 
-    // 🛒 Update offer status in product/category
+   
     if (offerType === "PRODUCT") {
       await Product.updateOne(
         { _id: selectionId },

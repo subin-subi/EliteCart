@@ -7,6 +7,8 @@ import connectDB from "./connections/connection.js";
 import userRoute from "./Routes/userRoute.js";
 import adminRoute from "./Routes/adminRoute.js"
 import MongoStore from "connect-mongo";
+import startOfferCron from "./utils/cronjob.js"
+startOfferCron()
 dotenv.config();
 connectDB();
 

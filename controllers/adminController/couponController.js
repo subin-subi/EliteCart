@@ -81,7 +81,7 @@ const deleteCoupon = async (req, res) => {
 
     const deletedCoupon = await Coupon.findByIdAndUpdate(
       couponId,
-      { isActive: false },
+      { isNonBlocked: false },
       { new: true }
     );
 

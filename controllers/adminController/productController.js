@@ -4,47 +4,66 @@ import Product from "../../models/productModel.js";
 
 const getProduct = async (req, res) => {
   try {
-    // Pagination
+  
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Filters
+
     const search = req.query.search?.trim() || "";
-    const isBlocked = req.query.isBlocked?.trim() || ""; 
-    const status = req.query.status?.trim() || '';
+    const isBlocked = req.query.isBlocked?.trim() || "";
+    const status = req.query.status?.trim() || "";
 
     let searchQuery = {};
 
-   
+
     if (search) {
-      searchQuery.name = { $regex: `${search}`, $options: "i" };
+      searchQuery.name = { $regex: search, $options: "i" };
     }
 
-    if (req.query.isBlocked) {
-  searchQuery.isBlocked = req.query.isBlocked === "true"; 
-}
 
+    if (req.query.isBlocked) {
+      searchQuery.isBlocked = req.query.isBlocked === "true";
+    }
+
+
+    if (status) {
+      searchQuery.status = status;
+    }
+
+    
     const totalProducts = await Product.countDocuments(searchQuery);
     const totalPages = Math.ceil(totalProducts / limit) || 1;
 
+    
     const products = await Product.find(searchQuery)
       .populate("category", "name")
       .populate("brand", "name")
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
+    
+    products.forEach((product) => {
+      product.variants = product.variants.map((variant) => ({
+        ...variant,
+        finalPrice: variant.discountPrice ?? variant.price,
+      }));
+    });
+
+    
     const categories = await Category.find({ isActive: true }).select("name");
     const brands = await Brand.find({ isActive: true }).select("name");
 
+   
     res.render("admin/products", {
       products,
       categories,
       brands,
       search,
-       status,
-      isBlocked, 
+      status,
+      isBlocked,
       pagination: {
         currentPage: page,
         totalPages,
@@ -60,7 +79,6 @@ const getProduct = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
-
 
 
 
