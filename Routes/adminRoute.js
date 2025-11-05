@@ -76,7 +76,7 @@ router.post("/edit-coupon/:couponId",couponController.editCoupon)
 
 router.get("/offer",offerController.getOfferPage)
 router.post("/add-offer",offerController.addOffer)
-router.delete("/delete-offer/:offerId",offerController.deleteOffer)
+router.post('/offer/toggle-status',offerController.toggleOffer)
 router.post("/edit-offer",offerController.editOffer)
 
 export default router;

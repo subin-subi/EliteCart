@@ -258,45 +258,53 @@ function updateEditOfferSelection() {
 
 
 
- ////////////////////////////////// Delete Offer ////////////////////////////////////////
+ ////////////////////////////////// toggle  Offer ////////////////////////////////////////
 
-async function deleteOffer(offerId) {
+async function toggleOfferStatus(offerId, currentStatus) {
   try {
+    const actionText = currentStatus ? "deactivate" : "activate";
+
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
+      title: `Are you sure you want to ${actionText} this offer?`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
+      confirmButtonColor: currentStatus ? "#d33" : "#16a34a",
       cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonText: `Yes, ${actionText} it!`
     });
 
     if (result.isConfirmed) {
-      const response = await axios.delete(`/admin/delete-offer/${offerId}`);
+      const response = await axios.post('/admin/offer/toggle-status', {
+        offerId,
+        isActive: !currentStatus // toggle status
+      });
 
       if (response.data.success) {
         Swal.fire({
           icon: "success",
-          title: "Deleted!",
-          text: "Offer has been deleted successfully.",
+          title: `Offer ${currentStatus ? "deactivated" : "activated"}!`,
           timer: 1200,
           showConfirmButton: false
         });
 
-        // Update UI after deletion
-        const rowActions = document.querySelector(
-          `button[onclick="deleteOffer('${offerId}')"]`
-        ).parentElement;
+        // Update button UI instantly
+        const btn = document.querySelector(
+          `button[onclick="toggleOfferStatus('${offerId}', ${currentStatus})"]`
+        );
 
-        rowActions.innerHTML = `
-          <span class="text-red-500 font-semibold text-sm">Offer Deleted</span>
-        `;
+        btn.textContent = currentStatus ? "Activate" : "Deactivate";
+        btn.style.backgroundColor = currentStatus ? "#16a34a" : "#dc2626";
+
+        // Update onclick to use new status
+        btn.setAttribute(
+          "onclick",
+          `toggleOfferStatus('${offerId}', ${!currentStatus})`
+        );
       } else {
         Swal.fire({
           icon: "error",
           title: "Failed!",
-          text: response.data.message || "Could not delete offer."
+          text: response.data.message || "Could not update offer status."
         });
       }
     }

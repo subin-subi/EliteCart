@@ -137,28 +137,78 @@ const applyBestOffer = async (productId) => {
 };
 
 
-
-
-const deleteOffer = async (req, res) => {
+const toggleOffer = async (req, res) => {
   try {
-    const offerId = req.params.offerId;
+    const { offerId, isActive } = req.body;
 
-    const deletedOffer= await Offer.findByIdAndUpdate(
-      offerId,
-      { isNonBlocked: false },
-      { new: true }
-    );
+    if (!offerId) return res.status(400).json({ success: false, message: 'Offer ID required' });
 
-    if (!deletedOffer) {
-      return res.json({ success: false, message: "Offer not found" });
+    const offer = await Offer.findById(offerId);
+    if (!offer) return res.status(404).json({ success: false, message: 'Offer not found' });
+
+    const now = new Date();
+
+    // Check if offer is expired
+    if (offer.endAt < now) {
+      offer.isActive = false;
+      offer.isNonBlocked = false;
+
+      // Reset discount price for product variants if PRODUCT offer
+      if (offer.offerType === "PRODUCT" && offer.productId) {
+        await Product.updateOne(
+          { _id: offer.productId },
+          { $set: { "variants.$[].discountPrice": null } } 
+        );
+      }
+
+      await offer.save();
+      return res.json({ success: false, message: 'Offer has expired and is now deactivated.' });
     }
 
-    res.json({ success: true, message: "Offer deleted successfully" });
-  } catch (err) {
-    console.error("Error deleting offer :", err);
-    res.json({ success: false, message: "Server error" });
+    // If not expired, toggle status normally
+    offer.isActive = isActive;
+    await offer.save();
+
+     let products = [];
+
+    if (offer.offerType === "PRODUCT" && offer.productId) {
+      // Single product
+      const product = await Product.findById(offer.productId);
+      if (product) products.push(product);
+
+    } else if (offer.offerType === "CATEGORY" && offer.categoryId) {
+      // All products in category
+      products = await Product.find({ category: offer.categoryId });
+    }
+
+    // Update variants for each product
+    for (const product of products) {
+      product.variants = product.variants.map(v => {
+        if (isActive) {
+          return {
+            ...v.toObject(),
+            discountPrice: Math.round(v.price - (v.price * offer.discountPercent) / 100),
+          };
+        } else {
+          return {
+            ...v.toObject(),
+            discountPrice: null,
+          };
+        }
+      });
+
+      await product.save();
+    }
+    return res.json({ success: true, message: `Offer ${isActive ? "activated" : "deactivated"} successfully.` });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+
+
 
 
 const editOffer = async (req, res) => {
@@ -182,12 +232,11 @@ const editOffer = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Please fill all required fields." });
 
-
     const existingOffer = await Offer.findById(offerId);
     if (!existingOffer)
       return res.status(404).json({ success: false, message: "Offer not found." });
 
-   
+    // Update basic offer fields
     existingOffer.name = name.trim();
     existingOffer.offerType = offerType;
     existingOffer.discountPercent = discountPercent;
@@ -195,7 +244,7 @@ const editOffer = async (req, res) => {
     existingOffer.endAt = new Date(endAt);
     existingOffer.description = description.trim();
 
-    
+    // Link offer to product/category
     if (offerType === "PRODUCT") {
       existingOffer.productId = selectionId;
       existingOffer.categoryId = null;
@@ -204,23 +253,31 @@ const editOffer = async (req, res) => {
       existingOffer.productId = null;
     }
 
- 
     await existingOffer.save();
 
-   
+    // Update product/category with discount info
     if (offerType === "PRODUCT") {
-      await Product.updateOne(
-        { _id: selectionId },
-        { $set: { offerApplied: true, offerPercent: discountPercent } }
-      );
+      const product = await Product.findById(selectionId);
+      if (product) {
+        product.variants = product.variants.map(v => ({
+          ...v._doc,
+          discountPrice: Math.round(v.price - (v.price * discountPercent) / 100),
+        }));
+        await product.save();
+      }
     } else if (offerType === "CATEGORY") {
-      await Category.updateOne(
-        { _id: selectionId },
-        { $set: { offerApplied: true, offerPercent: discountPercent } }
-      );
+      const products = await Product.find({ category: selectionId });
+      for (const product of products) {
+        product.variants = product.variants.map(v => ({
+          ...v._doc,
+          discountPrice: Math.round(v.price - (v.price * discountPercent) / 100),
+        }));
+        await product.save();
+      }
     }
 
     return res.json({ success: true, message: "Offer updated successfully!" });
+
   } catch (error) {
     console.error("❌ Error updating offer:", error);
     return res
@@ -230,9 +287,10 @@ const editOffer = async (req, res) => {
 };
 
 
+
 export default ({
     getOfferPage,
     addOffer,
-    deleteOffer,
+   toggleOffer,
     editOffer
 });

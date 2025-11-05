@@ -75,31 +75,28 @@
               <td class="py-3 px-4"><%= offer.startAt.toLocaleDateString() %></td>
               <td class="py-3 px-4"><%= offer.endAt.toLocaleDateString() %></td>
               <td class="py-3 px-4">
-                <% if (!offer.isNonBlocked) { %>
-                  <span class="text-red-500 font-semibold text-sm">Blocked</span>
-                <% } else if (offer.isActive) { %>
+                 <% if (offer.isActive) { %>
                   <span class="text-green-400 font-semibold text-sm">Active</span>
-                <% } else { %>
-                  <span class="text-yellow-400 font-semibold text-sm">Inactive</span>
-                <% } %>
+               <% } else { %>
+                <span class="text-yellow-400 font-semibold text-sm">Inactive</span>
+              <% } %>
               </td>
-              <td class="py-3 px-4 flex justify-center space-x-2">
-                <% if (!offer.isNonBlocked) { %>
-                  <span class="text-red-500 font-semibold text-sm">Offer Deleted</span>
-                <% } else { %>
-                 <button 
-              class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-sm font-medium"
-              onclick='openEditOfferModal(<%- JSON.stringify(offer) %>)'>
-               Edit
-            </button>
 
-                  <button
-                    class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm font-medium"
-                    onclick="deleteOffer('<%= offer._id %>')">
-                    Delete
-                  </button>
-                <% } %>
-              </td>
+              <td class="py-3 px-4 flex justify-center space-x-2">
+  <button 
+    class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-sm font-medium"
+    onclick='openEditOfferModal(<%- JSON.stringify(offer) %>)'>
+    Edit
+  </button>
+
+  <button
+    class="px-3 py-1 rounded-lg text-sm font-medium transition"
+    style="background-color: <%= offer.isActive ? '#dc2626' : '#16a34a' %>; color: white;"
+    onclick="toggleOfferStatus('<%= offer._id %>', <%= offer.isActive %>)">
+    <%= offer.isActive ? 'Deactivate' : 'Activate' %>
+  </button>
+</td>
+
             </tr>
           <% }) %>
         </tbody>
