@@ -48,88 +48,78 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
     <!-- Cart Items -->
-    <div class="lg:col-span-2 space-y-4">
+<div class="lg:col-span-2 space-y-4">
+  <% if (cartItems.length > 0) { %>
+    <% cartItems.forEach(item => { %>
+      <div class="flex items-center justify-between border rounded-xl p-4 shadow-sm">
 
-      <% if (cartItems.length > 0) { %>
-        <% cartItems.forEach(item => { %>
+        <!-- Product Info -->
+        <div class="flex items-center space-x-4">
+          <img src="<%= item.variant.mainImage %>" 
+               alt="<%= item.productId.name %>" 
+               class="w-24 h-24 object-cover rounded-lg">
 
-        
-          <div class="flex items-center justify-between border rounded-xl p-4 shadow-sm">
+          <div>
+            <h3 class="font-semibold text-sm tracking-wide"><%= item.productId.name %></h3>
+            <p class="text-xs text-gray-500">Volume: <%= item.variant.volume %> ml</p>
 
-            <!-- Product Info -->
-            <div class="flex items-center space-x-4">
-              <img src="<%= item.variant.mainImage %>" 
-     alt="<%= item.productId.name %>" 
-     class="w-24 h-24 object-cover rounded-lg">
+            <p class="font-semibold mt-2">
+              <% if (item.discountPercent > 0) { %>
+                <span class="line-through text-gray-400 mr-2">₹<%= item.variant.price %></span>
+                <span class="text-green-500">₹<%= item.offerPrice %></span>
+              <% } else { %>
+                ₹<%= item.variant.price %>
+              <% } %>
+            </p>
 
-<div>
-  <h3 class="font-semibold text-sm tracking-wide">
-    <%= item.productId.name %>
-  </h3>
-  <p class="text-xs text-gray-500">
-    Volume: <%= item.variant.volume %> ml
-  </p>
-  <p class="font-semibold mt-2">
-  <% if (item.discountPercent > 0) { %>
-    <span class="line-through text-gray-400 mr-2">₹<%= item.variant.price %></span>
-    <span class="text-green-500">₹<%= item.offerPrice %></span>
-  <% } else { %>
-    ₹<%= item.variant.price %>
-  <% } %>
-</p>
+            <% if (item.appliedOfferName) { %>
+              <p class="text-sm text-blue-400">Offer: <%= item.appliedOfferName %></p>
+            <% } %>
 
-<!-- Optional: show offer name -->
-<% if (item.appliedOfferName) { %>
-  <p class="text-sm text-blue-400">Offer: <%= item.appliedOfferName %></p>
-<% } %>
-
-</div>
-
-            </div>
-
-            <!-- Quantity + Delete -->
-          <div class="flex items-center space-x-6">
-  <!-- Grand Total (moved before quantity controls) -->
-  <span class="text-gray-800 font-semibold w-20 text-center" id="total-<%= item._id %>">
-    ₹<%= item.total.toFixed(2) %>
-  </span>
-
-
-
-<!-- Quantity controls -->
-<div class="flex items-center border rounded-full px-3 py-1 bg-gray-100 shrink-0">
-  <button onclick="updateCartQuantity('<%= item._id %>', -1)" 
-          class="text-gray-600 hover:text-black text-lg px-2">−</button>
-
-<span id="cartQuantity-<%= item._id %>" 
-      class="mx-3 text-black font-semibold text-base min-w-[24px] text-center inline-block">
-  <%= item.quantity %>
-</span>
-
-
-  <button onclick="updateCartQuantity('<%= item._id %>', 1)" 
-          class="text-gray-600 hover:text-black text-lg px-2">+</button>
-</div>
-
-
-
-
-  <!-- Delete button (stays fixed on the right) -->
-  <button 
-    onclick="removeFromCart('<%= item._id %>')" 
-    class="text-red-500 hover:text-red-700 ml-auto"
-  >
-    <i class="ri-delete-bin-line text-lg"></i>
-  </button>
-</div>
-
+            <% if (item.variant.stock <= 0) { %>
+              <p class="text-sm text-red-500 font-semibold mt-1">⚠️ Out of Stock</p>
+            <% } %>
           </div>
-        <% }) %>
-      <% } else { %>
-        <p class="text-gray-500">Your cart is empty 🛒</p>
-      <% } %>
+        </div>
 
-    </div>
+        <!-- Quantity + Delete -->
+        <div class="flex items-center space-x-6">
+          <span class="text-gray-800 font-semibold w-20 text-center" id="total-<%= item._id %>">
+            ₹<%= item.total.toFixed(2) %>
+          </span>
+
+          <% if (item.variant.stock > 0) { %>
+            <!-- Quantity controls (only if in stock) -->
+            <div class="flex items-center border rounded-full px-3 py-1 bg-gray-100 shrink-0">
+              <button onclick="updateCartQuantity('<%= item._id %>', -1)" 
+                      class="text-gray-600 hover:text-black text-lg px-2">−</button>
+
+              <span id="cartQuantity-<%= item._id %>" 
+                    class="mx-3 text-black font-semibold text-base min-w-[24px] text-center inline-block">
+                <%= item.quantity %>
+              </span>
+
+              <button onclick="updateCartQuantity('<%= item._id %>', 1)" 
+                      class="text-gray-600 hover:text-black text-lg px-2">+</button>
+            </div>
+          <% } %>
+
+          <!-- Delete button (always visible) -->
+          <button 
+            onclick="removeFromCart('<%= item._id %>')" 
+            class="text-red-500 hover:text-red-700 ml-auto"
+          >
+            <i class="ri-delete-bin-line text-lg"></i>
+          </button>
+        </div>
+
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p class="text-gray-500">Your cart is empty 🛒</p>
+  <% } %>
+</div>
+
 
    <!-- Order Summary -->
 <div class="border rounded-xl p-6 shadow-sm h-fit">
@@ -274,6 +264,18 @@ async function removeFromCart(itemId) {
     });
   }
 }
+
+////////////////////////////out of stock/////////////////////
+
+document.querySelector('a[href^="/checkout/cart"]').addEventListener("click", (e) => {
+  const outOfStock = [...document.querySelectorAll(".text-red-500")].some(el => el.textContent.includes("Out of Stock"));
+  
+  if (outOfStock) {
+    e.preventDefault();
+    alert("Some items are out of stock. Please remove them before proceeding to checkout.");
+  }
+});
+
 
 
 

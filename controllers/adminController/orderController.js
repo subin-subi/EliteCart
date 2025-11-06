@@ -12,60 +12,78 @@ const getAdminOrders = async (req, res) => {
     const search = req.query.search?.trim() || "";
     const priceSort = req.query.priceSort || "";
     const dateSort = req.query.dateSort || "";
+    const returnStatus = req.query.returnStatus || "";
 
     let filter = {};
 
-    // 🔍 Search logic (by orderId or user's name)
+    // Search logic (by orderId or user's name)
     if (search) {
       const users = await User.find(
         { name: { $regex: search, $options: "i" } },
         "_id"
       );
 
-      filter = {
-        $or: [
-          { orderId: { $regex: search, $options: "i" } },
-          ...(users.length > 0
-            ? [{ userId: { $in: users.map((u) => u._id) } }]
-            : []),
-        ],
-      };
+      filter.$or = [
+        { orderId: { $regex: search, $options: "i" } },
+        ...(users.length > 0
+          ? [{ userId: { $in: users.map((u) => u._id) } }]
+          : []),
+      ];
     }
 
-    // 🔽 Sorting logic (by grandTotal or createdAt)
+    // Return status filter (inside items array)
+    if (returnStatus) {
+      filter.items = { $elemMatch: { returnStatus } };
+    }
+
+    // Sorting logic
     let sortOptions = {};
     if (priceSort) {
-      sortOptions.grandTotal = priceSort === "asc" ? 1 : -1; // sort by grandTotal
+      sortOptions.grandTotal = priceSort === "asc" ? 1 : -1;
     } else if (dateSort) {
       sortOptions.createdAt = dateSort === "asc" ? 1 : -1;
     } else {
-      sortOptions.createdAt = -1; // default: newest first
+      sortOptions.createdAt = -1;
     }
 
-    // 📊 Pagination + sorting + search
+    // Pagination + sorting + filters
     const totalOrders = await Order.countDocuments(filter);
     const totalPages = Math.ceil(totalOrders / limit);
 
+    // Find orders with user info populated
     const orders = await Order.find(filter)
-      .populate("userId", "name")
+      .populate("userId", "name email mobile") // get person details
+      .populate("items.productId", "name")    // get product info if needed
       .sort(sortOptions)
       .skip(skip)
       .limit(limit);
 
-    // 🖥 Render page
+    // Optionally, filter items inside each order to only those with return requests
+    const ordersWithReturnItems = orders.map(order => {
+      const returnItems = order.items.filter(item => item.returnStatus === "Requested");
+      return {
+        ...order.toObject(),
+        items: returnItems
+      };
+    });
+
+    // Render EJS with filtered items
     res.render("admin/orderManagement", {
-      orders,
+      orders: ordersWithReturnItems,
       currentPage: page,
       totalPages,
       search,
       priceSort,
       dateSort,
+      returnStatus,
     });
   } catch (error) {
     console.error("Error loading orders:", error);
     res.status(500).send("Error loading orders");
   }
 };
+
+
 
 
 

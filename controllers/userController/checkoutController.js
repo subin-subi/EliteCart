@@ -3,6 +3,7 @@ import Cart from "../../models/cartModel.js";
 import Address from "../../models/addressModel.js";
 import Product from "../../models/productModel.js";
 import Order from "../../models/orderModel.js"
+import Coupon from "../../models/couponModel.js"
 import { console } from "inspector";
 
 
@@ -10,21 +11,30 @@ import { console } from "inspector";
 const getCartCheckout = async (req, res) => {
   try {
     const userId = req.session.user;
+    if (!userId) {
+      return res.redirect("/login");
+    }
 
     const user = await User.findById(userId);
     const addresses = await Address.find({ userId });
-
     const cart = await Cart.findOne({ userId }).populate("items.productId");
 
     if (!cart || cart.items.length === 0) {
-  return res.status(400).render("partials/error", {
-    message: "Your cart is empty. Please add items before proceeding to checkout."
-  });
-}
+      return res.status(400).render("partials/error", {
+        message: "Your cart is empty. Please add items before proceeding to checkout.",
+      });
+    }
 
+    // --- Validate stock and prepare cart items ---
+    let outOfStockItems = [];
     const cartItems = cart.items.map((item) => {
       const product = item.productId;
       const variant = product.variants[item.variantIndex];
+
+      // Check if variant exists and is in stock
+      if (!variant || variant.stock <= 0 || variant.isHidden) {
+        outOfStockItems.push(product.name);
+      }
 
       return {
         productId: product._id,
@@ -38,37 +48,89 @@ const getCartCheckout = async (req, res) => {
       };
     });
 
-   
-    const total = cart.grandTotal || cartItems.reduce((sum, i) => sum + i.total, 0);
+    // --- Stop checkout if any item is out of stock ---
+    if (outOfStockItems.length > 0) {
+      return res.status(400).render("partials/error", {
+        message: `Some products are out of stock: ${outOfStockItems.join(", ")}. Please remove them from your cart.`,
+      });
+    }
 
-    
-    const shippingCost = total > 1000 ? 0 : 50;
+    // --- Calculate totals ---
+    const grandTotal =
+      cart.grandTotal || cartItems.reduce((sum, i) => sum + i.total, 0);
+
+    const currentDate = new Date();
+
+    // --- Fetch active coupons ---
+    const availableCoupons = await Coupon.find({
+      isActive: true,
+      isNonBlocked: true,
+      expiryDate: { $gte: currentDate },
+      $or: [
+        { "usedBy.userId": { $ne: userId } },
+        { usedBy: { $size: 0 } },
+      ],
+    }).lean();
+
+    // --- Filter valid coupons based on total ---
+    const validCoupons = availableCoupons.filter((coupon) => {
+      const min = coupon.minPurchaseAmount || 0;
+      const max = coupon.maxDiscountAmount || Infinity;
+      return grandTotal >= min && grandTotal <= max;
+    });
+
+    // --- Handle applied coupon ---
+    const appliedCode = req.query.coupon;
+    let discountAmount = 0;
+    let finalTotal = grandTotal;
+    let appliedCoupon = null;
+
+    if (appliedCode) {
+      appliedCoupon = validCoupons.find((c) => c.code === appliedCode);
+
+      if (appliedCoupon) {
+        const { discountType, discountValue } = appliedCoupon;
+
+        if (discountType === "percentage") {
+          discountAmount = Math.floor((grandTotal * discountValue) / 100);
+        } else if (discountType === "flat") {
+          discountAmount = discountValue;
+        }
+
+        finalTotal = grandTotal - discountAmount;
+      }
+    }
+
+    // --- Shipping logic based on discounted total ---
+    const shippingCost = finalTotal > 1000 ? 0 : 50;
+    const payableTotal = finalTotal + shippingCost;
 
    
-    const productIds = cartItems.map(i => i.productId).join(",");
-    const variantIds = cartItems.map(i => i.variantId).join(",");
 
     res.render("user/checkout", {
       user,
       cart: cartItems,
       addresses,
-      total,
-      shippingCost,  
-      productIds,
-      variantIds,
+      total: grandTotal,
+      finalTotal,
+      discountAmount,
+      shippingCost,
+      payableTotal,
+      productIds: cartItems.map((i) => i.productId).join(","),
+      variantIds: cartItems.map((i) => i.variantId).join(","),
+      availableCoupons: validCoupons,
+      appliedCoupon,
     });
-
   } catch (error) {
     console.error("🛒 Cart Checkout Error:", error);
     res.status(500).send("Internal Server Error");
   }
 };
 
-
 const selectAddres = async (req, res) => {
   try {
     const { addressId } = req.body;
-    req.session.selectedAddress = addressId; // store temporarily in session
+    req.session.selectedAddress = addressId; 
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Error selecting address' });

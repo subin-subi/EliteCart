@@ -19,7 +19,7 @@
     <!-- === FLEX CONTAINER === -->
     <section class="flex flex-col lg:flex-row gap-8">
 
-      <!-- 🛒 LEFT: Product Details -->
+      <!-- LEFT: Product Details -->
       <div class="flex-1 bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
         <h2 class="text-2xl font-bold text-black mb-6 border-b pb-2">Order Summary</h2>
 
@@ -41,12 +41,61 @@
             <% }) %>
           </div>
 
-          <!-- 💰 Price Summary -->
-        <div class="mt-8 border-t pt-4 space-y-2 text-gray-800">
+
+<!-- Coupon Section -->
+<div class="mt-6 border-t pt-4">
+  <h3 class="text-lg font-semibold text-gray-900 mb-3">Apply Coupon</h3>
+
+  <div class="flex flex-col sm:flex-row items-center gap-3">
+    <!-- Coupon Dropdown -->
+    <select id="couponSelect" class="w-full sm:w-2/3 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 text-gray-800">
+      <option value="">Select a coupon</option>
+
+      <% if (availableCoupons && availableCoupons.length > 0) { %>
+        <% availableCoupons.forEach(coupon => { %>
+          <option 
+            value="<%= coupon.code %>" 
+            data-discount="<%= coupon.discountValue %>" 
+            data-type="<%= coupon.discountType %>">
+            <%= coupon.code %> - 
+            <%= coupon.discountValue %>
+            <%= coupon.discountType === 'flat' ? '/-' : '%' %> off
+          </option>
+        <% }) %>
+      <% } else { %>
+        <option disabled>No coupons available</option>
+      <% } %>
+    </select>
+
+    <!-- Apply Button -->
+    <button id="applyCouponBtn"
+      class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition">
+      Apply
+    </button>
+
+    <!-- Remove Button -->
+    <button id="removeCouponBtn"
+      class="hidden bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 transition">
+      Remove
+    </button>
+  </div>
+
+  <!-- Coupon message -->
+  <p id="couponMessage" class="text-sm mt-2 text-green-600 font-medium hidden"></p>
+</div>
+
+<!-- 💰 Price Summary -->
+<div class="mt-8 border-t pt-4 space-y-2 text-gray-800">
   <!-- Subtotal -->
   <div class="flex justify-between text-lg">
     <span>Subtotal:</span>
-    <span>₹<%= cart.reduce((sum, item) => sum + item.total, 0).toLocaleString() %></span>
+    <span id="subtotalAmount">₹<%= cart.reduce((sum, item) => sum + item.total, 0).toLocaleString() %></span>
+  </div>
+
+  <!-- Discount -->
+  <div id="discountSection" class="hidden flex justify-between text-lg text-green-700 font-semibold">
+    <span>Coupon Discount:</span>
+    <span id="discountAmount">- ₹0.00</span>
   </div>
 
   <!-- Shipping -->
@@ -62,10 +111,13 @@
   <!-- Grand Total -->
   <div class="flex justify-between text-xl font-bold border-t pt-3">
     <span>Grand Total:</span>
-    <span>
+    <span id="grandTotal">
       ₹<%= (cart.reduce((sum, item) => sum + item.total, 0) + (shippingCost || 0)).toLocaleString() %>
     </span>
   </div>
+</div>
+
+
 </div>
 
           </div>
@@ -74,10 +126,10 @@
         <% } %>
       </div>
 
-      <!-- 📦 RIGHT: Address + Payment + Button -->
+      <!--  RIGHT: Address + Payment + Button -->
       <div class="flex-1 flex flex-col gap-6">
 
-        <!-- 🏠 Shipping Address -->
+        <!--  Shipping Address -->
         <section class="bg-white p-6 rounded-lg shadow-md">
           <h2 class="text-lg font-semibold mb-4 text-gray-800">Shipping Address</h2>
 
@@ -122,7 +174,7 @@
           </form>
         </section>
 
-        <!-- 🛍️ Buy Now Button -->
+        <!--Buy Now Button -->
         <div class="flex justify-center">
           <button 
             class="bg-black text-white text-lg px-10 py-3 rounded-full hover:bg-gray-800 transition w-full"
@@ -266,9 +318,9 @@ async function submitCheckout() {
    const body = {
       paymentMethod: payment,
       addressId: selectedAddressId,
-      productIds: "<%= productIds %>".split(","), // Convert to array
-      variantIds: "<%= variantIds %>".split(","), // Convert to array
-      total: Number(<%= total %>) // Make sure it’s a number
+      productIds: "<%= productIds %>".split(","), 
+      variantIds: "<%= variantIds %>".split(","), 
+      total: Number(<%= total %>) 
     };
 
 console.log(body)
@@ -293,8 +345,8 @@ console.log(body)
     cancelButtonText: "🛍️ Go to Shop",
     reverseButtons: true,
     customClass: {
-      popup: "w-[500px] p-6 rounded-2xl", // 📏 Bigger popup size
-      title: "text-2xl font-bold text-green-600", // 💬 Stylish title
+      popup: "w-[500px] p-6 rounded-2xl", 
+      title: "text-2xl font-bold text-green-600", 
       confirmButton: "bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700",
       cancelButton: "bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600"
     },
@@ -324,7 +376,145 @@ console.log(body)
   }
 }
 
+///////////////////////////////coupon adding ///////////////////////////////////
 
+
+  const applyBtn = document.getElementById("applyCouponBtn");
+const removeBtn = document.getElementById("removeCouponBtn");
+const couponSelect = document.getElementById("couponSelect");
+const message = document.getElementById("couponMessage");
+const discountSection = document.getElementById("discountSection");
+const discountAmount = document.getElementById("discountAmount");
+
+let grandTotal = <%= cart.reduce((sum, item) => sum + item.total, 0) + (shippingCost || 0) %>;
+let currentDiscount = 0;
+let finalTotal = grandTotal;
+
+applyBtn.addEventListener("click", () => {
+  const selected = couponSelect.options[couponSelect.selectedIndex];
+  const code = selected.value;
+  const discountValue = parseFloat(selected.dataset.discount || 0);
+  const discountType = selected.dataset.type;
+
+  if (!code) {
+    message.textContent = "Please select a coupon.";
+    message.classList.remove("hidden", "text-green-600");
+    message.classList.add("text-red-600");
+    return;
+  }
+
+ 
+ if (discountType === "percentage") {
+  currentDiscount = Math.floor((grandTotal * discountValue) / 100);
+}
+ else if (discountType === "flat") {
+    currentDiscount = discountValue;
+  }
+
+  // Prevent discount exceeding total
+  if (currentDiscount > grandTotal) {
+    currentDiscount = grandTotal;
+  }
+
+  finalTotal = grandTotal - currentDiscount;
+
+  //  Update discount display
+  discountAmount.textContent = `- ₹${currentDiscount.toFixed(2)}`;
+  discountSection.classList.remove("hidden");
+
+  //  Success message
+  message.textContent = `Coupon "${code}" applied successfully!`;
+  message.classList.remove("hidden", "text-red-600");
+  message.classList.add("text-green-600");
+
+  // Toggle buttons
+  applyBtn.classList.add("hidden");
+  removeBtn.classList.remove("hidden");
+
+  //  Optionally update total display on page (if you have one)
+  const totalElement = document.getElementById("grandTotal");
+  if (totalElement) totalElement.textContent = `₹${finalTotal.toFixed(2)}`;
+});
+
+removeBtn.addEventListener("click", () => {
+  currentDiscount = 0;
+  finalTotal = grandTotal;
+
+  discountSection.classList.add("hidden");
+  message.textContent = "Coupon removed successfully!";
+  message.classList.remove("hidden", "text-red-600");
+  message.classList.add("text-green-600");
+
+  removeBtn.classList.add("hidden");
+  applyBtn.classList.remove("hidden");
+  couponSelect.value = "";
+
+  //  Restore total
+  const totalElement = document.getElementById("grandTotal");
+  if (totalElement) totalElement.textContent = `₹${grandTotal.toFixed(2)}`;
+});
+
+
+
+document.getElementById("applyCouponBtn").addEventListener("click", () => {
+  const couponSelect = document.getElementById("couponSelect");
+  const selectedOption = couponSelect.options[couponSelect.selectedIndex];
+  const couponCode = selectedOption.value;
+  const discountValue = selectedOption.getAttribute("data-discount");
+  const discountType = selectedOption.getAttribute("data-type");
+
+  if (!couponCode) return;
+
+  // Save to localStorage
+  localStorage.setItem("appliedCoupon", JSON.stringify({
+    couponCode,
+    discountValue,
+    discountType
+  }));
+
+  // Update UI
+  document.getElementById("couponMessage").textContent = `Coupon "${couponCode}" applied successfully!`;
+  document.getElementById("couponMessage").classList.remove("hidden");
+  document.getElementById("removeCouponBtn").classList.remove("hidden");
+  document.getElementById("applyCouponBtn").classList.add("hidden");
+});
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const savedCoupon = localStorage.getItem("appliedCoupon");
+  if (savedCoupon) {
+    const { couponCode } = JSON.parse(savedCoupon);
+    const couponSelect = document.getElementById("couponSelect");
+
+    // Select the saved coupon in dropdown
+    for (let i = 0; i < couponSelect.options.length; i++) {
+      if (couponSelect.options[i].value === couponCode) {
+        couponSelect.selectedIndex = i;
+        break;
+      }
+    }
+
+    // Update UI
+    document.getElementById("couponMessage").textContent = `Coupon "${couponCode}" applied successfully!`;
+    document.getElementById("couponMessage").classList.remove("hidden");
+    document.getElementById("removeCouponBtn").classList.remove("hidden");
+    document.getElementById("applyCouponBtn").classList.add("hidden");
+  }
+});
+
+
+document.getElementById("removeCouponBtn").addEventListener("click", () => {
+  localStorage.removeItem("appliedCoupon");
+
+  const couponSelect = document.getElementById("couponSelect");
+  couponSelect.selectedIndex = 0; // Reset dropdown
+
+  // Update UI
+  document.getElementById("couponMessage").textContent = "";
+  document.getElementById("couponMessage").classList.add("hidden");
+  document.getElementById("removeCouponBtn").classList.add("hidden");
+  document.getElementById("applyCouponBtn").classList.remove("hidden");
+});
 
 </script>
 

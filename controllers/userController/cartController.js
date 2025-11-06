@@ -248,11 +248,11 @@ const updateQuantity = async (req, res) => {
         message: `Only ${variant.stock} left in stock`,
       });
 
-    // ✅ Base price
+
     const basePrice = Number(variant.price);
     let finalPrice = basePrice;
 
-    // ✅ Find active PRODUCT offer first
+    
     const today = new Date();
     let activeOffer = await Offer.findOne({
       offerType: "PRODUCT",
@@ -263,11 +263,11 @@ const updateQuantity = async (req, res) => {
       endAt: { $gte: today },
     });
 
-    // ✅ If no product offer, check for CATEGORY offer
+    
     if (!activeOffer && product.category) {
       activeOffer = await Offer.findOne({
         offerType: "CATEGORY",
-        categoryId: product.category, // ✅ Correct field
+        categoryId: product.category, 
         isActive: true,
         isNonBlocked: true,
         startAt: { $lte: today },
@@ -275,19 +275,19 @@ const updateQuantity = async (req, res) => {
       });
     }
 
-    // ✅ Apply offer discount if available
+    
     if (activeOffer && activeOffer.discountPercent > 0) {
       const discount = (basePrice * activeOffer.discountPercent) / 100;
       finalPrice = +(basePrice - discount).toFixed(2);
     }
 
-    // ✅ Update item details
+    
     item.quantity = newQuantity;
     item.price = basePrice;
     item.offerPrice = finalPrice;
     item.total = finalPrice * newQuantity;
 
-    // ✅ Recalculate cart total
+    
     cart.grandTotal = cart.items.reduce((acc, i) => acc + i.total, 0);
 
     await cart.save();

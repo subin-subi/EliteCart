@@ -42,34 +42,47 @@
 
   <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
 
-    <!-- 🔽 Filter Options -->
-    <form method="GET" action="/admin/orders" class="flex flex-wrap items-center gap-3">
+    
+   <form method="GET" action="/admin/orders" class="flex flex-wrap items-center gap-3">
 
-      <!-- Sort by Price -->
-      <select
-        name="priceSort"
-        class="px-3 py-2 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 focus:ring-2 focus:ring-green-400"
-        onchange="this.form.submit()"
-      >
-        <option value="">Sort by Price</option>
-        <option value="asc" <%= priceSort === 'asc' ? 'selected' : '' %>>Low to High</option>
-        <option value="desc" <%= priceSort === 'desc' ? 'selected' : '' %>>High to Low</option>
-      </select>
+  <!-- Sort by Price -->
+  <select
+    name="priceSort"
+    class="px-3 py-2 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 focus:ring-2 focus:ring-green-400"
+    onchange="this.form.submit()"
+  >
+    <option value="">Sort by Price</option>
+    <option value="asc" <%= priceSort === 'asc' ? 'selected' : '' %>>Low to High</option>
+    <option value="desc" <%= priceSort === 'desc' ? 'selected' : '' %>>High to Low</option>
+  </select>
 
-      <!-- Sort by Date -->
-      <select
-        name="dateSort"
-        class="px-3 py-2 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 focus:ring-2 focus:ring-green-400"
-        onchange="this.form.submit()"
-      >
-        <option value="">Sort by Date</option>
-        <option value="desc" <%= dateSort === 'desc' ? 'selected' : '' %>>Newest First</option>
-        <option value="asc" <%= dateSort === 'asc' ? 'selected' : '' %>>Oldest First</option>
-      </select>
+  <!-- Sort by Date -->
+  <select
+    name="dateSort"
+    class="px-3 py-2 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 focus:ring-2 focus:ring-green-400"
+    onchange="this.form.submit()"
+  >
+    <option value="">Sort by Date</option>
+    <option value="desc" <%= dateSort === 'desc' ? 'selected' : '' %>>Newest First</option>
+    <option value="asc" <%= dateSort === 'asc' ? 'selected' : '' %>>Oldest First</option>
+  </select>
 
-      <!-- Hidden input for search so filters retain it -->
-      <input type="hidden" name="search" value="<%= search || '' %>" />
-    </form>
+  <!-- Filter by Return Status -->
+  <select
+  name="returnStatus"
+  class="px-3 py-2 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 focus:ring-2 focus:ring-green-400"
+  onchange="this.form.submit()"
+>
+  <option value="">Filter by Return Status</option>
+  <option value="Requested" <%= returnStatus === 'Requested' ? 'selected' : '' %>>Requested</option>
+</select>
+
+
+  <!-- Hidden input for search so filters retain it -->
+  <input type="hidden" name="search" value="<%= search || '' %>" />
+
+</form>
+
 
     <!-- 🔍 Search -->
     <div class="relative w-full sm:w-72">
