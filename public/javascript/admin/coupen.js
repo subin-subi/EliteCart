@@ -60,7 +60,7 @@ function toggleEditDiscountInput() {
 document.getElementById('addCouponForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-
+  // Clear previous errors
   const errorFields = document.querySelectorAll('span[id$="Error"]');
   errorFields.forEach(span => (span.textContent = ''));
 
@@ -83,7 +83,6 @@ document.getElementById('addCouponForm').addEventListener('submit', async (e) =>
     isValid = false;
   }
 
- 
   if (isNaN(startDate) || isNaN(expiryDate)) {
     document.getElementById('startDateError').textContent = 'Select both start and expiry dates.';
     isValid = false;
@@ -91,7 +90,6 @@ document.getElementById('addCouponForm').addEventListener('submit', async (e) =>
     document.getElementById('expiryDateError').textContent = 'Expiry date must be after start date.';
     isValid = false;
   }
-
 
   if (isNaN(minAmount) || minAmount <= 0) {
     document.getElementById('minAmountError').textContent = 'Enter a valid minimum amount.';
@@ -106,16 +104,14 @@ document.getElementById('addCouponForm').addEventListener('submit', async (e) =>
     isValid = false;
   }
 
-
   if (!description || description.length < 10) {
     document.getElementById('descriptionError').textContent = 'Description must be at least 10 characters.';
     isValid = false;
   }
 
-
   if (!isValid) return;
 
-  
+
   try {
     const response = await axios.post('/admin/add-coupon', data);
     const result = response.data;
@@ -128,70 +124,51 @@ document.getElementById('addCouponForm').addEventListener('submit', async (e) =>
         confirmButtonColor: '#3085d6',
       }).then(() => window.location.reload());
     } else {
-      document.getElementById('codeError').textContent = result.message || 'Error adding coupon.';
+      // Show backend validation message in a clear alert
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: result.message || 'Something went wrong while adding coupon.',
+        confirmButtonColor: '#d33',
+      });
     }
   } catch (error) {
-    console.error(error);
-    document.getElementById('codeError').textContent = 'Something went wrong while adding coupon.';
+    console.error('Add coupon error:', error);
+
+    
+    const backendMessage = error.response?.data?.message || 'Server error while adding coupon.';
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: backendMessage,
+      confirmButtonColor: '#d33',
+    });
   }
 });
 
 
-//////////////////////////////////delete coupon////////////////////////////////////////
+//////////////////////////////////toggle coupon////////////////////////////////////////
 
 
-async function deleteCoupon(couponId) {
+async function toggleCouponStatus(couponId, isActive) {
   try {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!"
-    });
-
-    if (result.isConfirmed) {
-      const response = await axios.delete(`/admin/delete-coupon/${couponId}`);
-
-      if (response.data.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Deleted!",
-          text: "Coupon has been deleted.",
-          timer: 1200,
-          showConfirmButton: false
-        });
-
-       
-        const rowActions = document.querySelector(
-          `button[onclick="deleteCoupon('${couponId}')"]`
-        ).parentElement;
-
-       
-        rowActions.innerHTML = `
-          <span class="text-red-500 font-semibold text-sm">Coupon Deleted</span>
-        `;
-
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Failed!",
-          text: response.data.message || "Could not delete coupon."
-        });
-      }
+    const response = await axios.put(`/admin/coupons/toggle-status`, { couponId, isActive });
+    if (response.data.success) {
+      Swal.fire({
+        icon: 'success',
+        title: `Coupon ${isActive ? 'Activated' : 'Deactivated'}!`,
+        showConfirmButton: false,
+        timer: 1500
+      });
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      Swal.fire('Error', response.data.message, 'error');
     }
   } catch (err) {
-    console.error(err);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: "Something went wrong. Please try again."
-    });
+    Swal.fire('Error', 'Something went wrong', 'error');
   }
 }
-
 
 
 //////////////////////////////coupon editing//////////////////////////////////////////////

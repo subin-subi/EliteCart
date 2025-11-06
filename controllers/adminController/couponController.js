@@ -44,16 +44,55 @@ const getCouponPage = async (req, res) => {
 
 const addCoupon = async (req, res) => {
   try {
-    const { code, discountType, discount, startDate, expiryDate, maxAmount, minAmount, description } = req.body;
-console.log(code, discountType, discount, startDate, expiryDate, maxAmount, minAmount, description)
+    const { 
+      code,
+      discountType,
+      discount,
+      startDate,
+      expiryDate,
+      maxAmount,
+      minAmount,
+      description 
+    } = req.body;
+
+    console.log(discountType)
+    // Basic validation
     if (!code || !discountType || !discount || !startDate || !expiryDate) {
-      return res.status(400).json({ success: false, message: "Please fill all required fields." });
+      return res.status(400).json({
+        success: false,
+        message: "Please fill all required fields.",
+      });
     }
 
+    // Expiry date check
     if (new Date(expiryDate) <= new Date(startDate)) {
-      return res.status(400).json({ success: false, message: "Expiry date must be after start date." });
+      return res.status(400).json({
+        success: false,
+        message: "Expiry date must be after start date.",
+      });
     }
 
+    
+    if (discountType === "flat") {
+      const minPurchase = Number(minAmount);
+      const flatDiscount = Number(discount);
+
+      if (minPurchase <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Minimum purchase amount must be greater than 0 for flat discounts.",
+        });
+      }
+
+      const maxAllowed = minPurchase * 0.7; // 70% of min purchase
+console.log(maxAllowed)
+      if (flatDiscount > maxAllowed) {
+        return res.status(400).json({
+          success: false,
+          message: `Flat discount cannot exceed 70% of the minimum purchase amount. (Max allowed ₹${maxAllowed.toFixed(2)})`,
+        });
+      }
+    }
 
     const newCoupon = new Coupon({
       code: code.toUpperCase().trim(),
@@ -68,33 +107,21 @@ console.log(code, discountType, discount, startDate, expiryDate, maxAmount, minA
 
     await newCoupon.save();
 
-    res.status(200).json({ success: true, message: "Coupon added successfully!" });
+    res.status(200).json({
+      success: true,
+      message: "Coupon added successfully!",
+    });
   } catch (error) {
     console.error("Error adding coupon:", error);
-    res.status(500).json({ success: false, message: "Server error while adding coupon." });
+    res.status(500).json({
+      success: false,
+      message: "Server error while adding coupon.",
+    });
   }
 };
 
-const deleteCoupon = async (req, res) => {
-  try {
-    const couponId = req.params.couponId;
 
-    const deletedCoupon = await Coupon.findByIdAndUpdate(
-      couponId,
-      { isNonBlocked: false },
-      { new: true }
-    );
 
-    if (!deletedCoupon) {
-      return res.json({ success: false, message: "Coupon not found" });
-    }
-
-    res.json({ success: true, message: "Coupon deleted successfully" });
-  } catch (err) {
-    console.error("Error deleting coupon:", err);
-    res.json({ success: false, message: "Server error" });
-  }
-};
 
 
 
@@ -183,9 +210,48 @@ const editCoupon = async (req, res) => {
   }
 };
 
+
+const toggleCouponStatus = async (req, res) => {
+  try {
+    const { couponId, isActive } = req.body;
+
+    if (!couponId)
+      return res.status(400).json({ success: false, message: "Coupon ID required" });
+
+    const coupon = await Coupon.findById(couponId);
+    if (!coupon)
+      return res.status(404).json({ success: false, message: "Coupon not found" });
+
+    // Check if trying to activate an expired coupon
+    const currentDate = new Date();
+    if (isActive && coupon.endAt < currentDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot activate — this coupon has already expired.",
+      });
+    }
+
+    // Update both isActive and isNonBlocked together
+    coupon.isActive = isActive;
+    coupon.isNonBlocked = isActive ? true : false;
+
+    await coupon.save();
+
+    res.json({
+      success: true,
+      message: `Coupon ${isActive ? "activated" : "deactivated"} successfully`,
+    });
+  } catch (err) {
+    console.error("Error toggling coupon:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+
 export default ({
     getCouponPage,
      addCoupon,
-    deleteCoupon,
+    toggleCouponStatus,
     editCoupon
 })

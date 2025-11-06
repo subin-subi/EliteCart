@@ -70,8 +70,8 @@
               <th class="py-3 px-4">Discount (%)</th>
               <th class="py-3 px-4">Start Date</th>
               <th class="py-3 px-4">Expiry Date</th>
-              <th class="py-3 px-4">Max Amount</th>
               <th class="py-3 px-4">Min Amount</th>
+              <th class="py-3 px-4">Max Amount</th>
               <th class="py-3 px-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -91,29 +91,33 @@
 
       <td class="py-3 px-4"><%= coupon.startDate.toLocaleDateString() %></td>
       <td class="py-3 px-4"><%= coupon.expiryDate.toLocaleDateString() %></td>
-      <td class="py-3 px-4">₹<%= coupon.maxDiscountAmount %></td>
       <td class="py-3 px-4">₹<%= coupon.minPurchaseAmount %></td>
+      <td class="py-3 px-4">₹<%= coupon.maxDiscountAmount %></td>
 
-      <td class="py-3 px-4 flex justify-center space-x-2">
-        <% if (coupon.isActive === false) { %>
-          <!-- Show deleted message -->
-          <span class="text-red-500 font-semibold text-sm">Coupon Deleted</span>
-        <% } else { %>
-          <!-- Show action buttons -->
-          <button 
-  class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-sm font-medium"
-  onclick='openEditCouponModal(<%- JSON.stringify(coupon) %>)'>
-  Edit
-</button>
+     <td class="py-3 px-4 flex justify-center space-x-2">
+  <!-- Edit button -->
+  <button 
+    class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-sm font-medium"
+    onclick='openEditCouponModal(<%- JSON.stringify(coupon) %>)'>
+    Edit
+  </button>
 
-          <button
-            class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm font-medium"
-            onclick="deleteCoupon('<%= coupon._id %>')"
-          >
-            Delete
-          </button>
-        <% } %>
-      </td>
+  <!-- Activate / Deactivate button -->
+  <% if (coupon.isActive) { %>
+    <button
+      class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm font-medium"
+      onclick="toggleCouponStatus('<%= coupon._id %>', false)">
+      Deactivate
+    </button>
+  <% } else { %>
+    <button
+      class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-sm font-medium"
+      onclick="toggleCouponStatus('<%= coupon._id %>', true)">
+      Activate
+    </button>
+  <% } %>
+</td>
+
     </tr>
   <% }) %>
 </tbody>

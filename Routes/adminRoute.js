@@ -70,7 +70,7 @@ router.post("/addNewVariants/:id",addproductController.addNewVariants)
 
 router.get("/coupon", couponController.getCouponPage)
 router.post("/add-coupon", couponController.addCoupon)
-router.delete("/delete-coupon/:couponId",couponController.deleteCoupon)
+router.put("/coupons/toggle-status",couponController.toggleCouponStatus)
 router.post("/edit-coupon/:couponId",couponController.editCoupon)
 
 
