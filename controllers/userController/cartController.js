@@ -122,12 +122,13 @@ const addToCart = async (req, res) => {
   try {
     const userId = req.session.user;
     const { productId, variantId } = req.body;
+    console.log(productId, variantId )
 
     if (!userId) {
       return res.status(401).json({ success: false, message: "Please log in first" });
     }
 
-    // Find product
+    
     const product = await Product.findById(productId);
     if (!product)
       return res.status(404).json({ success: false, message: "Product not found" });
@@ -144,9 +145,7 @@ const addToCart = async (req, res) => {
 
     const today = new Date();
 
-    // -------------------------
-    // 🔍 Check active product-level offer
-    // -------------------------
+    
     let activeOffer = await Offer.findOne({
       isActive: true,
       isNonBlocked: true,
@@ -156,9 +155,7 @@ const addToCart = async (req, res) => {
       endAt: { $gte: today },
     });
 
-    // -------------------------
-    // 🔍 If no product offer, check category-level offer
-    // -------------------------
+    
     if (!activeOffer && product.category) {
       activeOffer = await Offer.findOne({
         isActive: true,
@@ -170,9 +167,6 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // -------------------------
-    // 💰 Calculate price
-    // -------------------------
     let price = Number(variant.price);
     if (activeOffer && activeOffer.discountPercent) {
       const discount = (variant.price * activeOffer.discountPercent) / 100;
@@ -182,9 +176,7 @@ const addToCart = async (req, res) => {
     const quantity = 1;
     const total = price * quantity;
 
-    // -------------------------
-    // 🛒 Handle cart logic
-    // -------------------------
+    
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = new Cart({
@@ -236,13 +228,11 @@ const updateQuantity = async (req, res) => {
 
     const newQuantity = item.quantity + change;
 
-    if (newQuantity < 1) {
+    if (newQuantity < 1)
       return res.json({ success: false, message: "Minimum quantity is 1" });
-    }
 
-    if (newQuantity > 10) {
+    if (newQuantity > 10)
       return res.json({ success: false, message: "Maximum quantity limit is 10" });
-    }
 
     const product = await Product.findById(item.productId);
     if (!product)
@@ -252,42 +242,68 @@ const updateQuantity = async (req, res) => {
     if (!variant)
       return res.json({ success: false, message: "Variant not found" });
 
-    if (newQuantity > variant.stock) {
+    if (newQuantity > variant.stock)
       return res.json({
         success: false,
-        message: `Only ${variant.stock} left in stock`
+        message: `Only ${variant.stock} left in stock`,
+      });
+
+    // ✅ Base price
+    const basePrice = Number(variant.price);
+    let finalPrice = basePrice;
+
+    // ✅ Find active PRODUCT offer first
+    const today = new Date();
+    let activeOffer = await Offer.findOne({
+      offerType: "PRODUCT",
+      productId: product._id,
+      isActive: true,
+      isNonBlocked: true,
+      startAt: { $lte: today },
+      endAt: { $gte: today },
+    });
+
+    // ✅ If no product offer, check for CATEGORY offer
+    if (!activeOffer && product.category) {
+      activeOffer = await Offer.findOne({
+        offerType: "CATEGORY",
+        categoryId: product.category, // ✅ Correct field
+        isActive: true,
+        isNonBlocked: true,
+        startAt: { $lte: today },
+        endAt: { $gte: today },
       });
     }
 
-    // ✅ Update item quantity
-    item.quantity = newQuantity;
-
-    // ✅ Check if the item has an offer price
-    if (item.offerPrice && item.offerPrice > 0) {
-      // Use offer price for total
-      item.total = item.offerPrice * item.quantity;
-    } else {
-      // Use normal price for total
-      item.total = item.price * item.quantity;
+    // ✅ Apply offer discount if available
+    if (activeOffer && activeOffer.discountPercent > 0) {
+      const discount = (basePrice * activeOffer.discountPercent) / 100;
+      finalPrice = +(basePrice - discount).toFixed(2);
     }
 
-    // ✅ Update grand total for the whole cart
+    // ✅ Update item details
+    item.quantity = newQuantity;
+    item.price = basePrice;
+    item.offerPrice = finalPrice;
+    item.total = finalPrice * newQuantity;
+
+    // ✅ Recalculate cart total
     cart.grandTotal = cart.items.reduce((acc, i) => acc + i.total, 0);
 
     await cart.save();
 
     res.json({
       success: true,
-      quantity: item.quantity,
+      quantity: newQuantity,
       itemTotal: item.total,
-      grandTotal: cart.grandTotal
+      grandTotal: cart.grandTotal,
     });
-
   } catch (err) {
     console.error("Update quantity error:", err);
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
+
 
 
 

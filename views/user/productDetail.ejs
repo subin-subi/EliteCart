@@ -319,48 +319,50 @@ mainImage.addEventListener("mouseleave", () => {
   mainImage.style.transform = "scale(1)";
 });
 
-////////////////variant selection//////////////////////////
-
-
-
+// //////////////////variant selection//////////////////////////
 
 const variantSelect = document.getElementById("variantSelect");
-  const priceSection = document.getElementById("priceSection");
-  const addToCartBtn = document.getElementById("addToCartBtn");
-  const outOfStockBtn = document.getElementById("outOfStockBtn");
+const priceSection = document.getElementById("priceSection");
+const addToCartBtn = document.getElementById("addToCartBtn");
+const outOfStockBtn = document.getElementById("outOfStockBtn");
 
-  if (variantSelect) {
-    variantSelect.addEventListener("change", (e) => {
-      const selectedOption = e.target.selectedOptions[0];
-      const price = parseFloat(selectedOption.getAttribute("data-price"));
-      const discount = parseFloat(selectedOption.getAttribute("data-discount")) || null;
-      const stock = parseInt(selectedOption.getAttribute("data-stock"));
+if (variantSelect) {
+  variantSelect.addEventListener("change", (e) => {
+    const selectedOption = e.target.selectedOptions[0];
+    const price = parseFloat(selectedOption.getAttribute("data-price"));
+    const discount = parseFloat(selectedOption.getAttribute("data-discount")) || null;
+    const stock = parseInt(selectedOption.getAttribute("data-stock"));
+    const variantId = selectedOption.value; // ✅ Get current variant id
 
-      let html = "";
+    // ✅ Update the Add to Cart button with selected variant ID
+    addToCartBtn.dataset.variant = variantId;
 
-      if (discount && discount < price) {
-        const discountPercent = Math.round(((price - discount) / price) * 100);
-        html = `
-          <span class="text-2xl sm:text-3xl font-semibold text-red-600">₹${discount.toLocaleString()}</span>
-          <span class="text-gray-500 line-through text-lg">₹${price.toLocaleString()}</span>
-          <span class="text-green-600 font-medium text-sm">(${discountPercent}% OFF)</span>
-        `;
-      } else {
-        html = `<span class="text-2xl sm:text-3xl font-semibold text-gray-900">₹${price.toLocaleString()}</span>`;
-      }
+    // Price display logic
+    let html = "";
 
-      priceSection.innerHTML = html;
+    if (discount && discount < price) {
+      const discountPercent = Math.round(((price - discount) / price) * 100);
+      html = `
+        <span class="text-2xl sm:text-3xl font-semibold text-red-600">₹${discount.toLocaleString()}</span>
+        <span class="text-gray-500 line-through text-lg">₹${price.toLocaleString()}</span>
+        <span class="text-green-600 font-medium text-sm">(${discountPercent}% OFF)</span>
+      `;
+    } else {
+      html = `<span class="text-2xl sm:text-3xl font-semibold text-gray-900">₹${price.toLocaleString()}</span>`;
+    }
 
-      // Update Add to Cart visibility
-      if (stock > 0) {
-        addToCartBtn.classList.remove("hidden");
-        outOfStockBtn.classList.add("hidden");
-      } else {
-        addToCartBtn.classList.add("hidden");
-        outOfStockBtn.classList.remove("hidden");
-      }
-    });
-  }
+    priceSection.innerHTML = html;
+
+    // Stock check
+    if (stock > 0) {
+      addToCartBtn.classList.remove("hidden");
+      outOfStockBtn.classList.add("hidden");
+    } else {
+      addToCartBtn.classList.add("hidden");
+      outOfStockBtn.classList.remove("hidden");
+    }
+  });
+}
 
 //////////////////////////////add to cart form ////////////////////////////////////
 document.addEventListener("DOMContentLoaded", () => {
