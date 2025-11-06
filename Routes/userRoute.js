@@ -12,7 +12,7 @@ import wishlistController from "../controllers/userController/wishlistController
 import orderDetailController from "../controllers/userController/orderDetailController.js"
 import walletController from "../controllers/userController/walletController.js";
 import pdfController from "../controllers/userController/pdfController.js"
-
+import redeemController from "../controllers/userController/redeemController.js";
 
 
 const route = Router();
@@ -113,5 +113,7 @@ route.get("/wallet",walletController.getWallet)
 
 route.get("/invoice/:orderId", pdfController.generateInvoice);
 
+
+route.get("/redeem", redeemController.getRedeem)
 
 export default route;

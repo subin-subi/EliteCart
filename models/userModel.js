@@ -61,9 +61,30 @@ const userSchema = new mongoose.Schema(
     },
     profileImage:{
       type :String
-    }
+    }, 
+     redeemCode: {
+      type: String,
+      unique: true
+    },
+
   },
   { timestamps: true }
 );
 
+
+
+userSchema.pre("save", async function (next) {
+  if (!this.redeemCode) {
+    
+    const code = crypto.randomBytes(3).toString("hex").toUpperCase(); 
+   
+    const existingUser = await mongoose.model("User").findOne({ redeemCode: code });
+    if (!existingUser) {
+      this.redeemCode = code;
+    } else {
+      this.redeemCode = crypto.randomBytes(3).toString("hex").toUpperCase(); 
+    }
+  }
+  next();
+});
 export default mongoose.model("User", userSchema);
