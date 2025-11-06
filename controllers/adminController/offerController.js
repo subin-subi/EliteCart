@@ -85,7 +85,6 @@ const addOffer = async (req, res) => {
     const newOffer = new Offer(offerData);
     await newOffer.save();
 
-    // Apply offer to related products
     if (offerType === "PRODUCT") {
       await applyBestOffer(selectionId);
     } else if (offerType === "CATEGORY") {
@@ -106,127 +105,95 @@ const addOffer = async (req, res) => {
 };
 
 
-// using inside addOffer
+
 const applyBestOffer = async (productId) => {
   const product = await Product.findById(productId).populate("category");
   if (!product) return;
 
-  
+  // Find all active offers related to this product or its category
   const offers = await Offer.find({
     isActive: true,
     $or: [{ productId }, { categoryId: product.category._id }],
   });
 
-    if (offers.length === 0) {
-    product.variants.forEach((variant) => (variant.discountPrice = null));
-    await product.save();
+  // If no offers found, just return
+  if (offers.length === 0) {
     return;
   }
-  
+
+  // Find best discount percentage
   const maxDiscount = Math.max(...offers.map((offer) => offer.discountPercent));
 
-  
-  product.variants.forEach((variant) => {
-    const newDiscountPrice = Math.round(
-      variant.price - (variant.price * maxDiscount) / 100
-    );
-    variant.discountPrice = newDiscountPrice;
-  });
+  // You can use this logic later (in UI or cart) to compute offer price:
+  // offerPrice = Math.round(price - (price * maxDiscount) / 100);
 
-  await product.save();
+  console.log(
+    `Best offer for product ${product.name}: ${maxDiscount}% discount`
+  );
 };
 
 
 const toggleOffer = async (req, res) => {
   try {
     const { offerId, isActive } = req.body;
+    console.log(offerId, isActive);
 
-    if (!offerId) return res.status(400).json({ success: false, message: 'Offer ID required' });
+    if (!offerId)
+      return res.status(400).json({ success: false, message: "Offer ID required" });
 
     const offer = await Offer.findById(offerId);
-    if (!offer) return res.status(404).json({ success: false, message: 'Offer not found' });
+    if (!offer)
+      return res.status(404).json({ success: false, message: "Offer not found" });
 
     const now = new Date();
 
-    // Check if offer is expired
+    // 🧩 Auto deactivate expired offers
     if (offer.endAt < now) {
       offer.isActive = false;
       offer.isNonBlocked = false;
-
-      // Reset discount price for product variants if PRODUCT offer
-      if (offer.offerType === "PRODUCT" && offer.productId) {
-        await Product.updateOne(
-          { _id: offer.productId },
-          { $set: { "variants.$[].discountPrice": null } } 
-        );
-      }
-
       await offer.save();
-      return res.json({ success: false, message: 'Offer has expired and is now deactivated.' });
+
+      return res.json({
+        success: false,
+        message: "Offer has expired and is now deactivated.",
+      });
     }
 
-    // Toggle offer status
+    // 🟢 Activate or deactivate based on input
     offer.isActive = isActive;
+
+    // When offer is deactivated, also block it
+    if (!isActive) {
+      offer.isNonBlocked = false;
+    } else {
+      offer.isNonBlocked = true; // If activating, make sure it’s unblocked
+    }
+
     await offer.save();
 
-    let products = [];
-
+    // 🧮 Apply or remove offer logic for products
     if (offer.offerType === "PRODUCT" && offer.productId) {
-      const product = await Product.findById(offer.productId);
-      if (product) products.push(product);
+      await applyBestOffer(offer.productId);
     } else if (offer.offerType === "CATEGORY" && offer.categoryId) {
-      products = await Product.find({ category: offer.categoryId });
+      const products = await Product.find({ category: offer.categoryId });
+      for (const product of products) {
+        await applyBestOffer(product._id);
+      }
     }
 
-    // Fetch all active offers
-    const activeOffers = await Offer.find({ isActive: true, isNonBlocked: true }).lean();
-
-    for (const product of products) {
-      product.variants = product.variants.map(v => {
-        if (isActive) {
-         
-          return {
-            ...v.toObject(),
-            discountPrice: Math.round(v.price - (v.price * offer.discountPercent) / 100),
-          };
-        } else {
-          // Find another active offer for this product
-          const otherOffers = activeOffers.filter(o => {
-            if (o._id.toString() === offerId) return false; // skip current toggled offer
-            if (o.offerType === "PRODUCT" && o.productId?.toString() === product._id.toString()) return true;
-            if (o.offerType === "CATEGORY" && o.categoryId?.toString() === product.category.toString()) return true;
-            return false;
-          });
-
-          if (otherOffers.length > 0) {
-            // Apply the best offer
-            const bestOffer = otherOffers.reduce((max, o) =>
-              o.discountPercent > max.discountPercent ? o : max
-            );
-            return {
-              ...v.toObject(),
-              discountPrice: Math.round(v.price - (v.price * bestOffer.discountPercent) / 100),
-            };
-          } else {
-            // No other offer, reset discountPrice
-            return {
-              ...v.toObject(),
-              discountPrice: null,
-            };
-          }
-        }
-      });
-
-      await product.save();
-    }
-
-    return res.json({ success: true, message: `Offer ${isActive ? "activated" : "deactivated"} successfully.` });
-
+    return res.json({
+      success: true,
+      message: `Offer ${isActive ? "activated" : "deactivated"} successfully.`,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("❌ Error toggling offer:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
+
 
 
 
@@ -246,8 +213,11 @@ const editOffer = async (req, res) => {
       description,
     } = req.body;
 
+    // 🧩 Validate required fields
     if (!offerId)
-      return res.status(400).json({ success: false, message: "Offer ID is required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Offer ID is required." });
 
     if (!name || !offerType || !selectionId)
       return res
@@ -256,9 +226,11 @@ const editOffer = async (req, res) => {
 
     const existingOffer = await Offer.findById(offerId);
     if (!existingOffer)
-      return res.status(404).json({ success: false, message: "Offer not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Offer not found." });
 
-    // Update basic offer fields
+    // 📝 Update basic offer fields
     existingOffer.name = name.trim();
     existingOffer.offerType = offerType;
     existingOffer.discountPercent = discountPercent;
@@ -266,7 +238,7 @@ const editOffer = async (req, res) => {
     existingOffer.endAt = new Date(endAt);
     existingOffer.description = description.trim();
 
-    // Link offer to product/category
+    // 🔗 Link offer to product or category
     if (offerType === "PRODUCT") {
       existingOffer.productId = selectionId;
       existingOffer.categoryId = null;
@@ -277,29 +249,20 @@ const editOffer = async (req, res) => {
 
     await existingOffer.save();
 
-    // Update product/category with discount info
+    // ✅ Do not modify Product DB — only call applyBestOffer for recalculation
     if (offerType === "PRODUCT") {
-      const product = await Product.findById(selectionId);
-      if (product) {
-        product.variants = product.variants.map(v => ({
-          ...v._doc,
-          discountPrice: Math.round(v.price - (v.price * discountPercent) / 100),
-        }));
-        await product.save();
-      }
+      await applyBestOffer(selectionId);
     } else if (offerType === "CATEGORY") {
       const products = await Product.find({ category: selectionId });
       for (const product of products) {
-        product.variants = product.variants.map(v => ({
-          ...v._doc,
-          discountPrice: Math.round(v.price - (v.price * discountPercent) / 100),
-        }));
-        await product.save();
+        await applyBestOffer(product._id);
       }
     }
 
-    return res.json({ success: true, message: "Offer updated successfully!" });
-
+    return res.json({
+      success: true,
+      message: "Offer updated successfully!",
+    });
   } catch (error) {
     console.error("❌ Error updating offer:", error);
     return res
@@ -307,6 +270,7 @@ const editOffer = async (req, res) => {
       .json({ success: false, message: "Internal server error." });
   }
 };
+
 
 
 

@@ -19,17 +19,25 @@ const productSchema = new mongoose.Schema(
     },
    variants: [
   {
-    volume: { type: Number,
-       required: true },
-    stock: { type: Number,
-       required: true },
-    price: { type: Number,
-       required: true },
-    discountPrice: { type: Number,
-       default: null },
-    isBlocked: { type: Boolean,
-       default: false },
-    mainImage: { type: String },
+    volume: {
+       type: Number,
+       required: true
+       },
+    stock: {
+       type: Number,
+       required: true
+       },
+    price: { 
+      type: Number,
+       required: true
+       },
+    isBlocked: { 
+      type: Boolean,
+       default: false
+       },
+    mainImage: {
+       type: String 
+      },
     subImages: [{ type: String }]
   }
 ]

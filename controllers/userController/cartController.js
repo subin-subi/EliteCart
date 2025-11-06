@@ -91,8 +91,8 @@ const getCart = async (req, res) => {
         productId: product,
         variant,
         productQuantity: item.quantity,
-        total: offerPrice * item.quantity, // total with offer applied
-        offerPrice, // send the discounted price to front-end
+        total: offerPrice * item.quantity,
+        offerPrice, 
         discountPercent,
         appliedOfferName: appliedOffer?.name || null,
       });
@@ -123,16 +123,14 @@ const addToCart = async (req, res) => {
     const userId = req.session.user;
     const { productId, variantId } = req.body;
 
-   
     if (!userId) {
       return res.status(401).json({ success: false, message: "Please log in first" });
     }
 
-  
+    // Find product
     const product = await Product.findById(productId);
     if (!product)
       return res.status(404).json({ success: false, message: "Product not found" });
-
 
     const variantIndex = product.variants.findIndex(v => v._id.toString() === variantId);
     if (variantIndex === -1)
@@ -140,21 +138,59 @@ const addToCart = async (req, res) => {
 
     const variant = product.variants[variantIndex];
 
-    
     if (!variant.stock || variant.stock <= 0) {
       return res.status(400).json({ success: false, message: "Out of stock" });
     }
 
-    const quantity = 1;
-    const price = Number(variant.discountPrice || variant.price || 0);
-    const total = Number(price * quantity);
+    const today = new Date();
 
+    // -------------------------
+    // 🔍 Check active product-level offer
+    // -------------------------
+    let activeOffer = await Offer.findOne({
+      isActive: true,
+      isNonBlocked: true,
+      offerType: "PRODUCT",
+      productId: product._id,
+      startAt: { $lte: today },
+      endAt: { $gte: today },
+    });
+
+    // -------------------------
+    // 🔍 If no product offer, check category-level offer
+    // -------------------------
+    if (!activeOffer && product.category) {
+      activeOffer = await Offer.findOne({
+        isActive: true,
+        isNonBlocked: true,
+        offerType: "CATEGORY",
+        categoryId: product.category,
+        startAt: { $lte: today },
+        endAt: { $gte: today },
+      });
+    }
+
+    // -------------------------
+    // 💰 Calculate price
+    // -------------------------
+    let price = Number(variant.price);
+    if (activeOffer && activeOffer.discountPercent) {
+      const discount = (variant.price * activeOffer.discountPercent) / 100;
+      price = Number((variant.price - discount).toFixed(2));
+    }
+
+    const quantity = 1;
+    const total = price * quantity;
+
+    // -------------------------
+    // 🛒 Handle cart logic
+    // -------------------------
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = new Cart({
         userId,
         items: [{ productId, variantIndex, quantity, price, total }],
-        grandTotal: total
+        grandTotal: total,
       });
     } else {
       const existingItem = cart.items.find(
@@ -162,7 +198,6 @@ const addToCart = async (req, res) => {
       );
 
       if (existingItem) {
-       
         if (existingItem.quantity + 1 > variant.stock) {
           return res.status(400).json({ success: false, message: "Not enough stock" });
         }
@@ -176,19 +211,15 @@ const addToCart = async (req, res) => {
       cart.grandTotal = cart.items.reduce((acc, item) => acc + Number(item.total || 0), 0);
     }
 
-
-    cart.items.forEach(item => {
-      if (!item.price || !item.total) throw new Error("Item missing price or total");
-    });
-
     await cart.save();
-    res.json({ success: true, message: "Product added to cart" });
 
+    res.json({ success: true, message: "Product added to cart" });
   } catch (err) {
     console.error("Add to cart error:", err);
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
+
 
 
 const updateQuantity = async (req, res) => {
@@ -205,17 +236,14 @@ const updateQuantity = async (req, res) => {
 
     const newQuantity = item.quantity + change;
 
-    
     if (newQuantity < 1) {
       return res.json({ success: false, message: "Minimum quantity is 1" });
     }
 
-    
     if (newQuantity > 10) {
       return res.json({ success: false, message: "Maximum quantity limit is 10" });
     }
 
-    
     const product = await Product.findById(item.productId);
     if (!product)
       return res.json({ success: false, message: "Product not found" });
@@ -231,11 +259,21 @@ const updateQuantity = async (req, res) => {
       });
     }
 
-    
+    // ✅ Update item quantity
     item.quantity = newQuantity;
-    item.total = item.price * item.quantity;
 
+    // ✅ Check if the item has an offer price
+    if (item.offerPrice && item.offerPrice > 0) {
+      // Use offer price for total
+      item.total = item.offerPrice * item.quantity;
+    } else {
+      // Use normal price for total
+      item.total = item.price * item.quantity;
+    }
+
+    // ✅ Update grand total for the whole cart
     cart.grandTotal = cart.items.reduce((acc, i) => acc + i.total, 0);
+
     await cart.save();
 
     res.json({
@@ -250,6 +288,7 @@ const updateQuantity = async (req, res) => {
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
+
 
 
 
