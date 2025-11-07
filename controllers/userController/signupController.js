@@ -3,6 +3,7 @@ import validatePassword from "../../utils/validatePassword.js";
 import bcrypt from "bcrypt"
 import {generateOTP, sendOTPEmail} from "../../utils/sendOTP.js"
 import passport  from "../../utils/googleAuth.js";
+import Wallet from "../../models/walletModel.js";
 
 const saltRounds =10;
 
@@ -22,33 +23,30 @@ const getSignUp = (req, res) => {
 
 const postSignup = async (req, res) => {
   try {
-    const { name, email, mobileNo, password } = req.body;
+    const { name, email, mobileNo, password, redeemCode } = req.body;
 
-    // Validate name: only letters and spaces, 2-50 chars
+    // ---------- VALIDATIONS ----------
     if (!name || !/^[a-zA-Z\s]{2,50}$/.test(name.trim())) {
       return res.status(400).json({
         success: false,
-        message: 'Name should be 2-50 characters long and contain only letters and spaces',
+        message: "Name should be 2-50 characters long and contain only letters and spaces",
       });
     }
 
-    // Validate email
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({
         success: false,
-        message: 'Please enter a valid email address',
+        message: "Please enter a valid email address",
       });
     }
 
-    // Validate mobileNo: exactly 10 digits (adjust if needed)
     if (!mobileNo || !/^\d{10}$/.test(mobileNo)) {
       return res.status(400).json({
         success: false,
-        message: 'Please enter a valid 10-digit mobile number',
+        message: "Please enter a valid 10-digit mobile number",
       });
     }
 
-    // Validate password (use your existing validatePassword function)
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       return res.status(400).json({
@@ -57,7 +55,27 @@ const postSignup = async (req, res) => {
       });
     }
 
-    // Check if user with this email or mobileNo exists
+
+// ---------- REFERRAL CODE VALIDATION ----------
+if (redeemCode) {
+  const referrer = await userSchema.findOne({ redeemCode, isverified: true });
+
+  if (!referrer) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid or inactive referral code. Please check and try again.",
+    });
+  }
+
+  if (referrer.email === email) {
+    return res.status(400).json({
+      success: false,
+      message: "You cannot use your own referral code.",
+    });
+  }
+}
+
+    // ---------- EXISTING USER ----------
     const existingUser = await userSchema.findOne({
       $or: [{ email }, { mobileNo }],
     });
@@ -67,68 +85,107 @@ const postSignup = async (req, res) => {
         await userSchema.deleteOne({ _id: existingUser._id });
       } else {
         const message = !existingUser.password
-          ? 'This email is linked to a Google login. Please log in with Google.'
-          : 'Email or mobile number is already registered';
-        return res.status(400).json({
-          success: false,
-          message,
-        });
+          ? "This email is linked to a Google login. Please log in with Google."
+          : "Email or mobile number is already registered";
+        return res.status(400).json({ success: false, message });
       }
     }
 
-    // Generate OTP and hash password
+    // ---------- OTP + PASSWORD ----------
     const otp = generateOTP();
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    console.log(' OTP:', otp);
-   
-    // Save new user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("OTP:", otp);
+
+    // ---------- CREATE USER ----------
     const newUser = new userSchema({
       name: name.trim(),
       email,
       mobileNo,
       password: hashedPassword,
       otp,
-      otpExpiresAt: Date.now() + 120000, // 2 minutes
+      otpExpiresAt: Date.now() + 120000, // 2 mins
       otpAttempts: 0,
     });
 
     await newUser.save();
-    
 
-    // Schedule deletion after OTP expiry if not verified
+
+    // ---------- CREATE WALLET ----------
+    const newUserWallet = new Wallet({
+      user: newUser._id,
+      balance: 0,
+      transactions: [],
+    });
+    await newUserWallet.save();
+
+    // ---------- APPLY REFERRAL BONUS ----------
+    if (redeemCode) {
+      const referrer = await userSchema.findOne({ redeemCode, isverified: true });
+      if (referrer) {
+        await Wallet.findOneAndUpdate(
+          { user: referrer._id },
+          {
+            $inc: { balance: 100 },
+            $push: {
+              transactions: {
+                type: "Credit",
+                amount: 100,
+                description: `Referral bonus from ${newUser.name}`,
+              },
+            },
+          }
+        );
+
+        await Wallet.findOneAndUpdate(
+          { user: newUser._id },
+          {
+            $inc: { balance: 100 },
+            $push: {
+              transactions: {
+                type: "Credit",
+                amount: 100,
+                description: `Welcome bonus for using redeem code`,
+              },
+            },
+          }
+        );
+      }
+    }
+
+    // ---------- DELETE UNVERIFIED USER AFTER EXPIRY ----------
     setTimeout(async () => {
       const user = await userSchema.findOne({ email });
       if (user && !user.isverified) {
         await userSchema.deleteOne({ _id: user._id });
+        await Wallet.deleteOne({ user: user._id });
       }
     }, 180000);
 
-    // Send OTP Email
+    // ---------- SEND OTP ----------
     try {
       await sendOTPEmail(email, otp);
     } catch (emailError) {
-      console.error('Error sending OTP:', emailError);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to send OTP',
-      });
+      console.error("Error sending OTP:", emailError);
+      return res.status(500).json({ success: false, message: "Failed to send OTP" });
     }
 
     res.json({
       success: true,
-      message: 'OTP sent successfully',
+      message: "OTP sent successfully. Your redeem code will be activated after verification.",
       email,
     });
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error("Signup error:", error);
     res.status(500).json({
       success: false,
-      message: 'Signup failed',
+      message: "Signup failed",
     });
   }
 };
-    
+
+
+
+
     const getLogin = (req, res) => {
         try {
             res.render('user/login')

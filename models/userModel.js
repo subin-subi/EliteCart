@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 const userSchema = new mongoose.Schema(
   {
@@ -30,7 +31,6 @@ const userSchema = new mongoose.Schema(
       default: true
     },
     
-    // OTP verification fields
     otp: {
       type: String,
       default: null
@@ -68,5 +68,23 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// ---------- Generate unique redeem code before saving ----------
+userSchema.pre("save", async function (next) {
+  if (!this.redeemCode) {
+    let uniqueCodeFound = false;
+    while (!uniqueCodeFound) {
+      const code = crypto.randomBytes(4).toString("hex").toUpperCase(); 
+      const existing = await mongoose.models.User.findOne({ redeemCode: code });
+      if (!existing) {
+        this.redeemCode = code;
+        uniqueCodeFound = true;
+      }
+    }
+  }
+  next();
+});
+
+
 
 export default mongoose.model("User", userSchema);

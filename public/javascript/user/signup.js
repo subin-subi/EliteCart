@@ -187,94 +187,103 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Form submit handler
-  form.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    let hasErrors = false;
+ form.addEventListener('submit', async function (e) {
+  e.preventDefault();
+  let hasErrors = false;
 
-    // Clear previous errors
-    const errorElements = document.querySelectorAll('[id$="Error"]');
-    errorElements.forEach(el => el.classList.add('hidden'));
+  // Clear previous errors
+  const errorElements = document.querySelectorAll('[id$="Error"]');
+  errorElements.forEach(el => el.classList.add('hidden'));
 
-    generalError.classList.add('hidden');
+  generalError.classList.add('hidden');
 
-    const name = document.getElementById('name').value.trim();
-    const mobileNo = document.getElementById('mobileNo').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
+  const name = document.getElementById('name').value.trim();
+  const mobileNo = document.getElementById('mobileNo').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+  const redeemCode = document.getElementById('redeemCode')?.value.trim(); // ✅ optional field
 
-    if (!name || name.length < 3 || name.length > 10) {
-      showError('nameError', 'Name must be between 3 and 10 characters');
-      hasErrors = true;
-    } else if (!/^[a-zA-Z\s]+$/.test(name)) {
-      showError('nameError', 'Name can only contain letters and spaces');
-      hasErrors = true;
-    }
+  // Validation
+  if (!name || name.length < 3 || name.length > 10) {
+    showError('nameError', 'Name must be between 3 and 10 characters');
+    hasErrors = true;
+  } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+    showError('nameError', 'Name can only contain letters and spaces');
+    hasErrors = true;
+  }
 
-    if (!/^\d{10}$/.test(mobileNo)) {
-      showError('mobileNoError', 'Mobile number must be 10 digits');
-      hasErrors = true;
-    }
+  if (!/^\d{10}$/.test(mobileNo)) {
+    showError('mobileNoError', 'Mobile number must be 10 digits');
+    hasErrors = true;
+  }
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showError('emailError', 'Please enter a valid email address');
-      hasErrors = true;
-    }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showError('emailError', 'Please enter a valid email address');
+    hasErrors = true;
+  }
 
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      showError('passwordError', passwordValidation.message);
-      hasErrors = true;
-    }
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.isValid) {
+    showError('passwordError', passwordValidation.message);
+    hasErrors = true;
+  }
 
-    if (password !== confirmPassword) {
-      showError('confirmPasswordError', 'Passwords do not match');
-      hasErrors = true;
-    }
+  if (password !== confirmPassword) {
+    showError('confirmPasswordError', 'Passwords do not match');
+    hasErrors = true;
+  }
 
-    if (hasErrors) return;
+  if (hasErrors) return;
 
-    // Disable submit button and show loading spinner
-    const submitButton = form.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    loadingSpinner.classList.remove('hidden');
+  // Disable submit button and show loading spinner
+  const submitButton = form.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  loadingSpinner.classList.remove('hidden');
 
-    try {
-      const response = await fetch('/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, mobileNo, email, password }),
-      });
+  try {
+    const response = await fetch('/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        mobileNo,
+        email,
+        password,
+        redeemCode: redeemCode || null, // ✅ Include redeem code if present
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      loadingSpinner.classList.add('hidden');
-      submitButton.disabled = false;
+    loadingSpinner.classList.add('hidden');
+    submitButton.disabled = false;
 
-      if (data.success) {
-        // Clear OTP inputs and errors
-        otpInputs.forEach(input => input.value = '');
-        otpError.classList.add('hidden');
-        otpInputs[0].focus();
+    if (data.success) {
+      // Clear OTP inputs and errors
+      otpInputs.forEach(input => input.value = '');
+      otpError.classList.add('hidden');
+      otpInputs[0].focus();
 
-        // Show OTP modal
-        otpModal.classList.remove('hidden');
-        otpModal.classList.add('flex');
+      // Show OTP modal
+      otpModal.classList.remove('hidden');
+      otpModal.classList.add('flex');
 
-        // Start OTP timer (2 minutes = 120 seconds)
-        startOTPTimer(120);
-      } else {
-        generalError.textContent = data.message || 'Signup failed';
-        generalError.classList.remove('hidden');
-      }
-    } catch (error) {
-      loadingSpinner.classList.add('hidden');
-      submitButton.disabled = false;
-      console.error('Signup error:', error);
-      generalError.textContent = 'Something went wrong! Please try again.';
+      // Start OTP timer (2 minutes = 120 seconds)
+      startOTPTimer(120);
+    } else {
+      generalError.textContent = data.message || 'Signup failed';
       generalError.classList.remove('hidden');
     }
-  });
+  } catch (error) {
+    loadingSpinner.classList.add('hidden');
+    submitButton.disabled = false;
+    console.error('Signup error:', error);
+    generalError.textContent = 'Something went wrong! Please try again.';
+    generalError.classList.remove('hidden');
+  }
+});
+
 
   // OTP verification button
   document.getElementById('verifyOtp').addEventListener('click', async () => {
@@ -394,4 +403,45 @@ document.addEventListener('DOMContentLoaded', () => {
       otpModal.classList.remove('flex');
     });
   }
+});
+
+
+/////////////////////////otp copy past //////////////
+const otpInputs = document.querySelectorAll(".otp-input");
+
+otpInputs.forEach((input, index) => {
+  // Allow only numbers
+  input.addEventListener("input", (e) => {
+    const value = e.target.value.replace(/\D/g, ""); // remove non-digits
+    e.target.value = value;
+
+    if (value && index < otpInputs.length - 1) {
+      otpInputs[index + 1].focus();
+    }
+  });
+
+  // Handle backspace
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && input.value === "" && index > 0) {
+      otpInputs[index - 1].focus();
+    }
+  });
+});
+
+//  Handle paste on any OTP box
+otpInputs[0].parentElement.addEventListener("paste", (e) => {
+  e.preventDefault();
+  const pasteData = e.clipboardData.getData("text").trim();
+  const digits = pasteData.replace(/\D/g, ""); // Only numbers
+
+  if (!digits) return;
+
+  // Fill each input
+  otpInputs.forEach((inp, i) => {
+    inp.value = digits[i] || "";
+  });
+
+  // Move focus to last filled
+  const filledIndex = Math.min(digits.length, otpInputs.length) - 1;
+  if (filledIndex >= 0) otpInputs[filledIndex].focus();
 });

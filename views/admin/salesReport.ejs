@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Google Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+  />
+
+  <!-- Flatpickr CSS (Theme should come AFTER base CSS) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css" />
+
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <!-- Bootstrap Bundle (JS + Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body >
+
+<body class="bg-white text-black min-h-screen flex">
+
+  <!-- Sidebar -->
+  <div class="w-64 hidden md:block bg-black text-white p-4">
+    <%- include('../partials/sidebar') %>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 p-6 space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <h2 class="text-2xl sm:text-3xl font-bold">Sales Report</h2>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="downloadReport('pdf')" class="border border-black text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition">
+          <i class="bi bi-filetype-pdf"></i> Download Full Period PDF
+        </button>
+        <button onclick="downloadReport('excel')" class="border border-black text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition">
+          <i class="bi bi-filetype-csv"></i> Download Full Period Excel
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-black text-white p-5 rounded-2xl">
+      <div class="grid md:grid-cols-4 gap-4 items-end">
+        <div>
+          <label class="block mb-2">Range</label>
+          <select id="range" onchange="toggleCustomDates()" class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-600">
+            <option value="day" <%= range==='day'?'selected':'' %>>1 Day</option>
+            <option value="week" <%= range==='week'?'selected':'' %>>1 Week</option>
+            <option value="month" <%= range==='month'?'selected':'' %>>1 Month</option>
+            <option value="year" <%= range==='year'?'selected':'' %>>1 Year</option>
+            <option value="custom" <%= range==='custom'?'selected':'' %>>Custom</option>
+          </select>
+        </div>
+
+       <div>
+  <label class="block mb-2 font-medium text-gray-800">Start</label>
+  <div class="relative">
+    <input
+      id="startDate"
+      type="text"
+      value="<%= startDate || '' %>"
+      placeholder="Select start date"
+      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-gray-600"
+    />
+    <i
+      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+      onclick="startPicker.open()"
+    ></i>
+  </div>
+       </div>
+
+<div>
+  <label class="block mb-2 font-medium text-gray-800">End</label>
+  <div class="relative">
+    <input
+      id="endDate"
+      type="text"
+      value="<%= endDate || '' %>"
+      placeholder="Select end date"
+      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-gray-600"
+    />
+    <i
+      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+      onclick="endPicker.open()"
+    ></i>
+  </div>
+</div>
+
+
+      <div class="flex gap-2">
+  <!-- Apply Button -->
+  <button
+    onclick="applyFilters()"
+    class="flex-1 border border-white bg-white text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition font-medium"
+  >
+    <i class="bi bi-funnel"></i> Apply
+  </button>
+
+  <!-- Clear Button -->
+  <button
+    onclick="clearFilters()"
+    class="border border-gray-500 bg-gray-100 text-black px-4 py-2 rounded-lg hover:bg-gray-800 hover:text-white transition font-medium"
+  >
+    <i class="bi bi-x-circle"></i> Clear
+  </button>
+</div>
+    
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="grid sm:grid-cols-3 gap-4">
+      <div class="bg-black text-white p-4 rounded-2xl flex justify-between">
+        <span>Overall Sales Count</span>
+        <span class="font-bold"><%= metrics.count %></span>
+      </div>
+
+      <div class="bg-black text-white p-4 rounded-2xl flex justify-between">
+        <span>Overall Order Amount</span>
+        <span class="font-bold">₹<%= metrics.amount %></span>
+      </div>
+
+      <div class="bg-black text-white p-4 rounded-2xl flex justify-between">
+        <span>Overall Discount</span>
+        <span class="font-bold">₹<%= metrics.discount %></span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-black text-white p-5 rounded-2xl overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead>
+          <tr class="bg-gray-900 text-white">
+            <th class="p-3">Order ID</th>
+            <th class="p-3">Date</th>
+            <th class="p-3">Customer</th>
+            <th class="p-3">Payment</th>
+            <th class="p-3">Status</th>
+            <th class="p-3">Products</th>
+            <th class="p-3">Subtotal</th>
+            <th class="p-3">Discount</th>
+            <th class="p-3">Shipping</th>
+            <th class="p-3">Grand Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-600">
+          <% orders.forEach(o => { %>
+            <tr class="hover:bg-gray-800 transition">
+              <td class="p-3 font-semibold"><%= o.orderId %></td>
+              <td class="p-3"><%= new Date(o.createdAt).toLocaleString('en-IN') %></td>
+              <td class="p-3">
+                <% if (o.userId) { %>
+                  <div><%= o.userId.name %></div>
+                  <div class="text-gray-400 text-xs"><%= o.userId.email %></div>
+                <% } else { %>
+                  <div class="text-gray-400">[User Deleted]</div>
+                <% } %>
+              </td>
+              <td class="p-3"><%= o.paymentMethod %></td>
+              <td class="p-3"><%= o.orderStatus %></td>
+              <td class="p-3 text-sm">
+                <% o.items.forEach(item => { %>
+                  <div><%= item.productId.name %> (Qty: <%= item.quantity %>)</div>
+                <% }) %>
+              </td>
+              <td class="p-3">₹<%= o.subtotal %></td>
+              <td class="p-3">₹<%= o.discount %></td>
+              <td class="p-3">₹<%= o.shippingCharge %></td>
+              <td class="p-3 font-semibold">₹<%= o.grandTotal %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="flex justify-between items-center mt-6 text-sm">
+        <div>
+          Page <%= currentPage %> of <%= totalPages %> (<%= totalOrders %> orders)
+        </div>
+        <div class="flex gap-2">
+          <% if (currentPage > 1) { %>
+            <a class="px-3 py-1 border border-white text-white rounded hover:bg-white hover:text-black transition"
+              href="?<%- (()=>{ const p=new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(urlQuery||'')), page:String(currentPage-1) }); return p.toString(); })() %>">Previous</a>
+          <% } %>
+          <% if (currentPage < totalPages) { %>
+            <a class="px-3 py-1 border border-white text-white rounded hover:bg-white hover:text-black transition"
+              href="?<%- (()=>{ const p=new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(urlQuery||'')), page:String(currentPage+1) }); return p.toString(); })() %>">Next</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+  
+  <script>
+    function applyFilters(){
+      const params = new URLSearchParams();
+      const range = document.getElementById('range').value;
+      params.append('range', range);
+      if(range === 'custom'){
+        const s = document.getElementById('startDate').value;
+        const e = document.getElementById('endDate').value;
+        if(s) params.append('startDate', s);
+        if(e) params.append('endDate', e);
+      }
+      window.location.href = '/admin-sales-report?' + params.toString();
+    }
+
+    function clearFilters(){
+      window.location.href = '/admin-sales-report';
+    }
+
+    function toggleCustomDates(){
+      const range = document.getElementById('range').value;
+      const disabled = range !== 'custom';
+      document.getElementById('startDate').disabled = disabled;
+      document.getElementById('endDate').disabled = disabled;
+    }
+    toggleCustomDates();
+
+    function downloadReport(type){
+      const params = new URLSearchParams(window.location.search);
+      params.delete('page');
+      params.delete('limit');
+      if(type==='pdf'){
+        window.location.href = '/admin-sales-report/download/pdf?' + params.toString();
+      }else{
+        window.location.href = '/admin-sales-report/download/excel?' + params.toString();
+      }
+    }
+  </script>
+
+  <script>
+  
+    const startPicker = flatpickr("#startDate", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      allowInput: true
+    });
+
+    const endPicker = flatpickr("#endDate", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      allowInput: true
+    });
+ 
+</script>
+
+
+</body>
+</html>

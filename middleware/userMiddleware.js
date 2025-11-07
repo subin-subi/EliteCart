@@ -1,6 +1,7 @@
 import userModel from "../models/userModel.js"
 import Product from "../models/productModel.js";
 
+
 const checkBlocked = async (req, res, next) => {
     try {
         const productId = req.params.id;
@@ -76,18 +77,11 @@ const checkSession = async (req, res, next) => {
         }
     }
 
-const noBack = (req, res, next) => {
-  // Prevent caching
-  res.header("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
-  res.header("Pragma", "no-cache");
-  res.header("Expires", "0"); // Proxies
-
-  // Prevent accessing previous page after logout
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-
-  next();
+ const noCache = (req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+next();
 };
 
 
@@ -101,7 +95,7 @@ const requireLogin = (req, res, next) => {
 export default { 
     isLogin, 
     checkSession ,
-    noBack,
+    noCache,
     requireLogin,
     checkBlocked
 }

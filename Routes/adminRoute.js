@@ -10,7 +10,7 @@ import addproductController from "../controllers/adminController/addproductContr
 import orderController from "../controllers/adminController/orderController.js";
 import couponController from "../controllers/adminController/couponController.js"
 import offerController from "../controllers/adminController/offerController.js"
-
+import salesReportController from "../controllers/adminController/salesReportController.js";
 
 
 const router = express.Router();
@@ -79,4 +79,8 @@ router.post("/add-offer",offerController.addOffer)
 router.post('/offer/toggle-status',offerController.toggleOffer)
 router.post("/edit-offer",offerController.editOffer)
 
+
+
+
+router.get("/salesreport", salesReportController.getSalesReport)
 export default router;

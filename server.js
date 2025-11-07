@@ -8,6 +8,7 @@ import userRoute from "./Routes/userRoute.js";
 import adminRoute from "./Routes/adminRoute.js"
 import MongoStore from "connect-mongo";
 import startOfferCron from "./utils/cronjob.js"
+
 startOfferCron()
 dotenv.config();
 connectDB();
@@ -22,7 +23,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware
+
 
 app.use(
     session({
