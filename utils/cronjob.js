@@ -15,11 +15,11 @@ import Coupon from "../models/couponModel.js";
       await Offer.updateMany({ startAt: { $gt: now } }, { $set: { isActive: false } });
 
             // Activate coupons within window
-      await Coupon.updateMany({ startAt: { $lte: now }, endAt: { $gte: now }, isNonBlocked: true }, { $set: { isActive: true } });
+      await Coupon.updateMany({ startDate: { $lte: now }, endAt: { $gte: now }, isNonBlocked: true }, { $set: { isActive: true } });
       // Deactivate coupons past end
-      await Coupon.updateMany({ endAt: { $lt: now } }, { $set: { isActive: false } });
+      await Coupon.updateMany({ expiryDate: { $lt: now } }, { $set: { isActive: false } });
       // Deactivate coupons not yet started
-      await Coupon.updateMany({ startAt: { $gt: now } }, { $set: { isActive: false } });
+      await Coupon.updateMany({ startDate: { $gt: now } }, { $set: { isActive: false } });
     } catch (err) {
       console.error("Offer cron error:", err);
     }

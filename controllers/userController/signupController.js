@@ -205,6 +205,7 @@ if (redeemCode) {
 
             const { email, password } = req.body;
             
+            
             // Server-side validation
             if (!email || !password) {
                 return res.status(400).json({
@@ -224,6 +225,7 @@ if (redeemCode) {
     
             // Find user
             const user = await userSchema.findOne({ email });
+           
             // Check if user exists
             if (!user) {
                 return res.status(400).json({
@@ -258,6 +260,7 @@ if (redeemCode) {
     
             // Verify password
             const isMatch = await bcrypt.compare(password, user.password);
+      
             if (!isMatch) {
                 return res.status(400).json({
                     success: false,
