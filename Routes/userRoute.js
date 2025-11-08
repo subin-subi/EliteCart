@@ -97,6 +97,7 @@ route.delete("/cart/remove/:itemId",cartController.removeProduct)
 route.get("/checkout/cart", checkoutController.getCartCheckout)
 route.post('/select-address',checkoutController.selectAddres)
 route.post('/place-order',checkoutController.placeOrder)
+route.post("/create-razorpay-order",checkoutController.createRazorpayOrderForUser)
 
 
 route.get("/wishlist",wishlistController.getWishlist)

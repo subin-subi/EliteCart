@@ -6,6 +6,10 @@
   <title>Checkout</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body class="bg-gray-100 pt-16 sm:pt-20">
@@ -90,6 +94,7 @@
   <div class="flex justify-between text-lg">
     <span>Subtotal:</span>
     <span id="subtotalAmount">₹<%= cart.reduce((sum, item) => sum + item.total, 0).toLocaleString() %></span>
+    <%console.log()%>
   </div>
 
   <!-- Discount -->
@@ -156,29 +161,56 @@
         </section>
 
         <!-- 💳 Payment Options -->
-        <section class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-lg font-semibold mb-4 text-gray-800">Payment Options</h2>
-          <form id="payment-form" class="space-y-3 flex flex-col">
-            <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
-              <input type="radio" name="payment" value="UPI" class="w-4 h-4 accent-green-600">
-              <span>UPI</span>
-            </label>
-            <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
-              <input type="radio" name="payment" value="Wallet" class="w-4 h-4 accent-green-600">
-              <span>Wallet</span>
-            </label>
-            <label class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer">
-              <input type="radio" name="payment" value="COD" checked class="w-4 h-4 accent-green-600">
-              <span>Cash On Delivery</span>
-            </label>
-          </form>
-        </section>
+   <section class="bg-white p-6 rounded-lg shadow-md mb-4">
+  <h2 class="text-lg font-semibold mb-4 text-gray-800">Payment Method</h2>
+
+  <form id="payment-form" class="space-y-3 flex flex-col">
+    <!-- Cash on Delivery -->
+    <label for="cod" class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer hover:bg-gray-200 transition">
+      <input
+        type="radio"
+        name="paymentMethod"
+        id="cod"
+        value="cod"
+        class="w-4 h-4 accent-green-600"
+        <%- subtotal > 1000 ? "disabled" : "checked" %>
+      >
+      <span class="font-semibold text-gray-700">Cash on Delivery</span>
+    </label>
+
+    <!-- Online Payment (Razorpay) -->
+    <label for="razorpayOption" class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer hover:bg-gray-200 transition">
+      <input
+        type="radio"
+        name="paymentMethod"
+        id="razorpayOption"
+        value="razorpay"
+        class="w-4 h-4 accent-green-600"
+        <%- subtotal > 1000 ? "checked" : "" %>
+      >
+      <span class="font-semibold text-gray-700">Online Payment</span>
+    </label>
+
+    <!-- Wallet -->
+    <label for="walletOption" class="flex items-center gap-3 bg-gray-100 rounded-full px-5 py-2 cursor-pointer hover:bg-gray-200 transition">
+      <input
+        type="radio"
+        name="paymentMethod"
+        id="walletOption"
+        value="wallet"
+        class="w-4 h-4 accent-green-600"
+      >
+      <span class="font-semibold text-gray-700">Wallet</span>
+    </label>
+  </form>
+</section>
+
 
         <!--Buy Now Button -->
         <div class="flex justify-center">
           <button 
             class="bg-black text-white text-lg px-10 py-3 rounded-full hover:bg-gray-800 transition w-full"
-            onclick="submitCheckout()"
+            onclick="placeOrder()"
           >
             Buy Now
           </button>
@@ -197,7 +229,431 @@
   <!-- Script remains same -->
   
 
+<script>
+let selectedAddressId = null;
 
+function openAddressModal() {
+  document.getElementById('addAddressModal').classList.remove('hidden');
+}
+
+const addresses = <%- JSON.stringify(addresses || []) %>;
+const container = document.getElementById('addressContainer');
+const itemsPerPage = 2;
+let currentPage = 1;
+
+function renderAddresses() {
+  container.innerHTML = '';
+  const ordered = [...addresses].reverse();
+  const visible = ordered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  visible.forEach(addr => {
+    const div = document.createElement('div');
+    div.className = `
+      relative bg-[#e6f2ef] rounded-lg p-4 w-[45%] shadow-md 
+      hover:shadow-lg transition border-2 border-transparent
+    `;
+    div.innerHTML = `
+      <div class="absolute top-3 right-3">
+        <input 
+          type="radio" 
+          name="selectedAddress" 
+          value="${addr._id}" 
+          onchange="selectAddress('${addr._id}')"
+          class="w-4 h-4 cursor-pointer accent-green-600"
+        >
+      </div>
+      <div class="text-sm leading-6 text-gray-700 mt-3">
+        <p class="font-semibold">${addr.name}</p>
+        <p>${addr.houseName}, ${addr.street}</p>
+        <p>${addr.city}, ${addr.state}, ${addr.country}</p>
+        <p>PIN: ${addr.pincode}</p>
+        <p>Contact: ${addr.mobile}</p>
+      </div>
+      <button 
+        onclick='editAddress(${JSON.stringify(addr)})'
+        class="absolute bottom-3 right-3 bg-black text-white text-xs px-4 py-1 rounded-full hover:bg-gray-800 transition"
+      >
+        Edit
+      </button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentPage * itemsPerPage < addresses.length) {
+    currentPage++;
+    renderAddresses();
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderAddresses();
+  }
+});
+
+renderAddresses();
+
+async function selectAddress(addressId) {
+  selectedAddressId = addressId;
+  document.querySelectorAll('#addressContainer > div').forEach(div => {
+    div.classList.remove('border-green-600', 'bg-green-50');
+    div.classList.add('border-transparent');
+  });
+
+  const selectedCard = document.querySelector(`input[value='${addressId}']`).closest('div.relative');
+  if (selectedCard) {
+    selectedCard.classList.add('border-green-600', 'bg-green-50');
+  }
+
+  try {
+    const res = await axios.post('/select-address', { addressId });
+    if (res.data.success) showToast('✅ Address selected successfully!', 'success');
+  } catch (err) {
+     console.error(err);
+      showToast('❌ Failed to select address.', 'error');
+  }
+}
+
+
+
+function showToast(message, type = 'success') {
+  // Create toast div
+  const toast = document.createElement('div');
+  toast.textContent = message;
+
+  // Style for toast
+  toast.className = `fixed bottom-5 right-5 px-4 py-2 rounded-md shadow-lg text-white text-sm transition-all duration-500 z-50 ${
+    type === 'success' ? 'bg-green-600' : 'bg-red-600'
+  }`;
+
+  document.body.appendChild(toast);
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
+}
+
+///////////////////////////////coupon adding ///////////////////////////////////
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const applyBtn = document.getElementById("applyCouponBtn");
+  const removeBtn = document.getElementById("removeCouponBtn");
+  const couponSelect = document.getElementById("couponSelect");
+  const message = document.getElementById("couponMessage");
+  const discountSection = document.getElementById("discountSection");
+  const discountAmount = document.getElementById("discountAmount");
+  const totalElement = document.getElementById("grandTotal");
+
+  let grandTotal = <%= cart.reduce((sum, item) => sum + item.total, 0) + (shippingCost || 0) %>;
+  let currentDiscount = 0;
+  let finalTotal = grandTotal;
+
+  const currentPage = window.location.pathname;
+
+  // ✅ Check for saved coupon in sessionStorage
+  const savedCoupon = JSON.parse(sessionStorage.getItem("appliedCoupon") || "{}");
+
+  // ✅ Only restore if same page
+  if (savedCoupon.page === currentPage) {
+    applyCouponLogic(savedCoupon.couponCode, savedCoupon.discountValue, savedCoupon.discountType);
+    setSelectedCoupon(savedCoupon.couponCode);
+  } else {
+    // Clear if coupon was for another route
+    sessionStorage.removeItem("appliedCoupon");
+  }
+
+  // ✅ Function to set dropdown value
+  function setSelectedCoupon(code) {
+    for (let i = 0; i < couponSelect.options.length; i++) {
+      if (couponSelect.options[i].value === code) {
+        couponSelect.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
+  // ✅ Function to apply coupon
+  function applyCouponLogic(code, discountValue, discountType) {
+    discountValue = parseFloat(discountValue || 0);
+    currentDiscount =
+      discountType === "percentage"
+        ? Math.floor((grandTotal * discountValue) / 100)
+        : discountValue;
+
+    if (currentDiscount > grandTotal) currentDiscount = grandTotal;
+
+    finalTotal = grandTotal - currentDiscount;
+    discountAmount.textContent = `- ₹${currentDiscount.toFixed(2)}`;
+    discountSection.classList.remove("hidden");
+
+    message.textContent = `Coupon "${code}" applied successfully!`;
+    message.classList.remove("hidden", "text-red-600");
+    message.classList.add("text-green-600");
+
+    applyBtn.classList.add("hidden");
+    removeBtn.classList.remove("hidden");
+
+    totalElement.textContent = `₹${finalTotal.toFixed(2)}`;
+  }
+
+  // ✅ Apply button click
+  applyBtn.addEventListener("click", () => {
+    const selected = couponSelect.options[couponSelect.selectedIndex];
+    const code = selected.value;
+    const discountValue = selected.dataset.discount;
+    const discountType = selected.dataset.type;
+
+    if (!code) {
+      message.textContent = "Please select a coupon.";
+      message.classList.remove("hidden", "text-green-600");
+      message.classList.add("text-red-600");
+      return;
+    }
+
+    applyCouponLogic(code, discountValue, discountType);
+
+    // Store only for current checkout page
+    sessionStorage.setItem(
+      "appliedCoupon",
+      JSON.stringify({ page: currentPage, couponCode: code, discountValue, discountType })
+    );
+  });
+
+  removeBtn.addEventListener("click", () => {
+    currentDiscount = 0;
+    finalTotal = grandTotal;
+    sessionStorage.removeItem("appliedCoupon");
+
+    discountSection.classList.add("hidden");
+    message.textContent = "Coupon removed successfully!";
+    message.classList.remove("hidden", "text-red-600");
+    message.classList.add("text-green-600");
+
+    removeBtn.classList.add("hidden");
+    applyBtn.classList.remove("hidden");
+    couponSelect.value = "";
+
+    totalElement.textContent = `₹${grandTotal.toFixed(2)}`;
+  });
+
+  // ✅ Optional: Auto-clear coupon when user leaves checkout route
+  window.addEventListener("beforeunload", () => {
+    const path = window.location.pathname;
+    if (!path.includes("checkout")) {
+      sessionStorage.removeItem("appliedCoupon");
+    }
+  });
+});
+
+
+///////////////////////////////////checkout ........../////////////////////////////////
+
+  async function placeOrder() {
+
+    const cart = <%- JSON.stringify(cart) %>;
+   const selectedPayment = document.querySelector("input[name=paymentMethod]:checked");
+if (!selectedPayment) {
+  showToast("Please select a payment method.", "warning");
+  return;
+}
+const paymentMethod = selectedPayment.value;
+
+  const couponSelect = document.getElementById("couponSelect");
+const coupon = couponSelect ? couponSelect.value.trim() : "";
+
+ 
+    
+    if(paymentMethod === "cod"){
+      try{
+        // Send request to backend
+        const res = await axios.post("/user-oder/oder", {
+          cart,
+          selectedAddressId,
+          paymentMethod,
+          coupon
+        });
+
+        if (res.data.success) {
+          //  Show success toast
+          showToast(res.data.message, "success");
+          sessionStorage.removeItem("coupon");
+          //  Redirect after short delay
+          setTimeout(() => {
+            window.location.href = res.data.redirect;
+          }, 2000);
+          return;
+        }
+      }catch(err){
+        console.error("Error placing order:", err);
+
+        //  Show error toast with backend message
+       const errorMessage = err.response?.data?.message || "Something went wrong. Please try again."; 
+        showToast(errorMessage, "danger");
+
+        //  If there are out-of-stock items, display them
+        if (err.response?.data?.outOfStockItems) {
+          console.warn("Out of stock items:", err.response.data.outOfStockItems);
+          err.response.data.outOfStockItems.forEach(item => {
+            showToast(`${item} is out of stock`, "warning");
+          });
+        }
+      }
+      
+    }else if(paymentMethod === "razorpay"){
+      try{
+
+         const urlParams = new URLSearchParams(window.location.search);
+    const subtotal = parseFloat(urlParams.get("total"));
+    console.log("su",subtotal)
+      const res = await axios.post('/create-razorpay-order', {
+  cart,
+  selectedAddressId,
+  paymentMethod,
+  coupon,
+  subtotal
+});
+
+        if (res.data.success) {
+          const { order, tempOrderId } = res.data;
+         
+          const options = {
+            key: '<%= process.env.RAZORPAY_KEY_ID %>',
+            amount: order.amount,
+            currency: order.currency,
+            name: 'EliteCart',
+            description: 'Order Payment',
+            order_id: order.id,
+            handler: async function (response) {
+              // Verify payment
+              try {
+                console.log("before varification to test res.data")
+                console.log(res.data);
+                console.log(response);
+                console.log("enterd varification");
+                const verifyRes = await axios.post('/user-oder/verify-razorpay-payment', {
+                  orderId: order.id,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                  tempOrderId
+                });
+                if (verifyRes.data.success) {
+                  sessionStorage.removeItem("coupon");
+                  console.log("success");
+                  console.log(verifyRes)
+                  window.location.href = `/user-oder/oder-status/${verifyRes.data.orderId}`;
+                } else {
+                  await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
+                  window.location.href = `/user-oder/payment-failed/${verifyRes.data.orderId}`;
+                  console.log("failed");
+                  console.log(verifyRes)
+                }
+              } catch (err) {
+                await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
+                window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+                console.log("catched");
+                console.log(verifyRes)
+              }
+            },
+            prefill: {
+              name: '<%= user.name %>',
+              email: '<%= user.email %>'
+            },
+            theme: { color: '#2e0e46' },
+            modal:{
+              ondismiss:async function(){
+                await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
+                window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+              }
+            }
+          };
+          const rzp = new window.Razorpay(options);
+
+          rzp.on("payment.failed",async function(response){
+            await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
+            window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+          })
+
+          rzp.open();
+        } else {
+          alert(res.data.message);
+        }
+
+      }catch(err){
+        console.log(err);
+       showToast(err.response?.data?.message || "Some Error in Razorpay", "danger");
+      }
+    }else if(paymentMethod ==="wallet"){
+        try{
+          // Send request to backend
+          const res = await axios.post("/user-oder/wallet-payment", {
+            cart,
+            selectedAddressId,
+            paymentMethod,
+            coupon
+          });
+
+          if (res.data.success) {
+            //  Show success toast
+            showToast(res.data.message, "success");
+            sessionStorage.removeItem("coupon");
+            //  Redirect after short delay
+            setTimeout(() => {
+              window.location.href = res.data.redirect;
+            }, 2000);
+            return;
+          }
+        }catch(err){
+          console.error("Error placing order:", err);
+
+          //  Show error toast with backend message
+          const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+          showToast(errorMessage, "danger");
+
+          //  If there are out-of-stock items, display them
+          if (err.response?.data?.outOfStockItems) {
+            console.warn("Out of stock items:", err.response.data.outOfStockItems);
+            err.response.data.outOfStockItems.forEach(item => {
+              showToast(`${item} is out of stock`, "warning");
+
+            });
+          }
+        }
+    }
+
+
+}
+  
+
+
+
+
+
+  function showToast(message, type = "info") {
+    const icon = type === "success" ? "success"
+               : type === "danger" ? "error"
+               : type === "warning" ? "warning"
+               : "info";
+
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: icon,
+      title: message,
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true
+    });
+  }
+
+
+</script>
 
 </body>
 </html>
