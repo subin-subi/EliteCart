@@ -46,17 +46,17 @@
   <!-- Main Content -->
   <div class="flex-1 p-6 space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-      <h2 class="text-2xl sm:text-3xl font-bold">Sales Report</h2>
-      <div class="flex flex-wrap gap-2">
-        <button onclick="downloadReport('pdf')" class="border border-black text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition">
-          <i class="bi bi-filetype-pdf"></i> Download Full Period PDF
-        </button>
-        <button onclick="downloadReport('excel')" class="border border-black text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition">
-          <i class="bi bi-filetype-csv"></i> Download Full Period Excel
-        </button>
-      </div>
-    </div>
+   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+  <h2 class="text-2xl sm:text-3xl font-bold">Sales Report</h2>
+  <div class="flex flex-wrap gap-2">
+    <button onclick="downloadReport('pdf')" class="border border-black text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition">
+      <i class="bi bi-filetype-pdf"></i> Download Full Period PDF
+    </button>
+    <button onclick="downloadReport('excel')" class="border border-black text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition">
+      <i class="bi bi-filetype-csv"></i> Download Full Period Excel
+    </button>
+  </div>
+</div>
 
     <!-- Filters -->
     <div class="bg-black text-white p-5 rounded-2xl">
@@ -72,41 +72,47 @@
           </select>
         </div>
 
-       <div>
-  <label class="block mb-2 font-medium text-gray-800">Start</label>
+
+<!-- Start Date -->
+<div>
+  <label for="startDate" class="block mb-2 font-medium text-white">Start Date</label>
   <div class="relative">
     <input
       id="startDate"
+      name="startDate"
       type="text"
-      value="<%= startDate || '' %>"
-      placeholder="Select start date"
-      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-gray-600"
+      placeholder="YYYY-MM-DD HH:mm"
+      value=""
+      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2
+             focus:ring-2 focus:ring-gray-600 focus:outline-none"
+      autocomplete="off"
     />
     <i
-      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-      onclick="startPicker.open()"
-    ></i>
-  </div>
-       </div>
-
-<div>
-  <label class="block mb-2 font-medium text-gray-800">End</label>
-  <div class="relative">
-    <input
-      id="endDate"
-      type="text"
-      value="<%= endDate || '' %>"
-      placeholder="Select end date"
-      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-gray-600"
-    />
-    <i
-      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-      onclick="endPicker.open()"
+      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
     ></i>
   </div>
 </div>
 
-
+<!-- End Date -->
+<div>
+  <label for="endDate" class="block mb-2 font-medium text-white">End Date</label>
+  <div class="relative">
+    <input
+      id="endDate"
+      name="endDate"
+      type="text"
+      placeholder="YYYY-MM-DD HH:mm"
+      value=""
+      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2
+             focus:ring-2 focus:ring-gray-600 focus:outline-none"
+      autocomplete="off"
+    />
+    <i
+      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+    ></i>
+  </div>
+</div>
+  
       <div class="flex gap-2">
   <!-- Apply Button -->
   <button
@@ -216,6 +222,26 @@
 
   
   <script>
+
+
+ // Optional: Validate date format (YYYY-MM-DD)
+  function validateDate(inputId) {
+    const input = document.getElementById(inputId);
+    input.addEventListener("blur", () => {
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (input.value && !datePattern.test(input.value)) {
+        alert("Please enter the date in YYYY-MM-DD format.");
+        input.focus();
+      }
+    });
+  }
+
+  validateDate("startDate");
+  validateDate("endDate");
+
+
+
+/////////////////////////////////////////////////////////////////
     function applyFilters(){
       const params = new URLSearchParams();
       const range = document.getElementById('range').value;
@@ -226,11 +252,11 @@
         if(s) params.append('startDate', s);
         if(e) params.append('endDate', e);
       }
-      window.location.href = '/admin-sales-report?' + params.toString();
+      window.location.href = '/admin/salesreport?' + params.toString();
     }
 
     function clearFilters(){
-      window.location.href = '/admin-sales-report';
+      window.location.href = '/admin/salesreport';
     }
 
     function toggleCustomDates(){
@@ -241,16 +267,52 @@
     }
     toggleCustomDates();
 
-    function downloadReport(type){
+   async function downloadReport(type) {
+    try {
       const params = new URLSearchParams(window.location.search);
       params.delete('page');
       params.delete('limit');
-      if(type==='pdf'){
-        window.location.href = '/admin-sales-report/download/pdf?' + params.toString();
-      }else{
-        window.location.href = '/admin-sales-report/download/excel?' + params.toString();
+
+      // Build endpoint based on type
+     const endpoint = type === 'pdf'
+      ? '/admin/salesreport/download/pdf?' + params.toString()
+      : '/admin/salesreport/download/excel?' + params.toString();
+
+
+      const response = await fetch(endpoint);
+
+      if (!response.ok) {
+        throw new Error('Failed to download ' + type.toUpperCase());
       }
+
+      // Convert response to Blob (binary file)
+      const blob = await response.blob();
+
+      // Create a temporary link element for download
+      const link = document.createElement('a');
+      const url = window.URL.createObjectURL(blob);
+      link.href = url;
+
+      // Set download filename
+      const today = new Date().toISOString().split('T')[0];
+      link.download = type === 'pdf'
+        ? `EliteCart_SalesReport_${today}.pdf`
+        : `EliteCart_SalesReport_${today}.xlsx`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Something went wrong while downloading the file!');
     }
+  }
+  
   </script>
 
   <script>

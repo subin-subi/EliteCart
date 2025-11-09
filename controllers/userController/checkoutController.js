@@ -101,12 +101,12 @@ const getCartCheckout = async (req, res) => {
     const shippingCost = finalTotal > 1000 ? 0 : 50;
     const payableTotal = finalTotal + shippingCost;
 
-    console.log("helo")
+  
     res.render("user/checkout", {
       user,
       cart: cartItems,
       addresses,
-      total: grandTotal,
+      total: payableTotal,
       subtotal: grandTotal, 
       finalTotal,
       discountAmount,
@@ -139,6 +139,7 @@ const selectAddres = async (req, res) => {
 
 const placeOrder = async (req, res) => {
   try {
+    console.log('triggered here')
     const userId = req.session.user;
     const { paymentMethod, addressId } = req.body;
 
@@ -248,8 +249,10 @@ const placeOrder = async (req, res) => {
 
 
 const createRazorpayOrderForUser = async (req, res) => {
+  console.log('function triggered')
   try {
-    const userId = req.user._id;
+    console.log("helo")
+    const userId = req.user.id;
     const { cart, selectedAddressId, paymentMethod, coupon, subtotal } = req.body;
     console.log( cart, selectedAddressId, paymentMethod, coupon, subtotal)
 
@@ -551,12 +554,16 @@ const createRazorpayOrderForUser = async (req, res) => {
 //   }
 // };
 
-
+const ff = (req, res) => {
+  console.log("JJJJ"); // This will appear in the server terminal, NOT browser console
+  res.json({ success: true, message: "COD order route hit!" });
+};
 
 
 export default {
   getCartCheckout,
   selectAddres,
   placeOrder,
-  createRazorpayOrderForUser
+  createRazorpayOrderForUser,
+  ff
  };

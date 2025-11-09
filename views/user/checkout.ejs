@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -94,7 +93,7 @@
   <div class="flex justify-between text-lg">
     <span>Subtotal:</span>
     <span id="subtotalAmount">₹<%= cart.reduce((sum, item) => sum + item.total, 0).toLocaleString() %></span>
-    <%console.log()%>
+
   </div>
 
   <!-- Discount -->
@@ -118,6 +117,8 @@
     <span>Grand Total:</span>
     <span id="grandTotal">
       ₹<%= (cart.reduce((sum, item) => sum + item.total, 0) + (shippingCost || 0)).toLocaleString() %>
+      
+     
     </span>
   </div>
 </div>
@@ -459,6 +460,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const cart = <%- JSON.stringify(cart) %>;
    const selectedPayment = document.querySelector("input[name=paymentMethod]:checked");
+  
 if (!selectedPayment) {
   showToast("Please select a payment method.", "warning");
   return;
@@ -472,8 +474,11 @@ const coupon = couponSelect ? couponSelect.value.trim() : "";
     
     if(paymentMethod === "cod"){
       try{
-        // Send request to backend
-        const res = await axios.post("/user-oder/oder", {
+        console.log( cart,
+          selectedAddressId,
+          paymentMethod,
+          coupon)
+        const res = await axios.post("/order-cod", {
           cart,
           selectedAddressId,
           paymentMethod,
@@ -510,15 +515,19 @@ const coupon = couponSelect ? couponSelect.value.trim() : "";
       try{
 
          const urlParams = new URLSearchParams(window.location.search);
+        
     const subtotal = parseFloat(urlParams.get("total"));
     console.log("su",subtotal)
-      const res = await axios.post('/create-razorpay-order', {
+const res = await axios.post('/create-razorpay-order', {
   cart,
   selectedAddressId,
   paymentMethod,
   coupon,
   subtotal
 });
+
+
+
 
         if (res.data.success) {
           const { order, tempOrderId } = res.data;
@@ -537,7 +546,7 @@ const coupon = couponSelect ? couponSelect.value.trim() : "";
                 console.log(res.data);
                 console.log(response);
                 console.log("enterd varification");
-                const verifyRes = await axios.post('/user-oder/verify-razorpay-payment', {
+                const verifyRes = await axios.post('/verify-razorpay-payment', {
                   orderId: order.id,
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
@@ -547,16 +556,16 @@ const coupon = couponSelect ? couponSelect.value.trim() : "";
                   sessionStorage.removeItem("coupon");
                   console.log("success");
                   console.log(verifyRes)
-                  window.location.href = `/user-oder/oder-status/${verifyRes.data.orderId}`;
+                  window.location.href = `/oder-status/${verifyRes.data.orderId}`;
                 } else {
-                  await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
-                  window.location.href = `/user-oder/payment-failed/${verifyRes.data.orderId}`;
+                  await axios.patch(`/payment-failed/${tempOrderId}`)
+                  window.location.href = `/payment-failed/${verifyRes.data.orderId}`;
                   console.log("failed");
                   console.log(verifyRes)
                 }
               } catch (err) {
-                await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
-                window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+                await axios.patch(`/payment-failed/${tempOrderId}`)
+                window.location.href = `/payment-failed/${tempOrderId}`;
                 console.log("catched");
                 console.log(verifyRes)
               }
@@ -568,16 +577,16 @@ const coupon = couponSelect ? couponSelect.value.trim() : "";
             theme: { color: '#2e0e46' },
             modal:{
               ondismiss:async function(){
-                await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
-                window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+                await axios.patch(`/payment-failed/${tempOrderId}`)
+                window.location.href = `/payment-failed/${tempOrderId}`;
               }
             }
           };
           const rzp = new window.Razorpay(options);
 
           rzp.on("payment.failed",async function(response){
-            await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
-            window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+            await axios.patch(`/payment-failed/${tempOrderId}`)
+            window.location.href = `/payment-failed/${tempOrderId}`;
           })
 
           rzp.open();
@@ -592,7 +601,7 @@ const coupon = couponSelect ? couponSelect.value.trim() : "";
     }else if(paymentMethod ==="wallet"){
         try{
           // Send request to backend
-          const res = await axios.post("/user-oder/wallet-payment", {
+          const res = await axios.post("/wallet-payment", {
             cart,
             selectedAddressId,
             paymentMethod,
