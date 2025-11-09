@@ -1,95 +1,57 @@
 import Order from "../../models/orderModel.js";
 import PDFDocument from "pdfkit"
 import HTTP_STATUS from "../../utils/responseHandler.js";
+import ExcelJS from "exceljs";
 
 
 
-//   try {
-//     // Get query params (range, custom dates, pagination)
-//     const { range, startDate, endDate, page = 1 } = req.query;
-//     const limit = 10;
-//     const skip = (page - 1) * limit;
 
-//     let filter = {};
 
-//     // Date filter based on selected range
-//     const now = new Date();
-//     if (range === "day") {
-//       filter.createdAt = { $gte: new Date(now - 24 * 60 * 60 * 1000) };
-//     } else if (range === "week") {
-//       filter.createdAt = { $gte: new Date(now - 7 * 24 * 60 * 60 * 1000) };
-//     } else if (range === "month") {
-//       filter.createdAt = { $gte: new Date(now.setMonth(now.getMonth() - 1)) };
-//     } else if (range === "year") {
-//       filter.createdAt = { $gte: new Date(now.setFullYear(now.getFullYear() - 1)) };
-//     } else if (range === "custom" && startDate && endDate) {
-//       filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
-//     }
-
-//     const totalOrders = await Order.countDocuments(filter);
-//     const totalPages = Math.ceil(totalOrders / limit);
-
-//     const orders = await Order.find(filter)
-//       .populate("userId")
-//       .populate("items.productId")
-//       .sort({ createdAt: -1 })
-//       .skip(skip)
-//       .limit(limit);
-
-//     // Metrics
-//     const metrics = {
-//       count: orders.length,
-//       amount: orders.reduce((acc, o) => acc + o.grandTotal, 0),
-//       discount: orders.reduce((acc, o) => acc + o.discount, 0),
-//     };
-
-//     res.render("admin/salesReport", {
-//       orders,
-//       metrics,
-//       currentPage: Number(page),
-//       totalPages,
-//       totalOrders,
-//       range: range || "day",
-//       startDate: startDate || "",
-//       endDate: endDate || "",
-//       urlQuery: req.url.split("?")[1] || "",
-//     });
-//   } catch (err) {
-//     console.error("Error loading sales report:", err);
-//     res.status(500).send("Server Error");
-//   }
-// };
 const getSalesReport = async (req, res) => {
-    try {
-        const {
-            range = "day", 
-            startDate,
-            endDate,
-            page = 1,
-            limit = 20
-        } = req.query;
+  try {
+    const {
+      range,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10
+    } = req.query;
 
-        const { query, start, end } = buildDateFilter(range, startDate, endDate);
+    let query = {}; // Default: fetch all
+    let start = null;
+    let end = null;
 
-        const pagination = await fetchSalesData(query, Number(page), Number(limit));
-        const metrics = calculateMetrics(pagination.items);
-
-        const urlQuery = new URLSearchParams(req.query).toString();
-        res.render("admin/salesReport", {
-            range,
-            startDate: start ? start.toISOString().slice(0, 16) : "",
-            endDate: end ? end.toISOString().slice(0, 16) : "",
-            currentPage: pagination.currentPage,
-            totalPages: pagination.totalPages,
-            totalOrders: pagination.totalItems,
-            orders: pagination.items,
-            metrics,
-            urlQuery
-        });
-    } catch (err) {
-        console.error("renderSalesReport error", err);
-        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", { status: 500, message: "Internal Server Error" });
+    // If range or dates are selected, apply filter
+    if (range || startDate || endDate) {
+      const filter = buildDateFilter(range || "custom", startDate, endDate);
+      query = filter.query;
+      start = filter.start;
+      end = filter.end;
     }
+
+    // Otherwise, no filter -> show all orders
+    const pagination = await fetchSalesData(query, Number(page), Number(limit));
+    const metrics = calculateMetrics(pagination.items);
+
+    const urlQuery = new URLSearchParams(req.query).toString();
+
+    res.render("admin/salesReport", {
+      range: range || "all",
+      startDate: start ? start.toISOString().slice(0, 16) : "",
+      endDate: end ? end.toISOString().slice(0, 16) : "",
+      currentPage: pagination.currentPage,
+      totalPages: pagination.totalPages,
+      totalOrders: pagination.totalItems,
+      orders: pagination.items,
+      metrics,
+      urlQuery
+    });
+  } catch (err) {
+    console.error("renderSalesReport error", err);
+    res
+      .status(500)
+      .render("error", { status: 500, message: "Internal Server Error" });
+  }
 };
 
 const getSalesReportData = async (req, res) => {
@@ -116,6 +78,7 @@ const getSalesReportData = async (req, res) => {
  const downloadSalesReportPdf = async (req, res) => {
     try {
         const { range = "day", startDate, endDate } = req.query;
+        console.log(range)
         const { query } = buildDateFilter(range, startDate, endDate);
         
         // Get ALL orders for the period (not paginated)
@@ -157,59 +120,62 @@ const getSalesReportData = async (req, res) => {
         doc.fontSize(14).text("DETAILED ORDERS", { underline: true });
         doc.moveDown(0.5);
 
-        orders.forEach((order, index) => {
-            // Check if we need a new page
-            if (doc.y > 650) {
-                doc.addPage();
-            }
+      orders.forEach((order) => {
+    // Check if we need a new page
+    if (doc.y > 650) {
+        doc.addPage();
+    }
 
-            // Order Header
-            doc.fontSize(12).text(`Order #${order.orderId}`, { underline: true });
-            doc.moveDown(0.3);
-            
-            // Order Details in two columns
-            const leftCol = 50;
-            const rightCol = 300;
-            let currentY = doc.y;
-            
-            // Left column - Basic info
-            doc.fontSize(10).text(`Date: ${new Date(order.createdAt).toLocaleString('en-IN')}`, leftCol, currentY);
-            doc.text(`Customer: ${order.userId.name}`, leftCol, currentY + 15);
-            doc.text(`Email: ${order.userId.email}`, leftCol, currentY + 30);
-            doc.text(`Payment: ${order.paymentMethod}`, leftCol, currentY + 45);
-            doc.text(`Status: ${order.orderStatus}`, leftCol, currentY + 60);
-            
-            // Right column - Financial info
-            doc.text(`Subtotal: ₹${order.subtotal}`, rightCol, currentY);
-            doc.text(`Discount: ₹${order.discount}`, rightCol, currentY + 15);
-            doc.text(`Shipping: ₹${order.shippingCharge}`, rightCol, currentY + 30);
-            doc.fontSize(12).text(`Grand Total: ₹${order.grandTotal}`, rightCol, currentY + 45);
-            
-            // Products section
-            doc.moveDown(1);
-            doc.fontSize(11).text("Products:", { underline: true });
-            doc.moveDown(0.3);
-            
-            let productY = doc.y;
-            order.items.forEach((item, itemIndex) => {
-                if (productY > 700) { // New page if needed for products
-                    doc.addPage();
-                    productY = 50;
-                }
-                
-                doc.fontSize(9).text(`• ${item.productId.name}`, 60, productY);
-                doc.text(`  Quantity: ${item.quantity}`, 60, productY + 12);
-                doc.text(`  Price: ₹${item.finalPrice} each`, 60, productY + 24);
-                doc.text(`  Total: ₹${item.total}`, 60, productY + 36);
-                
-                productY += 50; // Space for each product
-            });
-            
-            // Draw separator line
-            doc.moveDown(0.5);
-            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-            doc.moveDown(0.5);
-        });
+    doc.fontSize(12).text(`Order #${order.orderId}`, { underline: true });
+    doc.moveDown(0.3);
+
+    const leftCol = 50;
+    const rightCol = 300;
+    let currentY = doc.y;
+
+    const userName = order.userId?.name || "Unknown User";
+    const userEmail = order.userId?.email || "N/A";
+
+    // Left column - Basic info
+    doc.fontSize(10).text(`Date: ${new Date(order.createdAt).toLocaleString('en-IN')}`, leftCol, currentY);
+    doc.text(`Customer: ${userName}`, leftCol, currentY + 15);
+    doc.text(`Email: ${userEmail}`, leftCol, currentY + 30);
+    doc.text(`Payment: ${order.paymentMethod || "N/A"}`, leftCol, currentY + 45);
+    doc.text(`Status: ${order.orderStatus || "N/A"}`, leftCol, currentY + 60);
+
+    // Right column - Financial info
+    doc.text(`Subtotal: ₹${order.subtotal || 0}`, rightCol, currentY);
+    doc.text(`Discount: ₹${order.discount || 0}`, rightCol, currentY + 15);
+    doc.text(`Shipping: ₹${order.shippingCharge || 0}`, rightCol, currentY + 30);
+    doc.fontSize(12).text(`Grand Total: ₹${order.grandTotal || 0}`, rightCol, currentY + 45);
+
+    // Products section
+    doc.moveDown(1);
+    doc.fontSize(11).text("Products:", { underline: true });
+    doc.moveDown(0.3);
+
+    let productY = doc.y;
+    order.items.forEach((item) => {
+        if (productY > 700) {
+            doc.addPage();
+            productY = 50;
+        }
+
+        const productName = item.productId?.name || "Unknown Product";
+        doc.fontSize(9).text(`• ${productName}`, 60, productY);
+        doc.text(`  Quantity: ${item.quantity}`, 60, productY + 12);
+        doc.text(`  Price: ₹${item.finalPrice || 0} each`, 60, productY + 24);
+        doc.text(`  Total: ₹${item.total || 0}`, 60, productY + 36);
+
+        productY += 50;
+    });
+
+    // Draw separator line
+    doc.moveDown(0.5);
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.5);
+});
+
 
         doc.end();
     } catch (err) {
@@ -284,11 +250,133 @@ async function fetchSalesData(query, page, limit) {
 
 
 
+const downloadSalesReportExcel = async (req, res) => {
+  try {
+    const { range = "day", startDate, endDate } = req.query;
+    const { query } = buildDateFilter(range, startDate, endDate);
+
+    const orders = await Order.find(query)
+      .populate({ path: "userId", select: "name email" })
+      .populate({ path: "items.productId", select: "name" })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const metrics = calculateMetrics(orders);
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Sales Report");
+
+    // Header
+    sheet.addRow(["EliteCart SALES REPORT"]);
+    sheet.addRow([]);
+    sheet.addRow([`Report Period: ${range.toUpperCase()}`]);
+    if (startDate && endDate) {
+      sheet.addRow([
+        `Date Range: ${new Date(startDate).toLocaleDateString("en-IN")} to ${new Date(
+          endDate
+        ).toLocaleDateString("en-IN")}`,
+      ]);
+    }
+    sheet.addRow([`Generated On: ${new Date().toLocaleString("en-IN")}`]);
+    sheet.addRow([]);
+
+    // Summary
+    sheet.addRow(["SUMMARY"]);
+    sheet.addRow(["Total Orders", "Total Revenue", "Total Discount"]);
+    sheet.addRow([
+      metrics.count,
+      `₹${metrics.amount.toLocaleString()}`,
+      `₹${metrics.discount.toLocaleString()}`,
+    ]);
+    sheet.addRow([]);
+
+    // Detailed Orders
+    sheet.addRow(["DETAILED ORDERS"]);
+    sheet.addRow([
+      "Order ID",
+      "Date",
+      "Customer",
+      "Payment Method",
+      "Status",
+      "Subtotal",
+      "Discount",
+      "Shipping",
+      "Grand Total",
+    ]);
+
+    orders.forEach((order) => {
+      const userName = order.userId?.name || "Unknown User";
+      const userEmail = order.userId?.email || "N/A";
+      sheet.addRow([
+        order.orderId,
+        new Date(order.createdAt).toLocaleString("en-IN"),
+        `${userName} (${userEmail})`,
+        order.paymentMethod || "N/A",
+        order.orderStatus || "N/A",
+        `₹${order.subtotal || 0}`,
+        `₹${order.discount || 0}`,
+        `₹${order.shippingCharge || 0}`,
+        `₹${order.grandTotal || 0}`,
+      ]);
+    });
+
+    // Product details
+    sheet.addRow([]);
+    sheet.addRow(["PRODUCT DETAILS"]);
+    sheet.addRow(["Order ID", "Product Name", "Quantity", "Unit Price", "Total Price"]);
+
+    orders.forEach((order) => {
+      order.items.forEach((item) => {
+        const productName = item.productId?.name || "Unknown Product";
+        sheet.addRow([
+          order.orderId,
+          productName,
+          item.quantity || 0,
+          `₹${item.finalPrice || 0}`,
+          `₹${item.total || 0}`,
+        ]);
+      });
+    });
+
+    // Send Excel file
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=EliteCart_SalesReport_${range}_${new Date()
+        .toISOString()
+        .split("T")[0]}.xlsx`
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error("downloadSalesReportExcel error", err);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+
+
+
+function escapeCsv(value) {
+    if (value == null) return "";
+    const str = String(value).replace(/"/g, '""');
+    if (str.includes(",") || str.includes("\n") || str.includes("\r")) {
+        return `"${str}"`;
+    }
+    return str;
+}
+
+
 
 
 export default ({ 
   getSalesReport,
   downloadSalesReportPdf,
-  getSalesReportData
+  getSalesReportData,
+  downloadSalesReportExcel
 
 })

@@ -20,16 +20,13 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
   />
 
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-/>
+  <!-- Flatpickr CSS (Theme should come AFTER base CSS) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css" />
 
-<!-- Optional dark theme (looks great with your black background) -->
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
-/>
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
   <!-- Bootstrap Bundle (JS + Popper) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -77,37 +74,45 @@
 
 
 <!-- Start Date -->
-      <div>
-        <label for="startDate" class="block mb-2 font-medium text-white">Start Date</label>
-        <div class="relative">
-          <input
-            id="startDate"
-            name="startDate"
-            type="text"
-            placeholder="Select start date"
-            class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-600 focus:outline-none"
-            autocomplete="off"
-          />
-          <i class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-        </div>
-      </div>
+<div>
+  <label for="startDate" class="block mb-2 font-medium text-white">Start Date</label>
+  <div class="relative">
+    <input
+      id="startDate"
+      name="startDate"
+      type="text"
+      placeholder="YYYY-MM-DD HH:mm"
+      value=""
+      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2
+             focus:ring-2 focus:ring-gray-600 focus:outline-none"
+      autocomplete="off"
+    />
+    <i
+      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+    ></i>
+  </div>
+</div>
 
-      <!-- End Date -->
-      <div>
-        <label for="endDate" class="block mb-2 font-medium text-white">End Date</label>
-        <div class="relative">
-          <input
-            id="endDate"
-            name="endDate"
-            type="text"
-            placeholder="Select end date"
-            class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-600 focus:outline-none"
-            autocomplete="off"
-          />
-          <i class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-        </div>
-      </div>
-
+<!-- End Date -->
+<div>
+  <label for="endDate" class="block mb-2 font-medium text-white">End Date</label>
+  <div class="relative">
+    <input
+      id="endDate"
+      name="endDate"
+      type="text"
+      placeholder="YYYY-MM-DD HH:mm"
+      value=""
+      class="w-full bg-white text-black border border-gray-400 rounded-lg px-3 py-2
+             focus:ring-2 focus:ring-gray-600 focus:outline-none"
+      autocomplete="off"
+    />
+    <i
+      class="bi bi-calendar-date absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+    ></i>
+  </div>
+</div>
+  
       <div class="flex gap-2">
   <!-- Apply Button -->
   <button
@@ -241,16 +246,12 @@
       const params = new URLSearchParams();
       const range = document.getElementById('range').value;
       params.append('range', range);
-      if (range === 'custom') {
-    // Read actual values
-    const startInput = document.getElementById('startDate');
-    const endInput = document.getElementById('endDate');
-    const s = startInput.getAttribute('data-value') || startInput.value;
-    const e = endInput.getAttribute('data-value') || endInput.value;
-
-    if (s) params.append('startDate', s);
-    if (e) params.append('endDate', e);
-  }
+      if(range === 'custom'){
+        const s = document.getElementById('startDate').value;
+        const e = document.getElementById('endDate').value;
+        if(s) params.append('startDate', s);
+        if(e) params.append('endDate', e);
+      }
       window.location.href = '/admin/salesreport?' + params.toString();
     }
 
@@ -314,36 +315,22 @@
   
   </script>
 
- <!-- Include Flatpickr JS -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+  
+    const startPicker = flatpickr("#startDate", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      allowInput: true
+    });
 
-<script>
-  const startPicker = flatpickr("#startDate", {
-    enableTime: true,
-    dateFormat: "Y-m-d H:i",
-    altInput: true,
-    altFormat: "F j, Y - h:i K",
-    allowInput: true,
-    defaultHour: 0,
-    defaultMinute: 0,
-    onChange: function(selectedDates, dateStr) {
-      document.getElementById("startDate").setAttribute("data-value", dateStr);
-    }
-  });
-
-  const endPicker = flatpickr("#endDate", {
-    enableTime: true,
-    dateFormat: "Y-m-d H:i",
-    altInput: true,
-    altFormat: "F j, Y - h:i K",
-    allowInput: true,
-    defaultHour: 23,
-    defaultMinute: 59,
-    onChange: function(selectedDates, dateStr) {
-      document.getElementById("endDate").setAttribute("data-value", dateStr);
-    }
-  });
+    const endPicker = flatpickr("#endDate", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      allowInput: true
+    });
+ 
 </script>
+
 
 </body>
 </html>
