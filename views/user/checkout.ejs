@@ -246,6 +246,15 @@ function renderAddresses() {
   container.innerHTML = '';
   const ordered = [...addresses].reverse();
   const visible = ordered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  if (selectedAddressId) {
+  const radio = document.querySelector(`input[value='${selectedAddressId}']`);
+  if (radio) {
+    radio.checked = true;
+    const selectedCard = radio.closest('div.relative');
+    selectedCard.classList.add('border-green-600', 'bg-green-50');
+  }
+}
+
 
   visible.forEach(addr => {
     const div = document.createElement('div');
@@ -259,7 +268,7 @@ function renderAddresses() {
           type="radio" 
           name="selectedAddress" 
           value="${addr._id}" 
-          onchange="selectAddress('${addr._id}')"
+          onchange="window.selectAddress('${addr._id}')"
           class="w-4 h-4 cursor-pointer accent-green-600"
         >
       </div>
@@ -311,6 +320,7 @@ async function selectAddress(addressId) {
 
   try {
     const res = await axios.post('/select-address', { addressId });
+
     if (res.data.success) showToast('✅ Address selected successfully!', 'success');
   } catch (err) {
      console.error(err);
@@ -358,10 +368,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const currentPage = window.location.pathname;
 
-  // ✅ Check for saved coupon in sessionStorage
+  //  Check for saved coupon in sessionStorage
   const savedCoupon = JSON.parse(sessionStorage.getItem("appliedCoupon") || "{}");
 
-  // ✅ Only restore if same page
+  //  Only restore if same page
   if (savedCoupon.page === currentPage) {
     applyCouponLogic(savedCoupon.couponCode, savedCoupon.discountValue, savedCoupon.discountType);
     setSelectedCoupon(savedCoupon.couponCode);
@@ -370,7 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sessionStorage.removeItem("appliedCoupon");
   }
 
-  // ✅ Function to set dropdown value
+  //  Function to set dropdown value
   function setSelectedCoupon(code) {
     for (let i = 0; i < couponSelect.options.length; i++) {
       if (couponSelect.options[i].value === code) {
@@ -380,7 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ✅ Function to apply coupon
+  //  Function to apply coupon
   function applyCouponLogic(code, discountValue, discountType) {
     discountValue = parseFloat(discountValue || 0);
     currentDiscount =
@@ -404,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
     totalElement.textContent = `₹${finalTotal.toFixed(2)}`;
   }
 
-  // ✅ Apply button click
+  // Apply button click
   applyBtn.addEventListener("click", () => {
     const selected = couponSelect.options[couponSelect.selectedIndex];
     const code = selected.value;
@@ -456,190 +466,167 @@ document.addEventListener("DOMContentLoaded", () => {
 
 ///////////////////////////////////checkout ........../////////////////////////////////
 
-  async function placeOrder() {
+async function placeOrder() {
+  const cart = <%- JSON.stringify(cart) %>;
 
-    const cart = <%- JSON.stringify(cart) %>;
-   const selectedPayment = document.querySelector("input[name=paymentMethod]:checked");
   
-if (!selectedPayment) {
-  showToast("Please select a payment method.", "warning");
-  return;
-}
-const paymentMethod = selectedPayment.value;
+ const selectedAddress = document.querySelector("input[name='selectedAddress']:checked");
+const selectedAddressId = selectedAddress ? selectedAddress.value : null;
 
+  const selectedPayment = document.querySelector("input[name=paymentMethod]:checked");
+
+  
+  // ======= VALIDATION =======
+  if (!selectedAddressId) {
+    showToast("Please select an address before placing the order.", "warning");
+    return;
+  }
+
+  if (!selectedPayment) {
+    showToast("Please select a payment method.", "warning");
+    return;
+  }
+
+  const paymentMethod = selectedPayment.value;
   const couponSelect = document.getElementById("couponSelect");
-const coupon = couponSelect ? couponSelect.value.trim() : "";
+  const coupon = couponSelect ? couponSelect.value.trim() : "";
 
- 
-    
-    if(paymentMethod === "cod"){
-      try{
-        console.log( cart,
-          selectedAddressId,
-          paymentMethod,
-          coupon)
-        const res = await axios.post("/order-cod", {
-          cart,
-          selectedAddressId,
-          paymentMethod,
-          coupon
-        });
+  // ======= COD PAYMENT =======
+if (paymentMethod === "cod") {
+  try {
+    console.log("COD order payload:", { cart, selectedAddressId, paymentMethod, coupon });
 
-        if (res.data.success) {
-          //  Show success toast
-          showToast(res.data.message, "success");
-          sessionStorage.removeItem("coupon");
-          //  Redirect after short delay
-          setTimeout(() => {
-            window.location.href = res.data.redirect;
-          }, 2000);
-          return;
-        }
-      }catch(err){
-        console.error("Error placing order:", err);
+    const { data } = await axios.post("/checkout/order-cod", {
+      cart,
+      selectedAddressId,
+      paymentMethod,
+      coupon,
+    });
 
-        //  Show error toast with backend message
-       const errorMessage = err.response?.data?.message || "Something went wrong. Please try again."; 
-        showToast(errorMessage, "danger");
+    if (data.success) {
+      showToast(data.message, "success");
+      sessionStorage.removeItem("coupon");
+      setTimeout(() => {
+        window.location.href = data.redirect;
+      }, 2000);
+    } else {
+      showToast(data.message || "Order failed.", "danger");
+    }
+  } catch (err) {
+    console.error("Error placing order:", err);
+    showToast("Something went wrong. Please try again.", "danger");
+  }
+}
 
-        //  If there are out-of-stock items, display them
-        if (err.response?.data?.outOfStockItems) {
-          console.warn("Out of stock items:", err.response.data.outOfStockItems);
-          err.response.data.outOfStockItems.forEach(item => {
-            showToast(`${item} is out of stock`, "warning");
-          });
-        }
-      }
-      
-    }else if(paymentMethod === "razorpay"){
-      try{
+  // ======= RAZORPAY PAYMENT =======
+  else if (paymentMethod === "razorpay") {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const subtotal = parseFloat(urlParams.get("total"));
+     
 
-         const urlParams = new URLSearchParams(window.location.search);
-        
-    const subtotal = parseFloat(urlParams.get("total"));
-    console.log("su",subtotal)
-const res = await axios.post('/create-razorpay-order', {
-  cart,
-  selectedAddressId,
-  paymentMethod,
-  coupon,
-  subtotal
-});
+      const res = await fetch("/create-razorpay-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart, selectedAddressId, paymentMethod, coupon, subtotal }),
+      });
 
+      const data = await res.json();
 
+      if (data.success) {
+        const { order, tempOrderId } = data;
 
-
-        if (res.data.success) {
-          const { order, tempOrderId } = res.data;
-         
-          const options = {
-            key: '<%= process.env.RAZORPAY_KEY_ID %>',
-            amount: order.amount,
-            currency: order.currency,
-            name: 'EliteCart',
-            description: 'Order Payment',
-            order_id: order.id,
-            handler: async function (response) {
-              // Verify payment
-              try {
-                console.log("before varification to test res.data")
-                console.log(res.data);
-                console.log(response);
-                console.log("enterd varification");
-                const verifyRes = await axios.post('/verify-razorpay-payment', {
+        const options = {
+          key: "<%= process.env.RAZORPAY_KEY_ID %>",
+          amount: order.amount,
+          currency: order.currency,
+          name: "EliteCart",
+          description: "Order Payment",
+          order_id: order.id,
+          handler: async function (response) {
+            try {
+              const verifyRes = await fetch("/verify-razorpay-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
                   orderId: order.id,
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
-                  tempOrderId
-                });
-                if (verifyRes.data.success) {
-                  sessionStorage.removeItem("coupon");
-                  console.log("success");
-                  console.log(verifyRes)
-                  window.location.href = `/oder-status/${verifyRes.data.orderId}`;
-                } else {
-                  await axios.patch(`/payment-failed/${tempOrderId}`)
-                  window.location.href = `/payment-failed/${verifyRes.data.orderId}`;
-                  console.log("failed");
-                  console.log(verifyRes)
-                }
-              } catch (err) {
-                await axios.patch(`/payment-failed/${tempOrderId}`)
-                window.location.href = `/payment-failed/${tempOrderId}`;
-                console.log("catched");
-                console.log(verifyRes)
+                  tempOrderId,
+                }),
+              });
+
+              const verifyData = await verifyRes.json();
+
+              if (verifyData.success) {
+                sessionStorage.removeItem("coupon");
+                window.location.href = `/oder-status/${verifyData.orderId}`;
+              } else {
+                await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
+                window.location.href = `/payment-failed/${verifyData.orderId}`;
               }
-            },
-            prefill: {
-              name: '<%= user.name %>',
-              email: '<%= user.email %>'
-            },
-            theme: { color: '#2e0e46' },
-            modal:{
-              ondismiss:async function(){
-                await axios.patch(`/payment-failed/${tempOrderId}`)
-                window.location.href = `/payment-failed/${tempOrderId}`;
-              }
+            } catch (err) {
+              await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
+              window.location.href = `/payment-failed/${tempOrderId}`;
             }
-          };
-          const rzp = new window.Razorpay(options);
+          },
+          prefill: {
+            name: "<%= user.name %>",
+            email: "<%= user.email %>",
+          },
+          theme: { color: "#2e0e46" },
+          modal: {
+            ondismiss: async function () {
+              await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
+              window.location.href = `/payment-failed/${tempOrderId}`;
+            },
+          },
+        };
 
-          rzp.on("payment.failed",async function(response){
-            await axios.patch(`/payment-failed/${tempOrderId}`)
-            window.location.href = `/payment-failed/${tempOrderId}`;
-          })
+        const rzp = new window.Razorpay(options);
 
-          rzp.open();
-        } else {
-          alert(res.data.message);
-        }
+        rzp.on("payment.failed", async function () {
+          await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
+          window.location.href = `/payment-failed/${tempOrderId}`;
+        });
 
-      }catch(err){
-        console.log(err);
-       showToast(err.response?.data?.message || "Some Error in Razorpay", "danger");
+        rzp.open();
+      } else {
+        showToast(data.message || "Unable to create Razorpay order.", "danger");
       }
-    }else if(paymentMethod ==="wallet"){
-        try{
-          // Send request to backend
-          const res = await axios.post("/wallet-payment", {
-            cart,
-            selectedAddressId,
-            paymentMethod,
-            coupon
-          });
-
-          if (res.data.success) {
-            //  Show success toast
-            showToast(res.data.message, "success");
-            sessionStorage.removeItem("coupon");
-            //  Redirect after short delay
-            setTimeout(() => {
-              window.location.href = res.data.redirect;
-            }, 2000);
-            return;
-          }
-        }catch(err){
-          console.error("Error placing order:", err);
-
-          //  Show error toast with backend message
-          const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
-          showToast(errorMessage, "danger");
-
-          //  If there are out-of-stock items, display them
-          if (err.response?.data?.outOfStockItems) {
-            console.warn("Out of stock items:", err.response.data.outOfStockItems);
-            err.response.data.outOfStockItems.forEach(item => {
-              showToast(`${item} is out of stock`, "warning");
-
-            });
-          }
-        }
+    } catch (err) {
+      console.error("Razorpay error:", err);
+      showToast("Some Error in Razorpay", "danger");
     }
+  }
 
+  // ======= WALLET PAYMENT =======
+  else if (paymentMethod === "wallet") {
+    try {
+      const res = await fetch("/wallet-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart, selectedAddressId, paymentMethod, coupon }),
+      });
 
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message, "success");
+        sessionStorage.removeItem("coupon");
+
+        setTimeout(() => {
+          window.location.href = data.redirect;
+        }, 2000);
+      } else {
+        showToast(data.message || "Wallet payment failed.", "danger");
+      }
+    } catch (err) {
+      console.error("Error placing order:", err);
+      showToast("Something went wrong. Please try again.", "danger");
+    }
+  }
 }
-  
-
 
 
 

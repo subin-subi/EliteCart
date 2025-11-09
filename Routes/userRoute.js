@@ -95,10 +95,11 @@ route.delete("/cart/remove/:itemId",cartController.removeProduct)
 
 
 route.get("/checkout/cart", checkoutController.getCartCheckout)
+route.post("/checkout/order-cod",checkoutController.userOrderCOD)
+
+
 route.post('/select-address',checkoutController.selectAddres)
-route.post('/place-order',checkoutController.placeOrder)
-route.post('/create-razorpay-order',checkoutController.createRazorpayOrderForUser)
-route.post("/order-cod",checkoutController.ff)
+route.get("/oder-status/:id",checkoutController.userOrderSuccessPage)
 
 
 
