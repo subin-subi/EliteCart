@@ -496,7 +496,7 @@ if (paymentMethod === "cod") {
   try {
     console.log("COD order payload:", { cart, selectedAddressId, paymentMethod, coupon });
 
-    const { data } = await axios.post("/checkout/order-cod", {
+    const { data } = await  axios.post("/checkout/order-cod", {
       cart,
       selectedAddressId,
       paymentMethod,
@@ -521,14 +521,15 @@ if (paymentMethod === "cod") {
   // ======= RAZORPAY PAYMENT =======
   else if (paymentMethod === "razorpay") {
     try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const subtotal = parseFloat(urlParams.get("total"));
-     
+      // Get the current grand total from the page
+      const grandTotalElement = document.getElementById("grandTotal");
+      const grandTotalText = grandTotalElement.textContent.replace(/[₹,\s]/g, '');
+      const grandTotal = parseFloat(grandTotalText) || 0;
 
       const res = await fetch("/create-razorpay-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart, selectedAddressId, paymentMethod, coupon, subtotal }),
+        body: JSON.stringify({ cart, selectedAddressId, paymentMethod, coupon }),
       });
 
       const data = await res.json();
@@ -571,8 +572,8 @@ if (paymentMethod === "cod") {
             }
           },
           prefill: {
-            name: "<%= user.name %>",
-            email: "<%= user.email %>",
+            name: "<%= user.name || '' %>",
+            email: "<%= user.email || '' %>",
           },
           theme: { color: "#2e0e46" },
           modal: {
