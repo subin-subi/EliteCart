@@ -114,7 +114,7 @@
 
 <!-- Cancel (only when pending) -->
 <div class="w-28 flex justify-center">
-  <% if (order.orderStatus === 'Pending') { %>
+  <% if (['Pending', 'Confirmed', 'Shipped', 'Out for Delivery'].includes(order.orderStatus)) { %>
     <button 
       onclick="openCancelModal('<%= order._id %>')" 
       type="button"
@@ -125,6 +125,7 @@
     <div class="invisible px-4 py-2 w-full">Cancel</div>
   <% } %>
 </div>
+
 
 
   </div>

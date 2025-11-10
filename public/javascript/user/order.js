@@ -20,7 +20,7 @@ function validateCancelReason() {
   const reason = document.getElementById("cancelReason").value.trim();
   const errorMsg = document.getElementById("reasonError");
 
-  if (reason.length < 10) {
+  if (reason.length < 7) {
     errorMsg.classList.remove("hidden");
     return false; n
   }
@@ -48,7 +48,7 @@ function closeCancelModal() {
 document.getElementById("confirmCancelBtn").addEventListener("click", async () => {
   const reason = document.getElementById("cancelReason").value.trim();
 
-  // ✅ Frontend validation
+  // Frontend validation
   if (reason.length < 10) {
     Swal.fire({
       icon: "warning",
