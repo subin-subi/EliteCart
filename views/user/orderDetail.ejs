@@ -85,19 +85,36 @@
   </td>
 
   <!-- Status -->
-  <td class="py-5 px-4 text-lg font-semibold text-gray-800">
-    <% 
-      const status = order.orderStatus; 
-      let statusColor = "text-gray-600"; 
-      if (status === "Pending") statusColor = "text-yellow-500";
-      else if (status === "Confirmed") statusColor = "text-blue-500";
-      else if (status === "Shipped") statusColor = "text-purple-500";
-      else if (status === "Out for Delivery") statusColor = "text-orange-500";
-      else if (status === "Delivered") statusColor = "text-green-600";
-      else if (status === "Cancelled") statusColor = "text-red-600";
-    %>
-    <span class="<%= statusColor %> font-extrabold"><%= status %></span>
-  </td>
+<!-- Status -->
+<td class="py-5 px-4 text-lg font-semibold text-gray-800">
+  <% 
+    // Check if any product in the order has a return request
+    const hasReturn = order.items.some(it => it.returnStatus !== "Not Requested");
+    
+    let displayStatus = order.orderStatus;
+    let statusColor = "text-gray-600";
+
+    // If any product has a return request, show that return status
+    if (hasReturn) {
+      const returnedItem = order.items.find(it => it.returnStatus !== "Not Requested");
+      displayStatus = returnedItem.returnStatus;
+
+      if (displayStatus === "Requested") statusColor = "text-yellow-500";
+      else if (displayStatus === "Approved") statusColor = "text-green-600";
+      else if (displayStatus === "Rejected") statusColor = "text-red-600";
+    } else {
+      // Normal order status color
+      if (displayStatus === "Pending") statusColor = "text-yellow-500";
+      else if (displayStatus === "Confirmed") statusColor = "text-blue-500";
+      else if (displayStatus === "Shipped") statusColor = "text-purple-500";
+      else if (displayStatus === "Out for Delivery") statusColor = "text-orange-500";
+      else if (displayStatus === "Delivered") statusColor = "text-green-600";
+      else if (displayStatus === "Cancelled") statusColor = "text-red-600";
+    }
+  %>
+  <span class="<%= statusColor %> font-extrabold"><%= displayStatus %></span>
+</td>
+
 
  <!-- Action -->
 <td class="py-5 px-4 text-center">

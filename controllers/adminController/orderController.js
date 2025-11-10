@@ -257,21 +257,21 @@ const updateReturnStatus = async (req, res) => {
     const order = await Order.findById(orderId).populate("userId");
     if (!order) return res.json({ success: false, message: "Order not found" });
 
-    
     const item = order.items.find(i => i.productId.toString() === productId);
     if (!item) return res.json({ success: false, message: "Product not found in order" });
 
-    
+  
     item.returnStatus = newStatus;
 
-  
+    
     if (newStatus === "Approved") {
-      const refundAmount = item.finalPrice * item.quantity;
+     
+      const refundAmount = Number(item.finalPrice) * Number(item.quantity);
+
       const userId = order.userId._id;
-
-
       let wallet = await Wallet.findOne({ user: userId });
 
+     
       if (!wallet) {
         wallet = new Wallet({
           user: userId,
@@ -280,25 +280,31 @@ const updateReturnStatus = async (req, res) => {
         });
       }
 
-     
+      
       wallet.transactions.push({
         type: "Credit",
         amount: refundAmount,
-        description: `Refund for returned product  from order ${order.orderId}`,
+        description: `Refund for returned product from Order ${order.orderId}`,
         date: new Date(),
       });
 
-   
       wallet.balance += refundAmount;
-
       await wallet.save();
+
+
+      item.refundAmount = refundAmount;
     }
 
     await order.save();
 
-    res.json({ success: true, message: `Return status updated to ${newStatus}` });
+    res.json({
+      success: true,
+      message: `Return status updated to ${newStatus}${
+        newStatus === "Approved" ? " and refund processed" : ""
+      }`,
+    });
   } catch (error) {
-    console.error("Error updating return status:", error);
+    console.error("❌ Error updating return status:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
