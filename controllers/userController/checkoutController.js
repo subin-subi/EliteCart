@@ -125,7 +125,6 @@ const getCartCheckout = async (req, res) => {
 
 const selectAddres = async (req, res) => {
   try {
-    console.log("helo")
     const { addressId } = req.body;
     req.session.selectedAddress = addressId; 
     res.json({ success: true });
@@ -529,6 +528,110 @@ const paymentFailed = async (req, res) => {
   }
 };
 
+
+
+
+
+const getPaymentFailPage = async (req, res) => {
+  try {
+    const orderId = req.params.id; 
+    
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).send("Order not found");
+    }
+
+    res.status(200).render("user/paymentFail.ejs", { order });
+  } catch (err) {
+    console.error("Error loading payment fail page:", err);
+    res.status(500).send("Something went wrong while loading the page");
+  }
+};
+
+
+
+ const retryPayment = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
+    }
+    if (order.paymentMethod !== "RAZORPAY") {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only Razorpay orders can be retried" });
+    }
+    if (order.paymentStatus !== "Failed") {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only failed payments can be retried" });
+    }
+    if (order.orderStatus === "Cancelled" ) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "You have already cancelled the order" });
+    };
+
+    const variantIdArray = order.items.map((ele)=>{
+      return {
+        productId:ele.productId,
+        variantId:ele.variantId,
+        quantity:ele.quantity
+      }
+    });
+    const sufficient = await isSufficient(variantIdArray);
+    if(!sufficient){
+        order.orderStatus = 'Cancelled';
+        order.items.forEach(item => {
+            item.cancelStatus = 'Cancelled';
+            item.cancelReason = "Cancelled Due to some Product are Out of Quantity";
+        });
+        await order.save();
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Some Items are Out of Quantity,Order Cancelled" });
+    }
+        //  Reduce stock for each variant
+    for (let item of variantIdArray) {
+      await Product.updateOne(
+        { _id: item.productId, "variants._id": item.variantId },
+        { $inc: { "variants.$.stock": -item.quantity } }
+      );
+    }
+
+    // Create new Razorpay order
+    const razorpayOrder = await createRazorpayOrder(order.grandTotal, order.orderId.toString());
+
+    return res.json({ success: true, razorpayOrder, order });
+  } catch (err) {
+    console.error("Error retrying payment:", err);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+
+async function isSufficient(items) {
+  try {
+    const productIds = items.map((i) => i.productId);
+
+    const products = await Product.find({ _id: { $in: productIds } }).lean();
+
+    // Loop through each item and check stock
+    for (const item of items) {
+      const product = products.find((p) => p._id.toString() === item.productId.toString());
+      if (!product) return false;
+
+      const variant = product.variants.find(
+        (v) => v._id.toString() === item.variantId.toString()
+      );
+      if (!variant) return false; 
+
+      if (variant.stock < item.quantity) return false; 
+    }
+
+    return true; 
+  } catch (err) {
+    console.error("Error checking stock:", err);
+    return false; 
+  }
+}
+
+
 export default {
   getCartCheckout,
   selectAddres,
@@ -538,5 +641,10 @@ export default {
   verifyRazorpayPayment,
   walletPayment,
   paymentFailed,
+  getPaymentFailPage,
+  retryPayment
+
+
+
 };
 

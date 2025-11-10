@@ -96,12 +96,13 @@ route.delete("/cart/remove/:itemId",cartController.removeProduct)
 
 route.get("/checkout/cart", checkoutController.getCartCheckout)
 route.post("/checkout/order-cod",checkoutController.userOrderCOD)
+route.post('/select-address',checkoutController.selectAddres)
 route.post("/create-razorpay-order", checkoutController.createRazorpayOrderHandler)
 route.post("/verify-razorpay-payment", checkoutController.verifyRazorpayPayment)
 route.post("/wallet-payment", checkoutController.walletPayment)
+route.get("/payment-failed/:id", checkoutController.getPaymentFailPage);
 route.patch("/payment-failed/:id", checkoutController.paymentFailed)
-
-route.post('/select-address',checkoutController.selectAddres)
+route.post("/retry-payment/:id",checkoutController.retryPayment)
 route.get("/oder-status/:id",checkoutController.userOrderSuccessPage)
 
 

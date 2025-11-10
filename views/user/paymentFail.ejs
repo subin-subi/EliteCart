@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Failed | EliteCart</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 pt-16 sm:pt-20">
+
+ <!-- Header -->
+   <%- include("../partials/nav") %>
+
+  <div class="container mx-auto px-4">
+    <div class="max-w-lg mx-auto mt-12 bg-white rounded-xl shadow-lg p-8 text-center">
+      <div class="text-6xl text-red-600 mb-6">
+        <i class="bi bi-x-circle-fill"></i>
+      </div>
+      <h3 class="text-2xl font-bold text-red-600 mb-2">Payment Failed</h3>
+      <p class="text-gray-500 mb-6">
+        Oops! Your payment could not be completed.  
+        Don’t worry, you can retry your payment or choose another payment method.
+      </p>
+
+      <!-- Order Details -->
+      <ul class="text-left space-y-2 mb-6">
+        <li><strong>Status:</strong> Payment Failed</li>
+        <li><strong>Your Order ID:</strong> <span class="text-red-600 font-bold"><%= order.orderId %></span></li>
+      </ul>
+
+      <!-- Buttons -->
+      <div class="flex justify-center gap-4">
+        <button 
+          class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2"
+          onclick="retryPayment(`<%= order._id %>`)"
+        >
+          <i class="bi bi-arrow-repeat"></i> Retry Payment
+        </button>
+        <a href="/product" class="border border-red-600 text-red-600 hover:bg-red-600 hover:text-white px-4 py-2 rounded flex items-center gap-2">
+          <i class="bi bi-cart"></i> Continue Shopping
+        </a>
+      </div>
+    </div>
+  </div>
+
+ <!-- Footer -->
+     <%- include("../partials/footer") %>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    async function retryPayment(orderId) {
+      try {
+        const res = await axios.post(`/retry-payment/${orderId}`);
+        if (res.data.success) {
+          const { razorpayOrder, order } = res.data;
+
+          const options = {
+            key: "<%= process.env.RAZORPAY_KEY_ID %>",
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            name: "EliteCart",
+            description: "Retry Payment",
+            order_id: razorpayOrder.id,
+            handler: async function (response) {
+              try {
+                const verifyRes = await axios.post('/user-oder/verify-razorpay-payment', {
+                  orderId: razorpayOrder.id,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                  tempOrderId: order._id
+                });
+                if (verifyRes.data.success) {
+                  window.location.href = `/user-oder/oder-status/${order._id}`;
+                } else {
+                  await axios.patch(`/user-oder/payment-failed/${order._id}`);
+                  window.location.href = `/user-oder/payment-failed/${order._id}`;
+                }
+              } catch (err) {
+                await axios.patch(`/user-oder/payment-failed/${order._id}`);
+                window.location.href = `/user-oder/payment-failed/${order._id}`;
+              }
+            },
+            modal: {
+              ondismiss: async function () {
+                await axios.patch(`/user-oder/payment-failed/${order._id}`);
+                window.location.href = `/user-oder/payment-failed/${order._id}`;
+              }
+            },
+            theme: { color: "#2e0e46" }
+          };
+
+          const rzp = new Razorpay(options);
+          rzp.on("payment.failed", async function (response) {
+            await axios.patch(`/user-oder/payment-failed/${order._id}`);
+            window.location.href = `/user-oder/payment-failed/${order._id}`;
+          });
+          rzp.open();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast(err.response?.data?.message || "Error retrying payment. Please try again later.", "red");
+      }
+    }
+
+    function showToast(message, color = "blue") {
+      const toast = document.createElement("div");
+      toast.className = `fixed bottom-4 right-4 bg-${color}-600 text-white px-4 py-2 rounded shadow-lg flex items-center justify-between gap-4`;
+      toast.innerHTML = `
+        <span>${message}</span>
+        <button class="text-white font-bold" onclick="this.parentElement.remove()">X</button>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+</body>
+</html>
