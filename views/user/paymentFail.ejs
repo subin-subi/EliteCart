@@ -65,27 +65,28 @@
             order_id: razorpayOrder.id,
             handler: async function (response) {
               try {
-                const verifyRes = await axios.post('/user-oder/verify-razorpay-payment', {
+                const verifyRes = await axios.post('/verify-razorpay-payment', {
                   orderId: razorpayOrder.id,
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
                   tempOrderId: order._id
                 });
                 if (verifyRes.data.success) {
-                  window.location.href = `/user-oder/oder-status/${order._id}`;
+                  window.location.href = `/oder-status/${verifyRes.data.orderId}`;
                 } else {
-                  await axios.patch(`/user-oder/payment-failed/${order._id}`);
-                  window.location.href = `/user-oder/payment-failed/${order._id}`;
+                  await axios.patch(`/payment-failed/${order._id}`);
+                  window.location.href = `/payment-failed/${order._id}`;
                 }
               } catch (err) {
-                await axios.patch(`/user-oder/payment-failed/${order._id}`);
-                window.location.href = `/user-oder/payment-failed/${order._id}`;
+                console.error("Payment verification error:", err);
+                await axios.patch(`/payment-failed/${order._id}`);
+                window.location.href = `/payment-failed/${order._id}`;
               }
             },
             modal: {
               ondismiss: async function () {
-                await axios.patch(`/user-oder/payment-failed/${order._id}`);
-                window.location.href = `/user-oder/payment-failed/${order._id}`;
+                await axios.patch(`/payment-failed/${order._id}`);
+                window.location.href = `/payment-failed/${order._id}`;
               }
             },
             theme: { color: "#2e0e46" }
@@ -93,10 +94,14 @@
 
           const rzp = new Razorpay(options);
           rzp.on("payment.failed", async function (response) {
-            await axios.patch(`/user-oder/payment-failed/${order._id}`);
-            window.location.href = `/user-oder/payment-failed/${order._id}`;
+            try {
+              await axios.patch(`/payment-failed/${order._id}`);
+            } catch (err) {
+              console.error("Error updating payment status:", err);
+            }
+            window.location.href = `/payment-failed/${order._id}`;
           });
-          rzp.open();
+          rzp.open(); 
         }
       } catch (err) {
         console.error(err);

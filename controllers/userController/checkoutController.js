@@ -5,10 +5,58 @@ import Product from "../../models/productModel.js";
 import Order from "../../models/orderModel.js"
 import Coupon from "../../models/couponModel.js"
 import Wallet from "../../models/walletModel.js"
+import Offer from "../../models/offerModel.js"
 import {createRazorpayOrder, verifyRazorpaySignature} from "../../utils/paymentServices.js"
 import HTTP_STATUS from "../../utils/responseHandler.js"
 
+// Helper function to get offer discount for a product
+async function getProductOfferDiscount(product) {
+  try {
+    const currentDate = new Date();
+    const activeOffers = await Offer.find({
+      isActive: true,
+      isNonBlocked: true,
+      startAt: { $lte: currentDate },
+      endAt: { $gte: currentDate },
+    }).lean();
 
+    let discountPercent = 0;
+    let appliedOffer = null;
+
+    // Check product offers
+    const productOffers = activeOffers.filter(
+      (offer) => offer.offerType === "PRODUCT" && offer.productId?.toString() === product._id.toString()
+    );
+
+    // Check category offers
+    const categoryOffers = activeOffers.filter(
+      (offer) => offer.offerType === "CATEGORY" && offer.categoryId?.toString() === product.category?.toString()
+    );
+
+    if (productOffers.length > 0) {
+      const bestProductOffer = productOffers.reduce((max, offer) =>
+        offer.discountPercent > max.discountPercent ? offer : max
+      );
+      discountPercent = bestProductOffer.discountPercent;
+      appliedOffer = bestProductOffer;
+    }
+
+    if (categoryOffers.length > 0) {
+      const bestCategoryOffer = categoryOffers.reduce((max, offer) =>
+        offer.discountPercent > max.discountPercent ? offer : max
+      );
+      if (bestCategoryOffer.discountPercent > discountPercent) {
+        discountPercent = bestCategoryOffer.discountPercent;
+        appliedOffer = bestCategoryOffer;
+      }
+    }
+
+    return { discountPercent, appliedOffer };
+  } catch (err) {
+    console.error("Error getting product offer:", err);
+    return { discountPercent: 0, appliedOffer: null };
+  }
+}
 
 const getCartCheckout = async (req, res) => {
   try {
@@ -196,26 +244,38 @@ const userOrderCOD = async (req, res) => {
       return res.status(400).json({ success: false, message: "Some items are out of stock", outOfStockItems });
     }
 
-    // Prepare order items
+    // Prepare order items with proper offer and coupon discount calculation
     const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
-    const orderItems = cartItems.map(item => {
+    const orderItems = await Promise.all(cartItems.map(async (item) => {
       const variant = item.productId.variants[item.variantIndex];
-      const discountPerUnit = couponAmount > 0 
+      const originalPrice = variant.price; // Original price without any discount
+      
+      // Get offer discount
+      const { discountPercent, appliedOffer } = await getProductOfferDiscount(item.productId);
+      const offerDiscountAmount = discountPercent > 0 
+        ? Math.round((originalPrice * discountPercent) / 100) 
+        : 0;
+      const priceAfterOffer = originalPrice - offerDiscountAmount;
+      
+      // Calculate coupon discount on price after offer
+      const couponDiscountPerUnit = couponAmount > 0 
         ? Math.round((item.total / subtotalBeforeDiscount) * couponAmount) / item.quantity 
         : 0;
-      const finalPricePerUnit = variant.price - discountPerUnit;
+      
+      const finalPricePerUnit = priceAfterOffer - couponDiscountPerUnit;
+      const totalDiscountPerUnit = offerDiscountAmount + couponDiscountPerUnit;
       
       return {
         productId: item.productId._id,
         variantId: variant._id,
         quantity: item.quantity,
-        basePrice: variant.price,
-        discountAmount: discountPerUnit,
+        basePrice: originalPrice,
+        discountAmount: totalDiscountPerUnit, // Total discount (offer + coupon)
         finalPrice: finalPricePerUnit,
         total: finalPricePerUnit * item.quantity,
-        appliedOffer: appliedCoupon ? appliedCoupon.code : null,
+        appliedOffer: appliedOffer ? appliedOffer.name : null, // Store offer name, not coupon code
       };
-    });
+    }));
 
     const subtotal = orderItems.reduce((sum, i) => sum + i.total, 0);
     const shippingCharge = subtotal > 1000 ? 0 : 50;
@@ -260,8 +320,12 @@ const userOrderCOD = async (req, res) => {
       await appliedCoupon.save();
     }
 
-    // Clear cart
-    await Cart.findOneAndUpdate({ userId }, { $set: { items: [], grandTotal: 0 } });
+    // Clear cart - ensure it's properly cleared
+    await Cart.findOneAndUpdate(
+      { userId }, 
+      { $set: { items: [], grandTotal: 0 } },
+      { new: true }
+    );
 
     res.json({ success: true, message: "Order placed successfully!", redirect: `/oder-status/${order._id}` });
   } catch (err) {
@@ -298,18 +362,28 @@ const createRazorpayOrderHandler = async (req, res) => {
     const grandTotal = finalSubtotal + shippingCharge;
     const tempOrder = new Order({
       userId,
-      items: cartItems.map(item => {
+      items: await Promise.all(cartItems.map(async (item) => {
         const variant = item.productId.variants[item.variantIndex];
+        const originalPrice = variant.price;
+        
+        // Get offer discount for temp order (will be recalculated on verification)
+        const { discountPercent, appliedOffer } = await getProductOfferDiscount(item.productId);
+        const offerDiscountAmount = discountPercent > 0 
+          ? Math.round((originalPrice * discountPercent) / 100) 
+          : 0;
+        const priceAfterOffer = originalPrice - offerDiscountAmount;
+        
         return {
           productId: item.productId._id,
           variantId: variant._id,
           quantity: item.quantity,
-          basePrice: variant.price,
-          discountAmount: 0,
-          finalPrice: variant.price,
-          total: item.total,
+          basePrice: originalPrice,
+          discountAmount: offerDiscountAmount, // Will add coupon discount on verification
+          finalPrice: priceAfterOffer,
+          total: priceAfterOffer * item.quantity,
+          appliedOffer: appliedOffer ? appliedOffer.name : null,
         };
-      }),
+      })),
       address: {
         name: address.name,
         house: address.houseName,
@@ -355,53 +429,123 @@ const verifyRazorpayPayment = async (req, res) => {
     if (!order || String(order.userId) !== String(userId)) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
-    const cartData = await Cart.findOne({ userId }).populate("items.productId");
-    const cartItems = cartData ? cartData.items : [];
-    for (let item of cartItems) {
-      const variant = item.productId.variants[item.variantIndex];
-      if (!variant || variant.stock < item.quantity || variant.isBlocked) {
-        await Order.findByIdAndUpdate(tempOrderId, { paymentStatus: "Failed" });
-        return res.status(400).json({ success: false, message: "Some items are out of stock" });
+
+    const isRetryPayment = order.items && order.items.length > 0 && 
+      order.items[0].productId && 
+      (order.paymentStatus === "Failed" || (order.paymentStatus === "Pending" && order.razorpayPaymentId === null));
+
+    if (isRetryPayment) {
+      // Handle retry payment - use existing order items
+      for (let item of order.items) {
+        const productId = item.productId.toString ? item.productId.toString() : item.productId;
+        const product = await Product.findById(productId);
+        if (!product) {
+          await Order.findByIdAndUpdate(tempOrderId, { paymentStatus: "Failed" });
+          return res.status(400).json({ success: false, message: "Product not found" });
+        }
+        const variant = product.variants.id(item.variantId);
+        if (!variant || variant.stock < item.quantity || variant.isBlocked) {
+          await Order.findByIdAndUpdate(tempOrderId, { paymentStatus: "Failed" });
+          return res.status(400).json({ success: false, message: "Some items are out of stock" });
+        }
       }
+
+      // Update stock for retry payment
+      for (let item of order.items) {
+        const productId = item.productId.toString ? item.productId.toString() : item.productId;
+        const product = await Product.findById(productId);
+        const variant = product.variants.id(item.variantId);
+        variant.stock -= item.quantity;
+        await product.save();
+      }
+    } else {
+      // Handle new payment - use cart items
+      const cartData = await Cart.findOne({ userId }).populate("items.productId");
+      const cartItems = cartData ? cartData.items : [];
+      
+      if (cartItems.length === 0) {
+        await Order.findByIdAndUpdate(tempOrderId, { paymentStatus: "Failed" });
+        return res.status(400).json({ success: false, message: "Cart is empty" });
+      }
+
+      for (let item of cartItems) {
+        const variant = item.productId.variants[item.variantIndex];
+        if (!variant || variant.stock < item.quantity || variant.isBlocked) {
+          await Order.findByIdAndUpdate(tempOrderId, { paymentStatus: "Failed" });
+          return res.status(400).json({ success: false, message: "Some items are out of stock" });
+        }
+      }
+
+      for (let item of cartItems) {
+        const variant = item.productId.variants[item.variantIndex];
+        variant.stock -= item.quantity;
+        await item.productId.save();
+      }
+
+      // Calculate final order items with proper offer and coupon discount
+      let couponAmount = order.discount || 0;
+      const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
+      const orderItems = await Promise.all(cartItems.map(async (item) => {
+        const variant = item.productId.variants[item.variantIndex];
+        const originalPrice = variant.price; // Original price without any discount
+        
+        // Get offer discount
+        const { discountPercent, appliedOffer } = await getProductOfferDiscount(item.productId);
+        const offerDiscountAmount = discountPercent > 0 
+          ? Math.round((originalPrice * discountPercent) / 100) 
+          : 0;
+        const priceAfterOffer = originalPrice - offerDiscountAmount;
+        
+        // Calculate coupon discount on price after offer
+        const couponDiscountPerUnit = couponAmount > 0 
+          ? Math.round((item.total / subtotalBeforeDiscount) * couponAmount) / item.quantity 
+          : 0;
+        
+        const finalPricePerUnit = priceAfterOffer - couponDiscountPerUnit;
+        const totalDiscountPerUnit = offerDiscountAmount + couponDiscountPerUnit;
+        
+        return {
+          productId: item.productId._id,
+          variantId: variant._id,
+          quantity: item.quantity,
+          basePrice: originalPrice,
+          discountAmount: totalDiscountPerUnit, // Total discount (offer + coupon)
+          finalPrice: finalPricePerUnit,
+          total: finalPricePerUnit * item.quantity,
+          appliedOffer: appliedOffer ? appliedOffer.name : null, // Store offer name
+        };
+      }));
+      order.items = orderItems;
+      order.subtotal = orderItems.reduce((sum, i) => sum + i.total, 0);
     }
-    for (let item of cartItems) {
-      const variant = item.productId.variants[item.variantIndex];
-      variant.stock -= item.quantity;
-      await item.productId.save();
-    }
-    let couponAmount = order.discount || 0;
-    const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
-    const orderItems = cartItems.map(item => {
-      const variant = item.productId.variants[item.variantIndex];
-      const discountPerUnit = couponAmount > 0 
-        ? Math.round((item.total / subtotalBeforeDiscount) * couponAmount) / item.quantity 
-        : 0;
-      const finalPricePerUnit = variant.price - discountPerUnit;
-      return {
-        productId: item.productId._id,
-        variantId: variant._id,
-        quantity: item.quantity,
-        basePrice: variant.price,
-        discountAmount: discountPerUnit,
-        finalPrice: finalPricePerUnit,
-        total: finalPricePerUnit * item.quantity,
-        appliedOffer: order.appliedCoupon || null,
-      };
-    });
-    order.items = orderItems;
+
+    // Update order status
     order.paymentStatus = "Paid";
     order.orderStatus = "Confirmed";
     order.razorpayPaymentId = paymentId;
-    order.subtotal = orderItems.reduce((sum, i) => sum + i.total, 0);
     await order.save();
+
+    // Update coupon usage (only if not already used)
     if (order.appliedCoupon) {
       const appliedCoupon = await Coupon.findOne({ code: order.appliedCoupon });
       if (appliedCoupon) {
-        appliedCoupon.usedBy.push({ userId, usedAt: new Date() });
-        await appliedCoupon.save();
+        const alreadyUsed = appliedCoupon.usedBy.some(usage => String(usage.userId) === String(userId));
+        if (!alreadyUsed) {
+          appliedCoupon.usedBy.push({ userId, usedAt: new Date() });
+          await appliedCoupon.save();
+        }
       }
     }
-    await Cart.findOneAndUpdate({ userId }, { $set: { items: [], grandTotal: 0 } });
+
+    // Clear cart only for new payments - ensure it's properly cleared
+    if (!isRetryPayment) {
+      await Cart.findOneAndUpdate(
+        { userId }, 
+        { $set: { items: [], grandTotal: 0 } },
+        { new: true }
+      );
+    }
+
     res.json({ success: true, message: "Payment verified successfully", orderId: order._id.toString() });
   } catch (err) {
     console.error("Payment verification error:", err);
@@ -454,23 +598,36 @@ const walletPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Some items are out of stock", outOfStockItems });
     }
     const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
-    const orderItems = cartItems.map(item => {
+    const orderItems = await Promise.all(cartItems.map(async (item) => {
       const variant = item.productId.variants[item.variantIndex];
-      const discountPerUnit = couponAmount > 0 
+      const originalPrice = variant.price; // Original price without any discount
+      
+      // Get offer discount
+      const { discountPercent, appliedOffer } = await getProductOfferDiscount(item.productId);
+      const offerDiscountAmount = discountPercent > 0 
+        ? Math.round((originalPrice * discountPercent) / 100) 
+        : 0;
+      const priceAfterOffer = originalPrice - offerDiscountAmount;
+      
+      // Calculate coupon discount on price after offer
+      const couponDiscountPerUnit = couponAmount > 0 
         ? Math.round((item.total / subtotalBeforeDiscount) * couponAmount) / item.quantity 
         : 0;
-      const finalPricePerUnit = variant.price - discountPerUnit;
+      
+      const finalPricePerUnit = priceAfterOffer - couponDiscountPerUnit;
+      const totalDiscountPerUnit = offerDiscountAmount + couponDiscountPerUnit;
+      
       return {
         productId: item.productId._id,
         variantId: variant._id,
         quantity: item.quantity,
-        basePrice: variant.price,
-        discountAmount: discountPerUnit,
+        basePrice: originalPrice,
+        discountAmount: totalDiscountPerUnit, // Total discount (offer + coupon)
         finalPrice: finalPricePerUnit,
         total: finalPricePerUnit * item.quantity,
-        appliedOffer: appliedCoupon ? appliedCoupon.code : null,
+        appliedOffer: appliedOffer ? appliedOffer.name : null, // Store offer name, not coupon code
       };
-    });
+    }));
     const subtotal = orderItems.reduce((sum, i) => sum + i.total, 0);
     for (let item of cartItems) {
       const variant = item.productId.variants[item.variantIndex];
@@ -507,7 +664,12 @@ const walletPayment = async (req, res) => {
       appliedCoupon.usedBy.push({ userId, usedAt: new Date() });
       await appliedCoupon.save();
     }
-    await Cart.findOneAndUpdate({ userId }, { $set: { items: [], grandTotal: 0 } });
+    // Clear cart - ensure it's properly cleared
+    await Cart.findOneAndUpdate(
+      { userId }, 
+      { $set: { items: [], grandTotal: 0 } },
+      { new: true }
+    );
     res.json({ success: true, message: "Order placed successfully using wallet!", redirect: `/oder-status/${order._id}` });
   } catch (err) {
     console.error("Wallet payment error:", err);
@@ -519,7 +681,12 @@ const walletPayment = async (req, res) => {
 const paymentFailed = async (req, res) => {
   try {
     const { id } = req.params;
-    const order = await Order.findByIdAndUpdate(id, { paymentStatus: "Failed", orderStatus: "Cancelled" }, { new: true });
+    // Only update payment status to Failed, don't cancel the order so user can retry
+    const order = await Order.findByIdAndUpdate(
+      id, 
+      { paymentStatus: "Failed" }, 
+      { new: true }
+    );
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
     res.json({ success: true, message: "Payment failed status updated" });
   } catch (err) {
@@ -534,73 +701,118 @@ const paymentFailed = async (req, res) => {
 
 const getPaymentFailPage = async (req, res) => {
   try {
-    const orderId = req.params.id; 
+    const orderId = req.params.id;
+    
+    // Validate orderId is not undefined or invalid
+    if (!orderId || orderId === "undefined" || orderId === "null") {
+      return res.status(400).render("partials/error", { 
+        message: "Invalid order ID. Please check your order details." 
+      });
+    }
+
+    // Validate ObjectId format
+    if (!orderId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).render("partials/error", { 
+        message: "Invalid order ID format. Please check your order details." 
+      });
+    }
     
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).send("Order not found");
+      return res.status(404).render("partials/error", { 
+        message: "Order not found. Please check your order details." 
+      });
     }
 
     res.status(200).render("user/paymentFail.ejs", { order });
   } catch (err) {
     console.error("Error loading payment fail page:", err);
-    res.status(500).send("Something went wrong while loading the page");
+    res.status(500).render("partials/error", { 
+      message: "Something went wrong while loading the page. Please try again later." 
+    });
   }
 };
 
 
 
- const retryPayment = async (req, res) => {
+const retryPayment = async (req, res) => {
   try {
+    const userId = req.session.user;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
     const orderId = req.params.id;
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
-    if (order.paymentMethod !== "RAZORPAY") {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only Razorpay orders can be retried" });
-    }
-    if (order.paymentStatus !== "Failed") {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only failed payments can be retried" });
-    }
-    if (order.orderStatus === "Cancelled" ) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "You have already cancelled the order" });
-    };
 
-    const variantIdArray = order.items.map((ele)=>{
+    // Verify order belongs to user
+    if (String(order.userId) !== String(userId)) {
+      return res.status(403).json({ success: false, message: "Unauthorized access to this order" });
+    }
+
+    if (order.paymentMethod !== "RAZORPAY") {
+      return res.status(400).json({ success: false, message: "Only Razorpay orders can be retried" });
+    }
+
+    if (order.paymentStatus !== "Failed" && order.paymentStatus !== "Pending") {
+      return res.status(400).json({ success: false, message: "Only failed or pending payments can be retried" });
+    }
+
+    // Allow retry even if order was cancelled due to payment failure
+    // We'll reset the order status when retrying
+    if (order.orderStatus === "Cancelled" && order.paymentStatus !== "Failed") {
+      return res.status(400).json({ success: false, message: "Cannot retry payment for cancelled order" });
+    }
+
+    // Check stock availability
+    const variantIdArray = order.items.map((ele) => {
       return {
-        productId:ele.productId,
-        variantId:ele.variantId,
-        quantity:ele.quantity
-      }
+        productId: ele.productId,
+        variantId: ele.variantId,
+        quantity: ele.quantity
+      };
     });
+
     const sufficient = await isSufficient(variantIdArray);
-    if(!sufficient){
-        order.orderStatus = 'Cancelled';
-        order.items.forEach(item => {
-            item.cancelStatus = 'Cancelled';
-            item.cancelReason = "Cancelled Due to some Product are Out of Quantity";
-        });
-        await order.save();
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Some Items are Out of Quantity,Order Cancelled" });
+    if (!sufficient) {
+      order.orderStatus = 'Cancelled';
+      order.items.forEach(item => {
+        item.cancelStatus = 'Cancelled';
+        item.cancelReason = "Cancelled Due to some Product are Out of Quantity";
+      });
+      await order.save();
+      return res.status(400).json({ success: false, message: "Some Items are Out of Stock. Order Cancelled" });
     }
-        //  Reduce stock for each variant
-    for (let item of variantIdArray) {
-      await Product.updateOne(
-        { _id: item.productId, "variants._id": item.variantId },
-        { $inc: { "variants.$.stock": -item.quantity } }
-      );
+
+    // Reset order status for retry
+    order.paymentStatus = "Pending";
+    order.orderStatus = "Pending";
+    order.razorpayPaymentId = null;
+    
+    // Reset any cancelled item statuses if order was previously cancelled
+    if (order.items && order.items.length > 0) {
+      order.items.forEach(item => {
+        if (item.cancelStatus === "Cancelled") {
+          item.cancelStatus = "Not Cancelled";
+          item.cancelReason = null;
+        }
+      });
     }
+    
+    await order.save();
 
     // Create new Razorpay order
-    const razorpayOrder = await createRazorpayOrder(order.grandTotal, order.orderId.toString());
+    const razorpayOrder = await createRazorpayOrder(order.grandTotal, `retry_${order._id}`);
 
     return res.json({ success: true, razorpayOrder, order });
   } catch (err) {
     console.error("Error retrying payment:", err);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
+    res.status(500).json({ success: false, message: err.message || "Internal Server Error" });
   }
 };
 

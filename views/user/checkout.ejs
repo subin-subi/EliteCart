@@ -537,6 +537,12 @@ if (paymentMethod === "cod") {
       if (data.success) {
         const { order, tempOrderId } = data;
 
+        // Validate tempOrderId exists
+        if (!tempOrderId) {
+          showToast("Error: Order ID not found. Please try again.", "danger");
+          return;
+        }
+
         const options = {
           key: "<%= process.env.RAZORPAY_KEY_ID %>",
           amount: order.amount,
@@ -563,12 +569,32 @@ if (paymentMethod === "cod") {
                 sessionStorage.removeItem("coupon");
                 window.location.href = `/oder-status/${verifyData.orderId}`;
               } else {
-                await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
-                window.location.href = `/payment-failed/${verifyData.orderId}`;
+                // Use tempOrderId if verifyData.orderId is not available
+                const orderIdToUse = verifyData.orderId || tempOrderId;
+                if (orderIdToUse) {
+                  try {
+                    await fetch(`/payment-failed/${orderIdToUse}`, { method: "PATCH" });
+                  } catch (e) {
+                    console.error("Error updating payment status:", e);
+                  }
+                  window.location.href = `/payment-failed/${orderIdToUse}`;
+                } else {
+                  showToast("Payment verification failed. Please contact support.", "danger");
+                }
               }
             } catch (err) {
-              await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
-              window.location.href = `/payment-failed/${tempOrderId}`;
+              console.error("Payment verification error:", err);
+              // Use tempOrderId for error handling
+              if (tempOrderId) {
+                try {
+                  await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
+                } catch (e) {
+                  console.error("Error updating payment status:", e);
+                }
+                window.location.href = `/payment-failed/${tempOrderId}`;
+              } else {
+                showToast("Payment failed. Please contact support with order details.", "danger");
+              }
             }
           },
           prefill: {
@@ -578,17 +604,33 @@ if (paymentMethod === "cod") {
           theme: { color: "#2e0e46" },
           modal: {
             ondismiss: async function () {
-              await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
-              window.location.href = `/payment-failed/${tempOrderId}`;
+              if (tempOrderId) {
+                try {
+                  await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
+                } catch (e) {
+                  console.error("Error updating payment status:", e);
+                }
+                window.location.href = `/payment-failed/${tempOrderId}`;
+              } else {
+                showToast("Payment cancelled. Please try again.", "warning");
+              }
             },
           },
         };
 
         const rzp = new window.Razorpay(options);
 
-        rzp.on("payment.failed", async function () {
-          await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
-          window.location.href = `/payment-failed/${tempOrderId}`;
+        rzp.on("payment.failed", async function (response) {
+          if (tempOrderId) {
+            try {
+              await fetch(`/payment-failed/${tempOrderId}`, { method: "PATCH" });
+            } catch (e) {
+              console.error("Error updating payment status:", e);
+            }
+            window.location.href = `/payment-failed/${tempOrderId}`;
+          } else {
+            showToast("Payment failed. Please contact support.", "danger");
+          }
         });
 
         rzp.open();
