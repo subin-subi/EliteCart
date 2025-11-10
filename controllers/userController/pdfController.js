@@ -99,10 +99,10 @@ doc.font("Helvetica").fontSize(11).fillColor("black");
 
 order.items.forEach((item, i) => {
   const name = item.productId?.name || "Unnamed Product";
-  const price = `₹${item.finalPrice.toFixed(2)}`;
+  const price = `Rs: ${item.finalPrice.toFixed(2)}`;
   const qty = item.quantity;
-  const discount = item.discountAmount ? `₹${item.discountAmount.toFixed(2)}` : "-";
-  const total = `₹${(item.finalPrice * qty).toFixed(2)}`;
+  const discount = item.discountAmount ? `Rs: ${item.discountAmount.toFixed(2)}` : "-";
+  const total = `Rs: ${(item.finalPrice * qty).toFixed(2)}`;
 
   let rowValues = [i + 1, name, price, qty, discount, total];
 
@@ -128,20 +128,20 @@ doc.moveDown(2);
 
     doc.fontSize(12).font("Helvetica").fillColor("black");
     doc.text("Subtotal:", labelX, yPos);
-    doc.text(`₹${order.subtotal.toFixed(2)}`, valueX, yPos);
+    doc.text(`Rs: ${order.subtotal.toFixed(2)}`, valueX, yPos);
     yPos += 18;
 
     doc.text("Discount:", labelX, yPos);
-    doc.text(`₹${order.discount.toFixed(2)}`, valueX, yPos);
+    doc.text(`Rs: ${order.discount.toFixed(2)}`, valueX, yPos);
     yPos += 18;
 
     doc.text("Shipping:", labelX, yPos);
-    doc.text(`₹${order.shippingCharge.toFixed(2)}`, valueX, yPos);
+    doc.text(`Rs: ${order.shippingCharge.toFixed(2)}`, valueX, yPos);
     yPos += 25;
 
     doc.fontSize(14).font("Helvetica-Bold").fillColor("#16a34a");
     doc.text("Grand Total:", labelX, yPos);
-    doc.text(`₹${order.grandTotal.toFixed(2)}`, valueX, yPos);
+    doc.text(`Rs: ${order.grandTotal.toFixed(2)}`, valueX, yPos);
 
     doc.moveDown(2);
 
