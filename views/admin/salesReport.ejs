@@ -215,9 +215,15 @@
 
 
 
-  
   <script>
 
+ const normalizeDateForQuery = (value) => {
+   if (!value) return "";
+   const sanitized = value.includes("T") ? value : value.replace(" ", "T");
+   const date = new Date(sanitized);
+   if (Number.isNaN(date.getTime())) return "";
+   return date.toISOString();
+ };
 
  // Optional: Validate date format (YYYY-MM-DD)
   function validateDate(inputId) {
@@ -248,8 +254,11 @@
     const s = startInput.getAttribute('data-value') || startInput.value;
     const e = endInput.getAttribute('data-value') || endInput.value;
 
-    if (s) params.append('startDate', s);
-    if (e) params.append('endDate', e);
+    const startIso = normalizeDateForQuery(s);
+    const endIso = normalizeDateForQuery(e);
+
+    if (startIso) params.append('startDate', startIso);
+    if (endIso) params.append('endDate', endIso);
   }
       window.location.href = '/admin/salesreport?' + params.toString();
     }

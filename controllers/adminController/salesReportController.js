@@ -22,23 +22,23 @@ const getSalesReport = async (req, res) => {
     let end = null;
 
     // If range or dates are selected, apply filter
-    if (range || startDate || endDate) {
-      const filter = buildDateFilter(range || "custom", startDate, endDate);
-      query = filter.query;
-      start = filter.start;
-      end = filter.end;
-    }
+    const selectedRange = range || "day";
+    const filter = buildDateFilter(selectedRange, startDate, endDate);
+    query = filter.query;
+    start = filter.start;
+    end = filter.end;
 
-    // Otherwise, no filter -> show all orders
     const pagination = await fetchSalesData(query, Number(page), Number(limit));
     const metrics = calculateMetrics(pagination.items);
 
     const urlQuery = new URLSearchParams(req.query).toString();
 
+    const isCustom = selectedRange === "custom";
+
     res.render("admin/salesReport", {
-      range: range || "all",
-      startDate: start ? start.toISOString().slice(0, 16) : "",
-      endDate: end ? end.toISOString().slice(0, 16) : "",
+      range: selectedRange,
+      startDate: isCustom && start ? new Date(start).toISOString().slice(0, 16) : "",
+      endDate: isCustom && end ? new Date(end).toISOString().slice(0, 16) : "",
       currentPage: pagination.currentPage,
       totalPages: pagination.totalPages,
       totalOrders: pagination.totalItems,
@@ -75,11 +75,10 @@ const getSalesReportData = async (req, res) => {
     }
 };
 
- const downloadSalesReportPdf = async (req, res) => {
+const downloadSalesReportPdf = async (req, res) => {
     try {
         const { range = "day", startDate, endDate } = req.query;
-        console.log(range)
-        const { query } = buildDateFilter(range, startDate, endDate);
+        const { query, start, end } = buildDateFilter(range, startDate, endDate);
         
         // Get ALL orders for the period (not paginated)
         const orders = await Order.find(query)
@@ -89,6 +88,7 @@ const getSalesReportData = async (req, res) => {
             .lean();
 
         const metrics = calculateMetrics(orders);
+        const periodDescription = describeRange(range, start, end);
 
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename=EliteCart_SalesReport_${range}_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -102,10 +102,8 @@ const getSalesReportData = async (req, res) => {
         doc.moveDown();
 
         // Report Details
-        doc.fontSize(12).text(`Report Period: ${range.toUpperCase()}`);
-        if (startDate && endDate) {
-            doc.text(`Date Range: ${new Date(startDate).toLocaleDateString('en-IN')} to ${new Date(endDate).toLocaleDateString('en-IN')}`);
-        }
+        doc.fontSize(12).text(`Report Range: ${range.toUpperCase()}`);
+        doc.text(`Period: ${periodDescription}`);
         doc.text(`Generated On: ${new Date().toLocaleString('en-IN')}`);
         doc.moveDown();
 
@@ -187,46 +185,105 @@ const getSalesReportData = async (req, res) => {
 
 
 function calculateMetrics(items) {
-    const count = items.length;
-    const amount = items.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
-    const discount = items.reduce((sum, o) => sum + (o.discount || 0), 0);
-    return { count, amount, discount };
+  const count = items.length;
+  const amount = items.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+  const discount = items.reduce((sum, o) => sum + (o.discount || 0), 0);
+  return { count, amount, discount };
 }
 
 // Helpers
-function buildDateFilter(range, startDate, endDate) {
-    let start = null, end = null;
-    const now = new Date();
-    if (range === "custom" && startDate && endDate) {
-        start = new Date(startDate);
-        end = new Date(endDate);
-    } else if (range === "day") {
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    } else if (range === "week") {
-        const day = now.getDay();
-        const diffToMonday = (day + 6) % 7; // Monday as start
-        start = new Date(now);
-        start.setDate(now.getDate() - diffToMonday);
-        start.setHours(0, 0, 0, 0);
-        end = new Date(start);
-        end.setDate(start.getDate() + 7);
-    } else if (range === "month") {
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    } else if (range === "year") {
-        start = new Date(now.getFullYear(), 0, 1);
-        end = new Date(now.getFullYear() + 1, 0, 1);
-    }
+function buildDateFilter(range = "day", startDate, endDate) {
+  const now = new Date();
+  let start = null;
+  let end = null;
 
-    const query = {};
-    if (start && end) {
-        query.createdAt = { $gte: start, $lt: end };
+  const normalizeDate = (value) => {
+    if (!value) return null;
+    if (value instanceof Date) return new Date(value);
+    if (typeof value === "string") {
+      const sanitized = value.includes("T") ? value : value.replace(" ", "T");
+      const parsed = new Date(sanitized);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
-    // Include only completed/valid orders for sales reporting
-    query.orderStatus = { $in: [ "Delivered"] };
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
 
-    return { query, start, end };
+  const startOfDay = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const endOfDay = (date) => {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
+
+  switch (range) {
+    case "custom": {
+      const normalizedStart = normalizeDate(startDate);
+      const normalizedEnd = normalizeDate(endDate);
+      if (normalizedStart) start = startOfDay(normalizedStart);
+      if (normalizedEnd) end = endOfDay(normalizedEnd);
+      break;
+    }
+    case "week": {
+      start = new Date(now);
+      start.setDate(now.getDate() - 7);
+      start = startOfDay(start);
+      end = now;
+      break;
+    }
+    case "month": {
+      start = new Date(now);
+      start.setDate(now.getDate() - 30);
+      start = startOfDay(start);
+      end = now;
+      break;
+    }
+    case "year": {
+      start = new Date(now);
+      start.setFullYear(now.getFullYear() - 1);
+      start = startOfDay(start);
+      end = now;
+      break;
+    }
+    case "day":
+    default: {
+      if (range === "all") {
+        start = null;
+        end = null;
+      } else {
+        start = startOfDay(now);
+        end = now;
+      }
+      break;
+    }
+  }
+
+  if (start && !end) {
+    end = now;
+  }
+
+  if (start && end && start > end) {
+    const temp = start;
+    start = end;
+    end = temp;
+  }
+
+  // Include all non-cancelled, non-failed orders for sales reporting
+  const query = {
+    orderStatus: { $nin: ["Cancelled"] },
+    paymentStatus: { $ne: "Failed" },
+  };
+
+  if (start && end) {
+    query.createdAt = { $gte: start, $lte: end };
+  }
+
+  return { query, start, end };
 }
 
 async function fetchSalesData(query, page, limit) {
@@ -245,6 +302,36 @@ async function fetchSalesData(query, page, limit) {
     return { items, totalItems, totalPages, currentPage: page, limit };
 }
 
+function describeRange(range, start, end) {
+  const formatDateTime = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toLocaleString("en-IN");
+  };
+
+  const formattedStart = formatDateTime(start);
+  const formattedEnd = formatDateTime(end);
+
+  if (formattedStart && formattedEnd) {
+    return `${formattedStart} to ${formattedEnd}`;
+  }
+
+  switch (range) {
+    case "day":
+      return "Today";
+    case "week":
+      return "Last 7 Days";
+    case "month":
+      return "Last 30 Days";
+    case "year":
+      return "Last 12 Months";
+    case "custom":
+      return "Custom Period";
+    default:
+      return "All Time";
+  }
+}
+
 
 
 
@@ -253,7 +340,8 @@ async function fetchSalesData(query, page, limit) {
 const downloadSalesReportExcel = async (req, res) => {
   try {
     const { range = "day", startDate, endDate } = req.query;
-    const { query } = buildDateFilter(range, startDate, endDate);
+    const { query, start, end } = buildDateFilter(range, startDate, endDate);
+    const periodDescription = describeRange(range, start, end);
 
     const orders = await Order.find(query)
       .populate({ path: "userId", select: "name email" })
@@ -269,14 +357,8 @@ const downloadSalesReportExcel = async (req, res) => {
     // Header
     sheet.addRow(["EliteCart SALES REPORT"]);
     sheet.addRow([]);
-    sheet.addRow([`Report Period: ${range.toUpperCase()}`]);
-    if (startDate && endDate) {
-      sheet.addRow([
-        `Date Range: ${new Date(startDate).toLocaleDateString("en-IN")} to ${new Date(
-          endDate
-        ).toLocaleDateString("en-IN")}`,
-      ]);
-    }
+    sheet.addRow([`Report Range: ${range.toUpperCase()}`]);
+    sheet.addRow([`Period: ${periodDescription}`]);
     sheet.addRow([`Generated On: ${new Date().toLocaleString("en-IN")}`]);
     sheet.addRow([]);
 

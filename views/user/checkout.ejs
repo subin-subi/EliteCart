@@ -567,7 +567,7 @@ if (paymentMethod === "cod") {
 
               if (verifyData.success) {
                 sessionStorage.removeItem("coupon");
-                window.location.href = `/oder-status/${verifyData.orderId}`;
+                window.location.href = `/order-status/${verifyData.orderId}`;
               } else {
                 // Use tempOrderId if verifyData.orderId is not available
                 const orderIdToUse = verifyData.orderId || tempOrderId;

@@ -616,39 +616,12 @@ const verifyRazorpayPayment = async (req, res) => {
       }
     }
 
-    
-if (!isRetryPayment) {
-  const userCart = await Cart.findOne({ userId }).populate("items.productId");
-
-  if (userCart && userCart.items.length > 0) {
-    const purchasedItems = order.items.map(i => ({
-      productId: i.productId.toString(),
-      variantId: i.variantId.toString()
-    }));
-
-    const updatedItems = userCart.items.filter(cartItem => {
-      const product = cartItem.productId;
-      const variant = product?.variants?.[cartItem.variantIndex];
-      if (!variant) return true; // keep if variant not found
-      return !purchasedItems.some(
-        p =>
-          p.productId === product._id.toString() &&
-          p.variantId === variant._id.toString()
-      );
-    });
-
-    if (updatedItems.length === 0) {
-      userCart.items = [];
-      userCart.grandTotal = 0;
-    } else {
-      userCart.items = updatedItems;
-      userCart.grandTotal = updatedItems.reduce((sum, i) => sum + i.total, 0);
-    }
-
-    await userCart.save();
-  }
-}
-
+    // Clear cart after successful payment
+    await Cart.findOneAndUpdate(
+      { userId },
+      { $set: { items: [], grandTotal: 0 } },
+      { new: true }
+    );
 
     res.json({ success: true, message: "Payment verified successfully", orderId: order._id.toString() });
   } catch (err) {
