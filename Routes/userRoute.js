@@ -103,7 +103,7 @@ route.post("/wallet-payment", checkoutController.walletPayment)
 route.get("/payment-failed/:id", checkoutController.getPaymentFailPage);
 route.patch("/payment-failed/:id", checkoutController.paymentFailed)
 route.post("/retry-payment/:id",checkoutController.retryPayment)
-route.get("/oder-status/:id",checkoutController.userOrderSuccessPage)
+route.get("/order-status/:id",checkoutController.userOrderSuccessPage)
 
 
 
