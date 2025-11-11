@@ -264,25 +264,24 @@ const getPaymentFailPage = async (req, res) => {
 const addCoupon = async (req, res) => {
   try {
     let { code, total } = req.body;
-    const userId = req.user?._id; // if you’re using auth middleware
-    const shippingCost = 100; // or dynamically calculate it
+    const userId = req.session.user; 
+    const shippingCost = 50; 
 
-    // Convert values properly
     total = parseFloat(total);
 
-    // 1️⃣ Find the coupon
+    // ✅ Find valid, active, non-blocked coupon
     const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true, isNonBlocked: true });
     if (!coupon) {
       return res.status(404).json({ success: false, message: "Invalid or inactive coupon." });
     }
 
-    // 2️⃣ Check if coupon is expired
+    // ✅ Expiry check
     const now = new Date();
     if (coupon.expiryDate < now) {
       return res.status(400).json({ success: false, message: "Coupon has expired." });
     }
 
-    // 3️⃣ Check min purchase requirement
+    // ✅ Minimum purchase check
     if (total < coupon.minPurchaseAmount) {
       return res.status(400).json({
         success: false,
@@ -290,41 +289,35 @@ const addCoupon = async (req, res) => {
       });
     }
 
-    // 4️⃣ Check if user has already used it (optional)
+    // ✅ Check if user already used this coupon
     const alreadyUsed = coupon.usedBy.some((u) => u.userId?.toString() === userId?.toString());
     if (alreadyUsed) {
       return res.status(400).json({ success: false, message: "You have already used this coupon." });
     }
 
+    // ✅ Calculate discount
     let discountAmount = 0;
-
     if (coupon.discountType === "percentage") {
       discountAmount = (total * coupon.discountValue) / 100;
       if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
         discountAmount = coupon.maxDiscountAmount;
       }
-       discountAmount = Math.floor(discountAmount);
+      discountAmount = Math.floor(discountAmount); // remove decimals
     } else if (coupon.discountType === "flat") {
       discountAmount = coupon.discountValue;
     }
 
-    
     let discountedSubtotal = total - discountAmount;
     if (discountedSubtotal < 0) discountedSubtotal = 0;
 
+    // ✅ Add shipping only if below 1000
+    let discountedTotal = discountedSubtotal;
+    if (discountedSubtotal < 1000) {
+      discountedTotal += shippingCost;
+    }
 
-   let discountedTotal = discountedSubtotal;
-
-
-if (discountedSubtotal < 1000) {
-  discountedTotal += shippingCost;
-}
-
-    
-    coupon.usedBy.push({ userId });
-    await coupon.save();
-
-    console.log(discountAmount,discountedTotal)
+    // ❌ Removed coupon.usedBy.push() here — handled after payment success
+    console.log("Coupon applied:", { discountAmount, discountedTotal });
 
     return res.status(200).json({
       success: true,

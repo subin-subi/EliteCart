@@ -385,22 +385,29 @@ document.addEventListener("DOMContentLoaded", () => {
       const subtotalText = document.getElementById("subtotalAmount").textContent.replace(/[₹,]/g, "").trim();
       const subtotal = parseFloat(subtotalText) || 0;
 
-      // ✅ Send only subtotal to backend
+      // Send only subtotal to backend
       const res = await axios.post("/coupon/apply", { code, total: subtotal });
 
-      if (res.data.success) {
-        appliedCoupon = code;
-        appliedDiscount = res.data.discountAmount || 0; // backend should send discountAmount
+     if (res.data.success) {
+  appliedCoupon = code;
+  appliedDiscount = res.data.discountAmount || 0;
+  const discountedTotal = res.data.discountedTotal;
 
-        // ✅ Don't modify grand total display
-        // Just show discount section & message
-        document.getElementById("discountSection").classList.remove("hidden");
-        document.getElementById("discountAmount").textContent = `- ₹${appliedDiscount.toFixed(2)}`;
-        showMessage(`Coupon "${code}" applied successfully!`, "green");
+  // Show discount details
+  document.getElementById("discountSection").classList.remove("hidden");
+  document.getElementById("discountAmount").textContent = `- ₹${appliedDiscount.toFixed(2)}`;
+  showMessage(`Coupon "${code}" applied successfully!`, "green");
 
-        applyCouponBtn.classList.add("hidden");
-        removeCouponBtn.classList.remove("hidden");
-      } else {
+  // Hide normal total & show discounted total
+  document.getElementById("normalTotalSection").classList.add("hidden");
+  const discountedTotalSection = document.getElementById("discountedTotalSection");
+  discountedTotalSection.classList.remove("hidden");
+  document.getElementById("discountedTotal").textContent = `₹${discountedTotal.toLocaleString()}`;
+
+  applyCouponBtn.classList.add("hidden");
+  removeCouponBtn.classList.remove("hidden");
+}
+else {
         showMessage(res.data.message || "Invalid or expired coupon.", "red");
       }
     } catch (err) {
@@ -411,21 +418,27 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Remove coupon
-  removeCouponBtn.addEventListener("click", () => {
-    if (!appliedCoupon) return;
+ removeCouponBtn.addEventListener("click", () => {
+  if (!appliedCoupon) return;
 
-    appliedCoupon = null;
-    appliedDiscount = 0;
+  appliedCoupon = null;
+  appliedDiscount = 0;
 
-    // ✅ Hide discount section again
-    document.getElementById("discountSection").classList.add("hidden");
-    document.getElementById("discountAmount").textContent = "- ₹0.00";
-    showMessage("Coupon removed.", "red");
+  // Hide discount section
+  document.getElementById("discountSection").classList.add("hidden");
+  document.getElementById("discountAmount").textContent = "- ₹0.00";
 
-    removeCouponBtn.classList.add("hidden");
-    applyCouponBtn.classList.remove("hidden");
-    couponSelect.value = "";
-  });
+  // Restore normal total view
+  document.getElementById("normalTotalSection").classList.remove("hidden");
+  document.getElementById("discountedTotalSection").classList.add("hidden");
+
+  showMessage("Coupon removed.", "red");
+
+  removeCouponBtn.classList.add("hidden");
+  applyCouponBtn.classList.remove("hidden");
+  couponSelect.value = "";
+});
+
 
   // Show message function
   function showMessage(text, color = "green") {
