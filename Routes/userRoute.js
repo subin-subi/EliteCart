@@ -14,6 +14,7 @@ import walletController from "../controllers/userController/walletController.js"
 import pdfController from "../controllers/userController/pdfController.js"
 import redeemController from "../controllers/userController/redeemController.js";
 import razorpayController from "../controllers/userController/razorpayController.js";
+import paymentController from "../controllers/userController/paymentController.js";
 
 const route = Router();
 
@@ -94,14 +95,14 @@ route.delete("/cart/remove/:itemId",cartController.removeProduct)
 
 
 
+
 route.get("/checkout/cart", checkoutController.getCartCheckout)
-route.post("/checkout/order-cod",checkoutController.userOrderCOD)
 route.post('/select-address',checkoutController.selectAddres)
 
 route.get("/payment-failed/:id", checkoutController.getPaymentFailPage);
 route.patch("/payment-failed/:id", checkoutController.paymentFailed)
 route.get("/order-status/:id",checkoutController.userOrderSuccessPage)
-
+route.post("/coupon/apply",checkoutController.addCoupon)
 
 route.post("/create-razorpay-order", razorpayController.createRazorpayOrderHandler)
 route.post("/verify-razorpay-payment", razorpayController.verifyRazorpayPayment)
@@ -110,8 +111,8 @@ route.post("/retry-payment/:id",razorpayController.retryPayment)
 
 
 
-
-route.post("/wallet-payment", checkoutController.walletPayment)
+route.post("/checkout/order-cod",paymentController.userOrderCOD)
+route.post("/wallet-payment", paymentController.walletPayment)
 route.get("/wallet",walletController.getWallet)
 
 route.get("/wishlist",userMiddleware.isLogin,wishlistController.getWishlist)

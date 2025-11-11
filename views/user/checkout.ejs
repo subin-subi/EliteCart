@@ -92,23 +92,32 @@
   <!-- Subtotal -->
   <div class="flex justify-between text-lg">
     <span>Subtotal:</span>
-    <span id="subtotalAmount">₹<%= cart.reduce((sum, item) => sum + item.total, 0).toLocaleString() %></span>
-
+    <span id="subtotalAmount">
+      ₹<%= cart.reduce((sum, item) => sum + item.total, 0).toLocaleString() %>
+    </span>
   </div>
 
   <!-- Discount -->
-  <div id="discountSection" class="hidden flex justify-between text-lg text-green-700 font-semibold">
+  <% if (coupon && discountAmount > 0) { %>
+  <div id="discountSection" class="flex justify-between text-lg text-green-700 font-semibold">
     <span>Coupon Discount:</span>
-    <span id="discountAmount">- ₹0.00</span>
+    <span id="discountAmount">- ₹<%= Math.floor(discountAmount).toLocaleString() %></span>
   </div>
+  <% } %>
 
   <!-- Shipping -->
+  <% 
+    const discountedSubtotal = cart.reduce((sum, item) => sum + item.total, 0) - (discountAmount || 0);
+    const finalShippingCost = discountedSubtotal < 1000 ? shippingCost : 0;
+    const discountedTotal = discountedSubtotal + finalShippingCost;
+  %>
+
   <div class="flex justify-between text-lg">
     <span>Shipping:</span>
-    <% if (shippingCost === 0) { %>
+    <% if (finalShippingCost === 0) { %>
       <span id="shippingCost" class="text-green-600 font-semibold">Free</span>
     <% } else { %>
-      <span id="shippingCost">₹<%= shippingCost.toLocaleString() %></span>
+      <span id="shippingCost">₹<%= finalShippingCost.toLocaleString() %></span>
     <% } %>
   </div>
 
@@ -116,9 +125,7 @@
   <div class="flex justify-between text-xl font-bold border-t pt-3">
     <span>Grand Total:</span>
     <span id="grandTotal">
-      ₹<%= (cart.reduce((sum, item) => sum + item.total, 0) + (shippingCost || 0)).toLocaleString() %>
-      
-     
+      ₹<%= Math.floor(discountedTotal).toLocaleString() %>
     </span>
   </div>
 </div>

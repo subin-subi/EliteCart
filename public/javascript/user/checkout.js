@@ -355,4 +355,83 @@ if (paymentMethod === "cod") {
   }
 
 
+//////////////////////////////////coupon///////////////////////////////////////////////
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const couponSelect = document.getElementById("couponSelect");
+  const applyCouponBtn = document.getElementById("applyCouponBtn");
+  const removeCouponBtn = document.getElementById("removeCouponBtn");
+  const couponMessage = document.getElementById("couponMessage");
+
+  // Grand total (with shipping)
+  let grandTotal = parseFloat(document.getElementById("grandTotal").textContent.replace(/[₹,]/g, ""));
+  let originalTotal = grandTotal;
+  let appliedCoupon = null;
+  let appliedDiscount = 0;
+
+  // Apply coupon
+  applyCouponBtn.addEventListener("click", async () => {
+    const selectedOption = couponSelect.options[couponSelect.selectedIndex];
+    const code = selectedOption.value;
+
+    if (!code) {
+      showMessage("Please select a coupon first.", "red");
+      return;
+    }
+
+    try {
+      // ✅ Get subtotal (without shipping)
+      const subtotalText = document.getElementById("subtotalAmount").textContent.replace(/[₹,]/g, "").trim();
+      const subtotal = parseFloat(subtotalText) || 0;
+
+      // ✅ Send only subtotal to backend
+      const res = await axios.post("/coupon/apply", { code, total: subtotal });
+
+      if (res.data.success) {
+        appliedCoupon = code;
+        appliedDiscount = res.data.discountAmount || 0; // backend should send discountAmount
+
+        // ✅ Don't modify grand total display
+        // Just show discount section & message
+        document.getElementById("discountSection").classList.remove("hidden");
+        document.getElementById("discountAmount").textContent = `- ₹${appliedDiscount.toFixed(2)}`;
+        showMessage(`Coupon "${code}" applied successfully!`, "green");
+
+        applyCouponBtn.classList.add("hidden");
+        removeCouponBtn.classList.remove("hidden");
+      } else {
+        showMessage(res.data.message || "Invalid or expired coupon.", "red");
+      }
+    } catch (err) {
+      console.error("Coupon apply error:", err);
+      const message = err.response?.data?.message || "Error applying coupon.";
+      showMessage(message, "red");
+    }
+  });
+
+  // Remove coupon
+  removeCouponBtn.addEventListener("click", () => {
+    if (!appliedCoupon) return;
+
+    appliedCoupon = null;
+    appliedDiscount = 0;
+
+    // ✅ Hide discount section again
+    document.getElementById("discountSection").classList.add("hidden");
+    document.getElementById("discountAmount").textContent = "- ₹0.00";
+    showMessage("Coupon removed.", "red");
+
+    removeCouponBtn.classList.add("hidden");
+    applyCouponBtn.classList.remove("hidden");
+    couponSelect.value = "";
+  });
+
+  // Show message function
+  function showMessage(text, color = "green") {
+    couponMessage.textContent = text;
+    couponMessage.classList.remove("hidden");
+    couponMessage.style.color = color === "green" ? "#16a34a" : "#dc2626";
+  }
+});
 
