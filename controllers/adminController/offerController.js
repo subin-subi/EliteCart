@@ -124,12 +124,7 @@ const applyBestOffer = async (productId) => {
   // Find best discount percentage
   const maxDiscount = Math.max(...offers.map((offer) => offer.discountPercent));
 
-  // You can use this logic later (in UI or cart) to compute offer price:
-  // offerPrice = Math.round(price - (price * maxDiscount) / 100);
-
-  console.log(
-    `Best offer for product ${product.name}: ${maxDiscount}% discount`
-  );
+  
 };
 
 
@@ -147,7 +142,7 @@ const toggleOffer = async (req, res) => {
 
     const now = new Date();
 
-    // 🧩 Auto deactivate expired offers
+    //  Auto deactivate expired offers
     if (offer.endAt < now) {
       offer.isActive = false;
       offer.isNonBlocked = false;
@@ -159,7 +154,7 @@ const toggleOffer = async (req, res) => {
       });
     }
 
-    // 🟢 Activate or deactivate based on input
+    //  Activate or deactivate based on input
     offer.isActive = isActive;
 
     // When offer is deactivated, also block it
@@ -171,7 +166,7 @@ const toggleOffer = async (req, res) => {
 
     await offer.save();
 
-    // 🧮 Apply or remove offer logic for products
+    // Apply or remove offer logic for products
     if (offer.offerType === "PRODUCT" && offer.productId) {
       await applyBestOffer(offer.productId);
     } else if (offer.offerType === "CATEGORY" && offer.categoryId) {
@@ -213,7 +208,7 @@ const editOffer = async (req, res) => {
       description,
     } = req.body;
 
-    // 🧩 Validate required fields
+    //  Validate required fields
     if (!offerId)
       return res
         .status(400)
@@ -230,7 +225,7 @@ const editOffer = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Offer not found." });
 
-    // 📝 Update basic offer fields
+    //  Update basic offer fields
     existingOffer.name = name.trim();
     existingOffer.offerType = offerType;
     existingOffer.discountPercent = discountPercent;
@@ -238,7 +233,7 @@ const editOffer = async (req, res) => {
     existingOffer.endAt = new Date(endAt);
     existingOffer.description = description.trim();
 
-    // 🔗 Link offer to product or category
+    //  Link offer to product or category
     if (offerType === "PRODUCT") {
       existingOffer.productId = selectionId;
       existingOffer.categoryId = null;
@@ -249,7 +244,7 @@ const editOffer = async (req, res) => {
 
     await existingOffer.save();
 
-    // ✅ Do not modify Product DB — only call applyBestOffer for recalculation
+    //  Do not modify Product DB — only call applyBestOffer for recalculation
     if (offerType === "PRODUCT") {
       await applyBestOffer(selectionId);
     } else if (offerType === "CATEGORY") {

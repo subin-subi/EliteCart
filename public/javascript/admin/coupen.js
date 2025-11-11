@@ -99,12 +99,9 @@ document.getElementById('addCouponForm').addEventListener('submit', async (e) =>
   if (isNaN(maxAmount) || maxAmount <= 0) {
     document.getElementById('maxAmountError').textContent = 'Enter a valid maximum amount.';
     isValid = false;
-  } else if (maxAmount <= minAmount) {
-    document.getElementById('maxAmountError').textContent = 'Max amount must be greater than min amount.';
-    isValid = false;
-  }
+  } 
 
-  if (!description || description.length < 10) {
+  if (!description || description.length < 7) {
     document.getElementById('descriptionError').textContent = 'Description must be at least 10 characters.';
     isValid = false;
   }
@@ -223,10 +220,7 @@ document.getElementById('editCouponForm').addEventListener('submit', async (e) =
   if (!data.maxAmount || isNaN(data.maxAmount) || Number(data.maxAmount) <= 0) {
     document.getElementById('editMaxAmountError').textContent = 'Please enter a valid maximum amount.';
     isValid = false;
-  } else if (Number(data.maxAmount) < Number(data.minAmount)) {
-    document.getElementById('editMaxAmountError').textContent = 'Max amount must be greater than Min amount.';
-    isValid = false;
-  }
+  } 
 
   // Discount Type
   if (!data.discountType) {
@@ -265,7 +259,6 @@ document.getElementById('editCouponForm').addEventListener('submit', async (e) =
   }
 
 
-  // === Submit Form ===
   try {
    
     const response = await axios.post(`/admin/edit-coupon/${data.couponId}`, data);

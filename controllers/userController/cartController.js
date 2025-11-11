@@ -122,7 +122,7 @@ const addToCart = async (req, res) => {
   try {
     const userId = req.session.user;
     const { productId, variantId } = req.body;
-    console.log(productId, variantId )
+
 
     if (!userId) {
       return res.status(401).json({ success: false, message: "Please log in first" });

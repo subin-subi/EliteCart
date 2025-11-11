@@ -55,7 +55,6 @@ const addCoupon = async (req, res) => {
       description 
     } = req.body;
 
-    console.log(discountType)
     // Basic validation
     if (!code || !discountType || !discount || !startDate || !expiryDate) {
       return res.status(400).json({
@@ -84,8 +83,7 @@ const addCoupon = async (req, res) => {
         });
       }
 
-      const maxAllowed = minPurchase * 0.7; // 70% of min purchase
-console.log(maxAllowed)
+      const maxAllowed = minPurchase * 0.7; 
       if (flatDiscount > maxAllowed) {
         return res.status(400).json({
           success: false,
@@ -150,9 +148,7 @@ const editCoupon = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please enter a valid minimum amount." });
     }
 
-    if (!maxAmount || isNaN(maxAmount) || Number(maxAmount) <= Number(minAmount)) {
-      return res.status(400).json({ success: false, message: "Maximum amount must be greater than minimum amount." });
-    }
+   
 
     if (!discountType || !["percentage", "flat"].includes(discountType)) {
       return res.status(400).json({ success: false, message: "Invalid discount type." });
@@ -174,8 +170,8 @@ const editCoupon = async (req, res) => {
       return res.status(400).json({ success: false, message: "Expiry date must be after start date." });
     }
 
-    if (!description || description.trim().length < 10) {
-      return res.status(400).json({ success: false, message: "Description must be at least 10 characters long." });
+    if (!description || description.trim().length < 7) {
+      return res.status(400).json({ success: false, message: "Description must be at least 7 characters long." });
     }
 
     // === Update Coupon ===

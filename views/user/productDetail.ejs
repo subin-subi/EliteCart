@@ -46,7 +46,8 @@
   <!-- Product Section -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
 
-   <!-- Left Side --> <div class="flex flex-col md:w-[90%] lg:w-[85%] mx-auto"> <!-- Main Image --> <div class="bg-white rounded-lg shadow overflow-hidden relative"> <img id="mainImage" src="<%= product.variants[0].mainImage || '/images/placeholder.png' %>"
+   <!-- Left Side --> 
+    <div class="flex flex-col md:w-[90%] lg:w-[85%] mx-auto"> <!-- Main Image --> <div class="bg-white rounded-lg shadow overflow-hidden relative"> <img id="mainImage" src="<%= product.variants[0].mainImage || '/images/placeholder.png' %>"
        alt="<%= product.name %>" class="w-full h-[350px] sm:h-[450px] md:h-[550px] object-cover rounded-xl transition-transform duration-300 ease-in-out">
      </div> <!-- Thumbnails --> <div id="thumbnails" class="mt-6 grid grid-cols-3 gap-4"> <% (product.variants[0].subImages || []).forEach(function(img, idx) { %> <button type="button" class="thumbnail w-full h-20 sm:h-28 md:h-32 rounded-lg overflow-hidden border-2 border-transparent focus:outline-none" data-src="<%= img %>"> 
       <img src="<%= img %>" alt="thumb <%= idx+1 %>" class="w-full h-full object-cover"> </button> <% }) %> </div> </div>
@@ -332,9 +333,9 @@ if (variantSelect) {
     const price = parseFloat(selectedOption.getAttribute("data-price"));
     const discount = parseFloat(selectedOption.getAttribute("data-discount")) || null;
     const stock = parseInt(selectedOption.getAttribute("data-stock"));
-    const variantId = selectedOption.value; // ✅ Get current variant id
+    const variantId = selectedOption.value; 
 
-    // ✅ Update the Add to Cart button with selected variant ID
+    //  Update the Add to Cart button with selected variant ID
     addToCartBtn.dataset.variant = variantId;
 
     // Price display logic
@@ -389,48 +390,44 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const res = await axios.post("/cart/add", { productId, variantId });
 
-      if (res.data.success) {
-        
-        Swal.fire({
-          icon: "success",
-          title: "Added to Cart!",
-          text: "The item was successfully added to your cart.",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 2000,
-        });
-
-       
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Failed!",
-          text: res.data.message || "Failed to add product",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 2000,
-        });
-      }
-    } catch (err) {
-      console.error("Add to cart error:", err);
       Swal.fire({
-        icon: "error",
-        title: "Error!",
-        text: "Something went wrong while adding to cart.",
+        icon: res.data.success ? "success" : "error",
+        title: res.data.success ? "Added to Cart!" : "Failed!",
+        text: res.data.message || "Something went wrong",
         toast: true,
         position: "top-end",
         showConfirmButton: false,
         timer: 2000,
       });
+
+    } catch (err) {
+      console.error("Add to cart error:", err);
+
+      // Check if backend sent a message
+      const message = err.response?.data?.message || "Something went wrong";
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: message,
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+      });
+
+      // If the error is login-related, redirect to login page
+      if (err.response?.status === 401) {
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+      }
     }
   });
 });
 
 
 ///////////////////////////////////wishlist////////////////////////////////////////
-
 document.addEventListener("DOMContentLoaded", () => {
   const wishlistBtn = document.getElementById("wishlistBtn");
   const heartIcon = document.getElementById("heartIcon");
@@ -451,17 +448,28 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await axios.post("/wishlist/add", { productId, variantId });
 
       if (res.data.success && res.data.alreadyExists) {
-        // Product already in wishlist
-        showToast("⚠️ Already in wishlist");
+        showToast(res.data.message || "⚠️ Already in wishlist");
       } else if (res.data.success) {
-        // Product added successfully
         heartIcon.classList.add("text-red-600");
-        showToast("✅ Added to wishlist successfully");
+        showToast(res.data.message || "✅ Added to wishlist successfully");
+      } else {
+        // Backend sent success:false
+        showToast(res.data.message || "❌ Failed to add to wishlist");
       }
 
     } catch (err) {
       console.error("Wishlist add failed:", err);
-      showToast("❌ Error adding to wishlist. Try again.");
+
+     
+      const message = err.response?.data?.message || "❌ Error adding to wishlist. Try again.";
+      showToast(message);
+
+      
+      if (err.response?.status === 401) {
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+      }
     }
   });
 

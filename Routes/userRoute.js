@@ -13,7 +13,7 @@ import orderDetailController from "../controllers/userController/orderDetailCont
 import walletController from "../controllers/userController/walletController.js";
 import pdfController from "../controllers/userController/pdfController.js"
 import redeemController from "../controllers/userController/redeemController.js";
-
+import razorpayController from "../controllers/userController/razorpayController.js";
 
 const route = Router();
 
@@ -56,11 +56,11 @@ route.post("/logout", authController.getLogout)
 
 ////////////product Controller/////////////////////
 
-route.get("/product",userMiddleware.isLogin,productController.getProductsPage)
+route.get("/product",productController.getProductsPage)
 route.get("/search-products",userMiddleware.checkBlocked,productController.searchProduct)
-
 route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
-route.post("/wishlist/add",productController.addToWishlist)
+
+
 
 
 
@@ -97,17 +97,25 @@ route.delete("/cart/remove/:itemId",cartController.removeProduct)
 route.get("/checkout/cart", checkoutController.getCartCheckout)
 route.post("/checkout/order-cod",checkoutController.userOrderCOD)
 route.post('/select-address',checkoutController.selectAddres)
-route.post("/create-razorpay-order", checkoutController.createRazorpayOrderHandler)
-route.post("/verify-razorpay-payment", checkoutController.verifyRazorpayPayment)
-route.post("/wallet-payment", checkoutController.walletPayment)
+
 route.get("/payment-failed/:id", checkoutController.getPaymentFailPage);
 route.patch("/payment-failed/:id", checkoutController.paymentFailed)
-route.post("/retry-payment/:id",checkoutController.retryPayment)
 route.get("/order-status/:id",checkoutController.userOrderSuccessPage)
 
 
+route.post("/create-razorpay-order", razorpayController.createRazorpayOrderHandler)
+route.post("/verify-razorpay-payment", razorpayController.verifyRazorpayPayment)
+route.post("/retry-payment/:id",razorpayController.retryPayment)
 
-route.get("/wishlist",wishlistController.getWishlist)
+
+
+
+
+route.post("/wallet-payment", checkoutController.walletPayment)
+route.get("/wallet",walletController.getWallet)
+
+route.get("/wishlist",userMiddleware.isLogin,wishlistController.getWishlist)
+route.post("/wishlist/add",productController.addToWishlist)
 route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
 route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
 route.get('/get-counts',wishlistController.notificationCount)
@@ -117,7 +125,7 @@ route.post("/order-cancel/:orderId",orderDetailController.cancelFullOrder)
 route.post("/item-cancel/:orderId/:itemId",orderDetailController.cancelIndividualItem)
 route.post("/order-return/:orderId/:itemId",orderDetailController.requestReturnItem)
 
-route.get("/wallet",walletController.getWallet)
+
 
 route.get("/invoice/:orderId", pdfController.generateInvoice);
 
