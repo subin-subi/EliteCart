@@ -227,9 +227,15 @@
 
   <%- include('../partials/addressForm') %>
 
-  <!-- Script remains same -->
-  
-
-<script src="/javascript/user/checkout.js"></script>
+  <!-- Inject server data for external script -->
+  <script>
+    window.__CHECKOUT_DATA = {
+      addresses: <%- JSON.stringify(addresses || []) %>,
+      cart: <%- JSON.stringify(cart || []) %>,
+      user: { name: "<%= user?.name || '' %>", email: "<%= user?.email || '' %>" },
+      razorpayKey: "<%= process.env.RAZORPAY_KEY_ID %>"
+    };
+  </script>
+  <script src="/javascript/user/checkout.js"></script>
 </body>
 </html>

@@ -5,7 +5,13 @@ function openAddressModal() {
   document.getElementById('addAddressModal').classList.remove('hidden');
 }
 
-const addresses = <%- JSON.stringify(addresses || []) %>;
+// Read server-provided data injected by checkout.ejs
+const CHECKOUT_DATA = (window.__CHECKOUT_DATA || {});
+const addresses = Array.isArray(CHECKOUT_DATA.addresses) ? CHECKOUT_DATA.addresses : [];
+const cartData = Array.isArray(CHECKOUT_DATA.cart) ? CHECKOUT_DATA.cart : [];
+const userData = CHECKOUT_DATA.user || { name: "", email: "" };
+const razorpayKey = CHECKOUT_DATA.razorpayKey || "";
+
 const container = document.getElementById('addressContainer');
 const itemsPerPage = 2;
 let currentPage = 1;
@@ -123,7 +129,7 @@ function showToast(message, type = 'success') {
 ///////////////////////////////////checkout ........../////////////////////////////////
 
 async function placeOrder() {
-  const cart = <%- JSON.stringify(cart) %>;
+  const cart = cartData;
 
   
  const selectedAddress = document.querySelector("input[name='selectedAddress']:checked");
@@ -201,7 +207,7 @@ if (paymentMethod === "cod") {
         }
 
         const options = {
-          key: "<%= process.env.RAZORPAY_KEY_ID %>",
+          key: razorpayKey,
           amount: order.amount,
           currency: order.currency,
           name: "EliteCart",
@@ -255,8 +261,8 @@ if (paymentMethod === "cod") {
             }
           },
           prefill: {
-            name: "<%= user.name || '' %>",
-            email: "<%= user.email || '' %>",
+            name: userData.name || "",
+            email: userData.email || "",
           },
           theme: { color: "#2e0e46" },
           modal: {
