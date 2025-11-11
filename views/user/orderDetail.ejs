@@ -84,7 +84,7 @@
     ₹<%= order.grandTotal %>
   </td>
 
-  <!-- Status -->
+
 <!-- Status -->
 <td class="py-5 px-4 text-lg font-semibold text-gray-800">
   <% 
@@ -365,19 +365,39 @@
   </div>
 
 <!-- //////////////////////////cancel individual /////////////////////////// -->
- <!-- Cancel Modal -->
-<div id="cancelModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-  <div class="bg-white rounded-lg p-6 w-96 text-black">
-    <h2 class="text-lg font-semibold mb-3">Cancel Item</h2>
 
-    <textarea id="cancelReason" class="w-full border border-gray-300 rounded-md p-2 mb-3"
-      placeholder="Write reason (min 10 characters)"></textarea>
+<div id="cancelModal" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div class="bg-white rounded-lg p-6 w-96 text-black shadow-lg">
+    <h2 class="text-lg font-semibold mb-4">Cancel Item</h2>
+
+    <!-- Predefined Reasons -->
+    <label for="cancelSelect" class="block font-medium mb-2">Select a reason:</label>
+    <select 
+      id="cancelSelect" 
+      class="w-full border border-gray-300 rounded-md p-2 mb-3 focus:ring-2 focus:ring-red-500">
+      <option value="">-- Choose reason --</option>
+      <option value="Ordered by mistake">Ordered by mistake</option>
+      <option value="Found a better price elsewhere">Found a better price elsewhere</option>
+      <option value="Item not needed anymore">Item not needed anymore</option>
+      <option value="Delivery is taking too long">Delivery is taking too long</option>
+      <option value="Other">Other (type manually)</option>
+    </select>
+
+    <!-- Custom Reason (hidden initially) -->
+    <textarea 
+      id="cancelReason" 
+      class="w-full border border-gray-300 rounded-md p-2 mb-3 hidden"
+      placeholder="Please write your reason (min 10 characters)">
+    </textarea>
 
     <div class="flex justify-end gap-2">
-      <button onclick="closeCancelModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">
+      <button onclick="closeCancelModal()" 
+        class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">
         Close
       </button>
-      <button id="confirmCancelBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
+
+      <button id="confirmCancelBtn" 
+        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
         Confirm
       </button>
     </div>
