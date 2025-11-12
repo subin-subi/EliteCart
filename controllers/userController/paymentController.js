@@ -15,38 +15,63 @@ import {getProductOfferDiscount} from "../userController/checkoutController.js"
 const userOrderCOD = async (req, res) => {
   try {
     const userId = req.session.user;
-    const { cart, selectedAddressId, paymentMethod, coupon } = req.body;
+    const { selectedAddressId, paymentMethod, coupon } = req.body;
 
-    if (!selectedAddressId) {
-      return res.status(404).json({ success: false, message: "You didn't select an address" });
-    }
+    if (!selectedAddressId)
+      return res.status(404).json({ success: false, message: "Please select an address" });
 
-    if (paymentMethod !== "cod") {
+    if (paymentMethod !== "cod")
       return res.status(400).json({ success: false, message: "Only Cash On Delivery is applicable" });
-    }
 
     const address = await Address.findById(selectedAddressId);
-    if (!address) return res.status(404).json({ success: false, message: "Address not found" });
+    if (!address)
+      return res.status(404).json({ success: false, message: "Address not found" });
 
     const cartData = await Cart.findOne({ userId }).populate("items.productId");
     const cartItems = cartData ? cartData.items : [];
-    if (!cartItems.length) return res.status(400).json({ success: false, message: "Cart is empty" });
+    if (!cartItems.length)
+      return res.status(400).json({ success: false, message: "Cart is empty" });
 
-    //  Coupon logic
+    // 🧮 Step 1: Calculate subtotal before discounts
+    const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
+
+    // 🎟️ Step 2: Coupon logic
     let appliedCoupon = null;
     let couponAmount = 0;
+
     if (coupon) {
-      appliedCoupon = await Coupon.findOne({ code: coupon, isActive: true });
+      appliedCoupon = await Coupon.findOne({
+        code: coupon,
+        isActive: true,
+        isNonBlocked: true,
+      });
+
       if (appliedCoupon) {
-        const cartTotal = cartItems.reduce((sum, i) => sum + i.total, 0);
-        couponAmount =
-          appliedCoupon.discountType === "percentage"
-            ? Math.floor((cartTotal * appliedCoupon.discountValue) / 100)
-            : appliedCoupon.discountValue;
+        if (subtotalBeforeDiscount < appliedCoupon.minPurchaseAmount) {
+          return res.status(400).json({
+            success: false,
+            message: `Minimum purchase of ₹${appliedCoupon.minPurchaseAmount} is required to use this coupon.`,
+          });
+        }
+
+        // Calculate discount
+        if (appliedCoupon.discountType === "percentage") {
+          couponAmount = Math.floor(
+            (subtotalBeforeDiscount * appliedCoupon.discountValue) / 100
+          );
+          if (
+            appliedCoupon.maxDiscountAmount &&
+            couponAmount > appliedCoupon.maxDiscountAmount
+          ) {
+            couponAmount = appliedCoupon.maxDiscountAmount;
+          }
+        } else {
+          couponAmount = appliedCoupon.discountValue;
+        }
       }
     }
 
-    //  Stock check
+    // 📦 Step 3: Stock check
     const outOfStockItems = [];
     for (let item of cartItems) {
       const variant = item.productId.variants[item.variantIndex];
@@ -63,9 +88,8 @@ const userOrderCOD = async (req, res) => {
       });
     }
 
-    //  Prepare order items
-    const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
-    let totalDiscountAmount = 0; // 👈 track total offer + coupon discount
+    // 🛍️ Step 4: Prepare order items with coupon distribution
+    let totalDiscountAmount = 0;
 
     const orderItems = await Promise.all(
       cartItems.map(async (item) => {
@@ -74,50 +98,48 @@ const userOrderCOD = async (req, res) => {
 
         // Offer discount
         const { discountPercent, appliedOffer } = await getProductOfferDiscount(item.productId);
-        const offerDiscountAmount =
+        const offerDiscountPerUnit =
           discountPercent > 0 ? Math.round((originalPrice * discountPercent) / 100) : 0;
-        const priceAfterOffer = originalPrice - offerDiscountAmount;
+        const priceAfterOffer = originalPrice - offerDiscountPerUnit;
 
-        // Coupon discount 
-        const couponDiscountPerUnit =
-          couponAmount > 0
-            ? Math.round((item.total / subtotalBeforeDiscount) * couponAmount) / item.quantity
-            : 0;
+        // 🧾 Coupon share logic
+        const itemShare = item.total / subtotalBeforeDiscount;
+        const couponDiscountTotal = itemShare * couponAmount;
+        const couponDiscountPerUnit = couponDiscountTotal / item.quantity;
 
+        // Final per-unit price
         const finalPricePerUnit = priceAfterOffer - couponDiscountPerUnit;
 
-        //  total discount for this item
-        const totalDiscountForItem =
-          (originalPrice - finalPricePerUnit) * item.quantity;
-
-        totalDiscountAmount += totalDiscountForItem; 
+        // Total discount (offer + coupon)
+        const totalItemDiscount = (offerDiscountPerUnit + couponDiscountPerUnit) * item.quantity;
+        totalDiscountAmount += totalItemDiscount;
 
         return {
           productId: item.productId._id,
           variantId: variant._id,
           quantity: item.quantity,
           basePrice: originalPrice,
-          discountAmount: totalDiscountForItem, 
-          finalPrice: finalPricePerUnit,
-          total: finalPricePerUnit * item.quantity,
+          discountAmount: Math.round(totalItemDiscount),
+          finalPrice: Math.round(finalPricePerUnit),
+          total: Math.round(finalPricePerUnit * item.quantity),
           appliedOffer: appliedOffer ? appliedOffer.name : null,
         };
       })
     );
 
-    //  Calculate totals
+    // 🧾 Step 5: Calculate totals
     const subtotal = orderItems.reduce((sum, i) => sum + i.total, 0);
     const shippingCharge = subtotal > 1000 ? 0 : 50;
     const grandTotal = subtotal + shippingCharge;
 
-    //  Update stock
+    // 📉 Step 6: Update stock
     for (let item of cartItems) {
       const variant = item.productId.variants[item.variantIndex];
       variant.stock -= item.quantity;
       await item.productId.save();
     }
 
-    //  Create order
+    // 🧾 Step 7: Create order
     const order = new Order({
       userId,
       items: orderItems,
@@ -135,7 +157,7 @@ const userOrderCOD = async (req, res) => {
       paymentStatus: "Pending",
       orderStatus: "Pending",
       subtotal,
-      discount: Math.round(totalDiscountAmount), 
+      discount: Math.round(totalDiscountAmount),
       shippingCharge,
       grandTotal,
       appliedCoupon: appliedCoupon ? appliedCoupon.code : null,
@@ -143,13 +165,13 @@ const userOrderCOD = async (req, res) => {
 
     await order.save();
 
-    
+    // 🎟️ Step 8: Update coupon usage
     if (appliedCoupon) {
       appliedCoupon.usedBy.push({ userId, usedAt: new Date() });
       await appliedCoupon.save();
     }
 
-    // Clear cart
+    // 🧹 Step 9: Clear cart
     await Cart.findOneAndUpdate(
       { userId },
       { $set: { items: [], grandTotal: 0 } },
@@ -158,7 +180,7 @@ const userOrderCOD = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Order placed successfully!",
+      message: "Order placed successfully with Cash on Delivery!",
       redirect: `/order-status/${order._id}`,
     });
   } catch (err) {
@@ -177,9 +199,8 @@ const userOrderCOD = async (req, res) => {
 const walletPayment = async (req, res) => {
   try {
     const userId = req.session.user;
-    const { cart, selectedAddressId, paymentMethod, coupon } = req.body;
+    const { selectedAddressId, paymentMethod, coupon } = req.body;
 
-    // Validate payment and address
     if (!selectedAddressId)
       return res.status(400).json({ success: false, message: "Please select an address" });
 
@@ -195,26 +216,49 @@ const walletPayment = async (req, res) => {
     if (!cartItems.length)
       return res.status(400).json({ success: false, message: "Cart is empty" });
 
-    // Calculate subtotal and coupon
-    let subtotalAmount = cartItems.reduce((sum, i) => sum + i.total, 0);
+    // 🧮 Step 1: Calculate subtotal
+    const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
+
     let couponAmount = 0;
     let appliedCoupon = null;
 
+    // 🧾 Step 2: Apply coupon
     if (coupon) {
-      appliedCoupon = await Coupon.findOne({ code: coupon, isActive: true });
+      appliedCoupon = await Coupon.findOne({
+        code: coupon,
+        isActive: true,
+        isNonBlocked: true,
+      });
+
       if (appliedCoupon) {
-        couponAmount =
-          appliedCoupon.discountType === "percentage"
-            ? Math.floor((subtotalAmount * appliedCoupon.discountValue) / 100)
-            : appliedCoupon.discountValue;
+        if (subtotalBeforeDiscount < appliedCoupon.minPurchaseAmount) {
+          return res.status(400).json({
+            success: false,
+            message: `Minimum purchase of ₹${appliedCoupon.minPurchaseAmount} is required to use this coupon.`,
+          });
+        }
+
+        if (appliedCoupon.discountType === "percentage") {
+          couponAmount = Math.floor(
+            (subtotalBeforeDiscount * appliedCoupon.discountValue) / 100
+          );
+          if (
+            appliedCoupon.maxDiscountAmount &&
+            couponAmount > appliedCoupon.maxDiscountAmount
+          ) {
+            couponAmount = appliedCoupon.maxDiscountAmount;
+          }
+        } else {
+          couponAmount = appliedCoupon.discountValue;
+        }
       }
     }
 
-    const finalSubtotal = subtotalAmount - couponAmount;
-    const shippingCharge = finalSubtotal > 1000 ? 0 : 50;
+    const shippingCharge = subtotalBeforeDiscount > 1000 ? 0 : 50;
+    const finalSubtotal = subtotalBeforeDiscount - couponAmount;
     const grandTotal = finalSubtotal + shippingCharge;
 
-    //  Wallet balance check
+    // 💰 Step 3: Wallet check
     let wallet = await Wallet.findOne({ user: userId });
     if (!wallet) wallet = new Wallet({ user: userId, balance: 0 });
 
@@ -225,7 +269,7 @@ const walletPayment = async (req, res) => {
       });
     }
 
-    //  Stock check
+    // 🧩 Step 4: Check stock
     const outOfStockItems = [];
     for (let item of cartItems) {
       const variant = item.productId.variants[item.variantIndex];
@@ -242,29 +286,28 @@ const walletPayment = async (req, res) => {
       });
     }
 
-    const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
+    // 🛒 Step 5: Build order items with offer & coupon discount distribution
     let totalDiscountAmount = 0;
 
-    //  Prepare order items
     const orderItems = await Promise.all(
       cartItems.map(async (item) => {
         const variant = item.productId.variants[item.variantIndex];
         const originalPrice = variant.price;
 
-        // Offer discount
+        // Offer discount calculation
         const { discountPercent, appliedOffer } = await getProductOfferDiscount(item.productId);
-        const offerDiscountAmount =
+        const offerDiscountPerUnit =
           discountPercent > 0 ? Math.round((originalPrice * discountPercent) / 100) : 0;
-        const priceAfterOffer = originalPrice - offerDiscountAmount;
+        const priceAfterOffer = originalPrice - offerDiscountPerUnit;
 
-        // Coupon discount per unit
-        const couponDiscountPerUnit =
-          couponAmount > 0
-            ? Math.round((item.total / subtotalBeforeDiscount) * couponAmount) / item.quantity
-            : 0;
+        // 🧮 Proportional coupon discount
+        const itemShare = item.total / subtotalBeforeDiscount;
+        const couponDiscountTotal = itemShare * couponAmount;
+        const couponDiscountPerUnit = couponDiscountTotal / item.quantity;
 
         const finalPricePerUnit = priceAfterOffer - couponDiscountPerUnit;
-        const totalItemDiscount = (offerDiscountAmount + couponDiscountPerUnit) * item.quantity;
+        const totalItemDiscount = (offerDiscountPerUnit + couponDiscountPerUnit) * item.quantity;
+
         totalDiscountAmount += totalItemDiscount;
 
         return {
@@ -272,9 +315,9 @@ const walletPayment = async (req, res) => {
           variantId: variant._id,
           quantity: item.quantity,
           basePrice: originalPrice,
-          discountAmount: totalItemDiscount,
-          finalPrice: finalPricePerUnit,
-          total: finalPricePerUnit * item.quantity,
+          discountAmount: Math.round(totalItemDiscount),
+          finalPrice: Math.round(finalPricePerUnit),
+          total: Math.round(finalPricePerUnit * item.quantity),
           appliedOffer: appliedOffer ? appliedOffer.name : null,
         };
       })
@@ -282,24 +325,24 @@ const walletPayment = async (req, res) => {
 
     const subtotal = orderItems.reduce((sum, i) => sum + i.total, 0);
 
-    //  Update stock
+    // 📦 Step 6: Update stock
     for (let item of cartItems) {
       const variant = item.productId.variants[item.variantIndex];
       variant.stock -= item.quantity;
       await item.productId.save();
     }
 
-    //  Deduct from wallet
+    // 💳 Step 7: Deduct wallet amount
     wallet.balance -= grandTotal;
     wallet.transactions.push({
       type: "Debit",
       amount: grandTotal,
-      description: `Payment for order`,
+      description: "Payment for order",
       date: new Date(),
     });
     await wallet.save();
 
-    //  Create order
+    // 🧾 Step 8: Create order
     const order = new Order({
       userId,
       items: orderItems,
@@ -317,7 +360,7 @@ const walletPayment = async (req, res) => {
       paymentStatus: "Paid",
       orderStatus: "Confirmed",
       subtotal,
-      discount: totalDiscountAmount,
+      discount: Math.round(totalDiscountAmount),
       shippingCharge,
       grandTotal,
       appliedCoupon: appliedCoupon ? appliedCoupon.code : null,
@@ -325,13 +368,13 @@ const walletPayment = async (req, res) => {
 
     await order.save();
 
-    //  Update coupon usage
+    // 🎟️ Step 9: Mark coupon usage
     if (appliedCoupon) {
       appliedCoupon.usedBy.push({ userId, usedAt: new Date() });
       await appliedCoupon.save();
     }
 
-    //  Clear cart
+    // 🧹 Step 10: Clear cart
     await Cart.findOneAndUpdate(
       { userId },
       { $set: { items: [], grandTotal: 0 } },
@@ -351,6 +394,7 @@ const walletPayment = async (req, res) => {
     });
   }
 };
+
 
 
 export default ({

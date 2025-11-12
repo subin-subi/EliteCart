@@ -72,7 +72,7 @@
                   tempOrderId: order._id
                 });
                 if (verifyRes.data.success) {
-                  window.location.href = `/oder-status/${verifyRes.data.orderId}`;
+                  window.location.href = `/order-status/${verifyRes.data.orderId}`;
                 } else {
                   await axios.patch(`/payment-failed/${order._id}`);
                   window.location.href = `/payment-failed/${order._id}`;

@@ -381,11 +381,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // ✅ Get subtotal (without shipping)
+     
       const subtotalText = document.getElementById("subtotalAmount").textContent.replace(/[₹,]/g, "").trim();
       const subtotal = parseFloat(subtotalText) || 0;
 
-      // Send only subtotal to backend
+     
       const res = await axios.post("/coupon/apply", { code, total: subtotal });
 
      if (res.data.success) {

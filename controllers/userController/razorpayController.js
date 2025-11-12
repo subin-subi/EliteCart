@@ -19,20 +19,27 @@ const createRazorpayOrderHandler = async (req, res) => {
     if (!userId)
       return res.status(401).json({ success: false, message: "Unauthorized" });
 
-    const { cart, selectedAddressId, paymentMethod, coupon, subtotal } = req.body;
+    const { selectedAddressId, coupon } = req.body;
+
     if (!selectedAddressId)
-      return res.status(400).json({ success: false, message: "Please select an address" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Please select an address" });
 
     const address = await Address.findById(selectedAddressId);
     if (!address)
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Address not found" });
 
     const cartData = await Cart.findOne({ userId }).populate("items.productId");
     const cartItems = cartData ? cartData.items : [];
     if (!cartItems.length)
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Cart is empty" });
 
-    //  Calculate offer discounts
+    
     let subtotalAmount = 0;
     let totalDiscountAmount = 0;
     const detailedItems = [];
@@ -41,60 +48,102 @@ const createRazorpayOrderHandler = async (req, res) => {
       const variant = item.productId.variants[item.variantIndex];
       const originalPrice = variant.price;
 
-      // Product offer discount
-      const { discountPercent, appliedOffer } = await getProductOfferDiscount(item.productId);
+      const { discountPercent, appliedOffer } = await getProductOfferDiscount(
+        item.productId
+      );
+
       const offerDiscountPerUnit =
-        discountPercent > 0 ? Math.round((originalPrice * discountPercent) / 100) : 0;
+        discountPercent > 0
+          ? Math.round((originalPrice * discountPercent) / 100)
+          : 0;
 
       const priceAfterOffer = originalPrice - offerDiscountPerUnit;
       const totalPrice = priceAfterOffer * item.quantity;
-
-      // Total discount for this item
       const totalDiscountForItem = offerDiscountPerUnit * item.quantity;
-      totalDiscountAmount += totalDiscountForItem;
+
       subtotalAmount += totalPrice;
+      totalDiscountAmount += totalDiscountForItem;
 
       detailedItems.push({
         productId: item.productId._id,
         variantId: variant._id,
         quantity: item.quantity,
         basePrice: originalPrice,
-        discount: Math.round(totalDiscountForItem), 
-        finalPrice: priceAfterOffer,
+        discount: Math.round(totalDiscountForItem),
+        finalPrice: priceAfterOffer, // before coupon
         total: totalPrice,
         appliedOffer: appliedOffer ? appliedOffer.name : null,
       });
     }
 
-    //  Apply coupon logic
+    
+    // Step 2: Shipping before coupon
+    
+    const shippingCharge = subtotalAmount > 1000 ? 0 : 50;
+
+    // =============================
+    // 🎟 Step 3: Apply coupon
+    // =============================
     let couponAmount = 0;
     let appliedCoupon = null;
 
     if (coupon) {
-      appliedCoupon = await Coupon.findOne({ code: coupon, isActive: true });
-      if (appliedCoupon) {
-        couponAmount =
-          appliedCoupon.discountType === "percentage"
-            ? Math.floor((subtotalAmount * appliedCoupon.discountValue) / 100)
-            : appliedCoupon.discountValue;
+      appliedCoupon = await Coupon.findOne({
+        code: coupon,
+        isActive: true,
+        isNonBlocked: true,
+      });
 
-        // Distribute coupon discount across items proportionally
+      if (appliedCoupon) {
+        if (subtotalAmount < appliedCoupon.minPurchaseAmount) {
+          return res.status(400).json({
+            success: false,
+            message: `Minimum purchase of ₹${appliedCoupon.minPurchaseAmount} is required to use this coupon.`,
+          });
+        }
+
+        if (appliedCoupon.discountType === "percentage") {
+          couponAmount = Math.floor(
+            (subtotalAmount * appliedCoupon.discountValue) / 100
+          );
+          if (
+            appliedCoupon.maxDiscountAmount &&
+            couponAmount > appliedCoupon.maxDiscountAmount
+          ) {
+            couponAmount = appliedCoupon.maxDiscountAmount;
+          }
+        } else {
+          couponAmount = appliedCoupon.discountValue;
+        }
+
+        //  Distribute coupon proportionally to each item
         const totalBeforeCoupon = subtotalAmount;
         detailedItems.forEach((item) => {
           const itemShare = item.total / totalBeforeCoupon;
           const couponShare = itemShare * couponAmount;
+
+          // Add coupon share to discount
           item.discount += Math.round(couponShare);
-          totalDiscountAmount += Math.round(couponShare);
+
+          // Subtract coupon share from total & final price per unit
+          const totalAfterCoupon = item.total - couponShare;
+          const finalPriceAfterCoupon = totalAfterCoupon / item.quantity;
+
+          item.total = Math.round(totalAfterCoupon);
+          item.finalPrice = Math.round(finalPriceAfterCoupon);
         });
       }
     }
 
+    // =============================
     //  Final total calculations
+    // =============================
     const finalSubtotal = subtotalAmount - couponAmount;
-    const shippingCharge = finalSubtotal > 1000 ? 0 : 50;
     const grandTotal = finalSubtotal + shippingCharge;
 
-    //  Create temporary order
+    // =============================
+    //  Step 5: Create temporary order
+    // =============================
     const tempOrder = new Order({
       userId,
       items: detailedItems,
@@ -112,7 +161,7 @@ const createRazorpayOrderHandler = async (req, res) => {
       paymentStatus: "Pending",
       orderStatus: "Pending",
       subtotal: subtotalAmount,
-      discount: Math.round(totalDiscountAmount), 
+      discount: Math.round(totalDiscountAmount + couponAmount),
       shippingCharge,
       grandTotal,
       appliedCoupon: appliedCoupon ? appliedCoupon.code : null,
@@ -120,8 +169,11 @@ const createRazorpayOrderHandler = async (req, res) => {
 
     await tempOrder.save();
 
-    //  Create Razorpay order
-    const razorpayOrder = await createRazorpayOrder(grandTotal, `order_${tempOrder._id}`);
+
+    const razorpayOrder = await createRazorpayOrder(
+      grandTotal,
+      `order_${tempOrder._id}`
+    );
 
     res.json({
       success: true,
@@ -136,6 +188,8 @@ const createRazorpayOrderHandler = async (req, res) => {
     });
   }
 };
+
+
 
 
 

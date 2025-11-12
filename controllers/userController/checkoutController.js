@@ -3,7 +3,6 @@ import Cart from "../../models/cartModel.js";
 import Address from "../../models/addressModel.js";
 import Order from "../../models/orderModel.js"
 import Coupon from "../../models/couponModel.js"
-import Wallet from "../../models/walletModel.js"
 import Offer from "../../models/offerModel.js"
 
 
@@ -269,19 +268,31 @@ const addCoupon = async (req, res) => {
 
     total = parseFloat(total);
 
-    // ✅ Find valid, active, non-blocked coupon
-    const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true, isNonBlocked: true });
+    
+    const shippingCharge = total > 1000 ? 0 : shippingCost;
+
+    // Find valid, active, non-blocked coupon
+    const coupon = await Coupon.findOne({
+      code: code.toUpperCase(),
+      isActive: true,
+      isNonBlocked: true,
+    });
+
     if (!coupon) {
-      return res.status(404).json({ success: false, message: "Invalid or inactive coupon." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid or inactive coupon." });
     }
 
-    // ✅ Expiry check
+    // Expiry check
     const now = new Date();
     if (coupon.expiryDate < now) {
-      return res.status(400).json({ success: false, message: "Coupon has expired." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Coupon has expired." });
     }
 
-    // ✅ Minimum purchase check
+    // Minimum purchase check
     if (total < coupon.minPurchaseAmount) {
       return res.status(400).json({
         success: false,
@@ -289,46 +300,50 @@ const addCoupon = async (req, res) => {
       });
     }
 
-    // ✅ Check if user already used this coupon
-    const alreadyUsed = coupon.usedBy.some((u) => u.userId?.toString() === userId?.toString());
+    // Check if user already used this coupon
+    const alreadyUsed = coupon.usedBy.some(
+      (u) => u.userId?.toString() === userId?.toString()
+    );
     if (alreadyUsed) {
-      return res.status(400).json({ success: false, message: "You have already used this coupon." });
+      return res
+        .status(400)
+        .json({ success: false, message: "You have already used this coupon." });
     }
 
-    // ✅ Calculate discount
+    // Calculate discount
     let discountAmount = 0;
     if (coupon.discountType === "percentage") {
       discountAmount = (total * coupon.discountValue) / 100;
+
       if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
         discountAmount = coupon.maxDiscountAmount;
       }
+
       discountAmount = Math.floor(discountAmount); // remove decimals
     } else if (coupon.discountType === "flat") {
       discountAmount = coupon.discountValue;
     }
 
+    // Apply discount
     let discountedSubtotal = total - discountAmount;
     if (discountedSubtotal < 0) discountedSubtotal = 0;
 
-    // ✅ Add shipping only if below 1000
-    let discountedTotal = discountedSubtotal;
-    if (discountedSubtotal < 1000) {
-      discountedTotal += shippingCost;
-    }
-
-    // ❌ Removed coupon.usedBy.push() here — handled after payment success
-    console.log("Coupon applied:", { discountAmount, discountedTotal });
+  
+    const discountedTotal = discountedSubtotal + shippingCharge;
 
     return res.status(200).json({
       success: true,
       message: "Coupon applied successfully!",
       discountAmount,
+      shippingCharge,
       discountedTotal,
     });
 
   } catch (err) {
     console.error("Error from addCoupon:", err);
-    return res.status(500).json({ success: false, message: "Internal server error." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error." });
   }
 };
 
