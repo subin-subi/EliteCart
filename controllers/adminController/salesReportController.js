@@ -5,75 +5,41 @@ import ExcelJS from "exceljs";
 
 
 
-
-
-const getSalesReport = async (req, res) => {
-  try {
-    const {
-      range,
-      startDate,
-      endDate,
-      page = 1,
-      limit = 10
-    } = req.query;
-
-    let query = {}; // Default: fetch all
-    let start = null;
-    let end = null;
-
-    // If range or dates are selected, apply filter
-    const selectedRange = range || "day";
-    const filter = buildDateFilter(selectedRange, startDate, endDate);
-    query = filter.query;
-    start = filter.start;
-    end = filter.end;
-
-    const pagination = await fetchSalesData(query, Number(page), Number(limit));
-    const metrics = calculateMetrics(pagination.items);
-
-    const urlQuery = new URLSearchParams(req.query).toString();
-
-    const isCustom = selectedRange === "custom";
-
-    res.render("admin/salesReport", {
-      range: selectedRange,
-      startDate: isCustom && start ? new Date(start).toISOString().slice(0, 16) : "",
-      endDate: isCustom && end ? new Date(end).toISOString().slice(0, 16) : "",
-      currentPage: pagination.currentPage,
-      totalPages: pagination.totalPages,
-      totalOrders: pagination.totalItems,
-      orders: pagination.items,
-      metrics,
-      urlQuery
-    });
-  } catch (err) {
-    console.error("renderSalesReport error", err);
-    res
-      .status(500)
-      .render("error", { status: 500, message: "Internal Server Error" });
-  }
-};
-
-const getSalesReportData = async (req, res) => {
+ const getSalesReport = async (req, res) => {
     try {
         const {
-            range = "day",
+            range = "day", 
             startDate,
             endDate,
             page = 1,
             limit = 10
         } = req.query;
 
-        const { query } = buildDateFilter(range, startDate, endDate);
+        const { query, start, end } = buildDateFilter(range, startDate, endDate);
+
         const pagination = await fetchSalesData(query, Number(page), Number(limit));
         const metrics = calculateMetrics(pagination.items);
 
-        res.json({ success: true, ...pagination, metrics });
+        const urlQuery = new URLSearchParams(req.query).toString();
+        res.render("admin/salesReport", {
+            range,
+            startDate: start ? start.toISOString().slice(0, 16) : "",
+            endDate: end ? end.toISOString().slice(0, 16) : "",
+            currentPage: pagination.currentPage,
+            totalPages: pagination.totalPages,
+            totalOrders: pagination.totalItems,
+            orders: pagination.items,
+            metrics,
+            urlQuery
+        });
     } catch (err) {
-        console.error("getSalesReportData error", err);
-        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
+        console.error("renderSalesReport error", err);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", { status: 500, message: "Internal Server Error" });
     }
 };
+
+
+
 
 const downloadSalesReportPdf = async (req, res) => {
     try {
@@ -110,8 +76,8 @@ const downloadSalesReportPdf = async (req, res) => {
         // Summary
         doc.fontSize(14).text("SUMMARY", { underline: true });
         doc.fontSize(12).text(`Total Orders: ${metrics.count}`);
-        doc.text(`Total Revenue: ₹${metrics.amount.toLocaleString()}`);
-        doc.text(`Total Discount: ₹${metrics.discount.toLocaleString()}`);
+        doc.text(`Total Revenue: Rs: ${metrics.amount.toLocaleString()}`);
+        doc.text(`Total Discount: Rs: ${metrics.discount.toLocaleString()}`);
         doc.moveDown();
 
         // Orders Table
@@ -142,10 +108,10 @@ const downloadSalesReportPdf = async (req, res) => {
     doc.text(`Status: ${order.orderStatus || "N/A"}`, leftCol, currentY + 60);
 
     // Right column - Financial info
-    doc.text(`Subtotal: ₹${order.subtotal || 0}`, rightCol, currentY);
-    doc.text(`Discount: ₹${order.discount || 0}`, rightCol, currentY + 15);
-    doc.text(`Shipping: ₹${order.shippingCharge || 0}`, rightCol, currentY + 30);
-    doc.fontSize(12).text(`Grand Total: ₹${order.grandTotal || 0}`, rightCol, currentY + 45);
+    doc.text(`Subtotal: Rs: ${order.subtotal || 0}`, rightCol, currentY);
+    doc.text(`Discount: Rs: ${order.discount || 0}`, rightCol, currentY + 15);
+    doc.text(`Shipping: Rs: ${order.shippingCharge || 0}`, rightCol, currentY + 30);
+    doc.fontSize(12).text(`Grand Total: Rs: ${order.grandTotal || 0}`, rightCol, currentY + 45);
 
     // Products section
     doc.moveDown(1);
@@ -162,8 +128,8 @@ const downloadSalesReportPdf = async (req, res) => {
         const productName = item.productId?.name || "Unknown Product";
         doc.fontSize(9).text(`• ${productName}`, 60, productY);
         doc.text(`  Quantity: ${item.quantity}`, 60, productY + 12);
-        doc.text(`  Price: ₹${item.finalPrice || 0} each`, 60, productY + 24);
-        doc.text(`  Total: ₹${item.total || 0}`, 60, productY + 36);
+        doc.text(`  Price: Rs: ${item.finalPrice || 0} each`, 60, productY + 24);
+        doc.text(`  Total: Rs: ${item.total || 0}`, 60, productY + 36);
 
         productY += 50;
     });
@@ -367,8 +333,8 @@ const downloadSalesReportExcel = async (req, res) => {
     sheet.addRow(["Total Orders", "Total Revenue", "Total Discount"]);
     sheet.addRow([
       metrics.count,
-      `₹${metrics.amount.toLocaleString()}`,
-      `₹${metrics.discount.toLocaleString()}`,
+      `Rs: ${metrics.amount.toLocaleString()}`,
+      `Rs: ${metrics.discount.toLocaleString()}`,
     ]);
     sheet.addRow([]);
 
@@ -395,10 +361,10 @@ const downloadSalesReportExcel = async (req, res) => {
         `${userName} (${userEmail})`,
         order.paymentMethod || "N/A",
         order.orderStatus || "N/A",
-        `₹${order.subtotal || 0}`,
-        `₹${order.discount || 0}`,
-        `₹${order.shippingCharge || 0}`,
-        `₹${order.grandTotal || 0}`,
+        `Rs: ${order.subtotal || 0}`,
+        `Rs: ${order.discount || 0}`,
+        `Rs: ${order.shippingCharge || 0}`,
+        `Rs: ${order.grandTotal || 0}`,
       ]);
     });
 
@@ -414,8 +380,8 @@ const downloadSalesReportExcel = async (req, res) => {
           order.orderId,
           productName,
           item.quantity || 0,
-          `₹${item.finalPrice || 0}`,
-          `₹${item.total || 0}`,
+          `Rs: ${item.finalPrice || 0}`,
+          `Rs: ${item.total || 0}`,
         ]);
       });
     });
@@ -443,14 +409,14 @@ const downloadSalesReportExcel = async (req, res) => {
 
 
 
-function escapeCsv(value) {
-    if (value == null) return "";
-    const str = String(value).replace(/"/g, '""');
-    if (str.includes(",") || str.includes("\n") || str.includes("\r")) {
-        return `"${str}"`;
-    }
-    return str;
-}
+// function escapeCsv(value) {
+//     if (value == null) return "";
+//     const str = String(value).replace(/"/g, '""');
+//     if (str.includes(",") || str.includes("\n") || str.includes("\r")) {
+//         return `"${str}"`;
+//     }
+//     return str;
+// }
 
 
 
@@ -458,7 +424,6 @@ function escapeCsv(value) {
 export default ({ 
   getSalesReport,
   downloadSalesReportPdf,
-  getSalesReportData,
   downloadSalesReportExcel
 
 })

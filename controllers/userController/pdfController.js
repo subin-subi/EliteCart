@@ -60,90 +60,93 @@ const generateInvoice = async (req, res) => {
     doc.text(`Mobile  : ${address.mobile}`);
     doc.moveDown(1);
 
-    // ----// ---------- ORDER ITEMS TABLE ----------
-doc.fontSize(14).fillColor("#16a34a").text("Order Items", { underline: true });
-doc.moveDown(0.3);
+    // ---------- ORDER ITEMS TABLE ----------
+    doc.fontSize(14).fillColor("#16a34a").text("Order Items", { underline: true });
+    doc.moveDown(0.3);
 
-// Check if any item has cancel or return
-const hasCancel = order.items.some(item => item.cancelStatus);
-const hasReturn = order.items.some(item => item.returnStatus);
+    const startX = 50;
+    const colSpacing = [40, 120, 70, 50, 70, 70, 90];
+    const headers = ["S.No", "Product Name", "Unit Price", "Qty", "Discount", "Total", "Status"];
 
-// Column positions & headers
-const startX = 50;
-let colSpacing = [40, 100, 70, 50, 70, 70]; // default columns
-let headers = ["S.No", "Product Name", "Unit Price", "Qty", "Discount", "Total"];
+    let y = doc.y + 10;
 
-if (hasCancel) {
-  headers.push("Cancelled");
-  colSpacing.push(80);
-}
-if (hasReturn) {
-  headers.push("Return Status");
-  colSpacing.push(80);
-}
+    // Table header
+    doc.fontSize(12).font("Helvetica-Bold").fillColor("black");
+    let x = startX;
+    headers.forEach((header, i) => {
+      doc.text(header, x, y, { width: colSpacing[i], align: "left" });
+      x += colSpacing[i];
+    });
+    y += 20;
 
-let y = doc.y + 10;
+    doc.moveTo(startX, y - 5)
+      .lineTo(startX + colSpacing.reduce((a, b) => a + b, 0), y - 5)
+      .strokeColor("#000")
+      .lineWidth(1)
+      .stroke();
 
-// Draw table header
-doc.fontSize(12).font("Helvetica-Bold").fillColor("black");
-let x = startX;
-headers.forEach((header, i) => {
-  doc.text(header, x, y, { width: colSpacing[i], align: "left" });
-  x += colSpacing[i];
-});
-y += 20;
-doc.moveTo(startX, y - 5).lineTo(startX + colSpacing.reduce((a, b) => a + b, 0), y - 5).strokeColor("#000").lineWidth(1).stroke();
+    // Table rows
+    doc.font("Helvetica").fontSize(11).fillColor("black");
 
-// Table rows
-doc.font("Helvetica").fontSize(11).fillColor("black");
+    order.items.forEach((item, i) => {
+      const name = item.productId?.name || "Unnamed Product";
+      const price = `Rs: ${item.finalPrice.toFixed(2)}`;
+      const qty = item.quantity;
+      const discount = item.discountAmount ? `Rs: ${item.discountAmount.toFixed(2)}` : "-";
+      const total = `Rs: ${(item.finalPrice * qty).toFixed(2)}`;
 
-order.items.forEach((item, i) => {
-  const name = item.productId?.name || "Unnamed Product";
-  const price = `Rs: ${item.finalPrice.toFixed(2)}`;
-  const qty = item.quantity;
-  const discount = item.discountAmount ? `Rs: ${item.discountAmount.toFixed(2)}` : "-";
-  const total = `Rs: ${(item.finalPrice * qty).toFixed(2)}`;
+      // Determine status (cancel/return)
+      let statusText = "";
+      if (item.cancelStatus === "Cancelled") {
+        statusText = " Cancelled";
+      } else if (item.returnStatus && item.returnStatus !== "Not Requested") {
+        statusText = `↩ ${item.returnStatus}`;
+      }
 
-  let rowValues = [i + 1, name, price, qty, discount, total];
+      const rowValues = [i + 1, name, price, qty, discount, total, statusText];
 
-  if (hasCancel) rowValues.push(item.cancelStatus || "-");
-  if (hasReturn) rowValues.push(item.returnStatus || "-");
+      let xPos = startX;
+      rowValues.forEach((val, j) => {
+        doc.text(val.toString(), xPos, y, { width: colSpacing[j], align: "left" });
+        xPos += colSpacing[j];
+      });
 
-  let xPos = startX;
-  rowValues.forEach((val, j) => {
-    doc.text(val.toString(), xPos, y, { width: colSpacing[j], align: "left" });
-    xPos += colSpacing[j];
-  });
+      y += 20;
 
-  y += 20;
-  doc.moveTo(startX, y - 5).lineTo(startX + colSpacing.reduce((a, b) => a + b, 0), y - 5).strokeColor("#ccc").lineWidth(0.5).stroke();
-});
-
-doc.moveDown(2);
-
-    // ---------- TOTALS ----------
-    const labelX = 400;
-    const valueX = 500;
-    let yPos = doc.y + 15;
-
-    doc.fontSize(12).font("Helvetica").fillColor("black");
-    doc.text("Subtotal:", labelX, yPos);
-    doc.text(`Rs: ${order.subtotal.toFixed(2)}`, valueX, yPos);
-    yPos += 18;
-
-    doc.text("Discount:", labelX, yPos);
-    doc.text(`Rs: ${order.discount.toFixed(2)}`, valueX, yPos);
-    yPos += 18;
-
-    doc.text("Shipping:", labelX, yPos);
-    doc.text(`Rs: ${order.shippingCharge.toFixed(2)}`, valueX, yPos);
-    yPos += 25;
-
-    doc.fontSize(14).font("Helvetica-Bold").fillColor("#16a34a");
-    doc.text("Grand Total:", labelX, yPos);
-    doc.text(`Rs: ${order.grandTotal.toFixed(2)}`, valueX, yPos);
+      doc.moveTo(startX, y - 5)
+        .lineTo(startX + colSpacing.reduce((a, b) => a + b, 0), y - 5)
+        .strokeColor("#ccc")
+        .lineWidth(0.5)
+        .stroke();
+    });
 
     doc.moveDown(2);
+
+    // ---------- TOTALS (Centered) ----------
+const pageWidth = doc.page.width;
+const labelX = pageWidth / 2 - 30;   // move totals section closer to center
+const valueX = pageWidth / 2 + 110;
+let yPos = doc.y + 15;
+
+doc.fontSize(12).font("Helvetica").fillColor("black");
+
+doc.text("Subtotal:", labelX, yPos);
+doc.text(`Rs: ${order.subtotal.toFixed(2)}`, valueX, yPos);
+yPos += 18;
+
+doc.text("Discount:", labelX, yPos);
+doc.text(`Rs: ${order.discount.toFixed(2)}`, valueX, yPos);
+yPos += 18;
+
+doc.text("Shipping:", labelX, yPos);
+doc.text(`Rs: ${order.shippingCharge.toFixed(2)}`, valueX, yPos);
+yPos += 25;
+
+doc.fontSize(14).font("Helvetica-Bold").fillColor("#16a34a");
+doc.text("Grand Total:", labelX, yPos);
+doc.text(`Rs: ${order.grandTotal.toFixed(2)}`, valueX, yPos);
+
+doc.moveDown(2);
 
     // ---------- FOOTER ----------
     doc.fontSize(11).fillColor("black").text("Thank you for shopping with EliteCart!", { align: "center" });
@@ -156,4 +159,4 @@ doc.moveDown(2);
   }
 };
 
-export default ({generateInvoice});
+export default { generateInvoice };

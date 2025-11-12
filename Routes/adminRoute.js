@@ -85,5 +85,5 @@ router.post("/edit-offer",offerController.editOffer)
 router.get("/salesreport", salesReportController.getSalesReport)
 router.get("/salesreport/download/pdf", salesReportController.downloadSalesReportPdf)
 router.get("/salesreport/download/excel", salesReportController.downloadSalesReportExcel)
-router.get("/data",salesReportController.getSalesReportData)
+
 export default router;
