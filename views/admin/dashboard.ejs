@@ -1,80 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | EliteCart</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Joan&display=swap" rel="stylesheet">
+  <style>
+    #ordersChart {
+      max-height: 400px;
+    }
+
+    #dailyInput {
+  transition: all 0.3s ease-in-out;
+}
+#dailyInput.hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+#dailyInput:not(.hidden) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+  </style>
 </head>
-<body class="bg-gradient-to-r from-[#fdba74] to-[#f97316] text-gray-200 min-h-screen">
+<body class="bg-[#1b1b1b] text-white">
+
+<div class="flex min-h-screen bg-[#121212] text-white">
 
   <!-- Sidebar -->
-  <%- include("../partials/sidebar") %>
+  <aside class="fixed top-0 left-0 w-64 h-full bg-zinc-900 p-5 shadow-lg">
+    <%- include('../partials/sidebar', { path: '/admin/category' }) %>
+  </aside>
 
   <!-- Main Content -->
-  <main class="p-6">
-    
+  <main class="ml-64 flex-grow p-6 space-y-6">
     <!-- Header -->
-    <header class="flex items-center justify-between mb-6">
-      <h1 class="text-3xl font-semibold text-gray-100">L.Mark</h1>
-      <div class="flex items-center space-x-4">
-        <select id="yearFilter" class="px-4 py-2 text-gray-800 bg-gray-100 rounded-md">
-          <option value="2024"></option>
-          <option value="2023"></option>
-          <option value="2022"></option>
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <h2 class="text-2xl font-semibold">Sales Summary</h2>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <select id="periodSelect" onchange="toggleCustomInputs()"
+          class="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2">
+          <option value="daily" <%= period === 'daily' ? 'selected' : '' %>>Daily</option>
+          <option value="weekly" <%= period === 'weekly' ? 'selected' : '' %>>Weekly</option>
+          <option value="monthly" <%= period === 'monthly' ? 'selected' : '' %>>Monthly</option>
+          <option value="yearly" <%= period === 'yearly' ? 'selected' : '' %>>Yearly</option>
         </select>
-        <button class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"></button>
-        <button class="px-4 py-2 bg-purple-400 text-white rounded-md hover:bg-purple-500"></button>
+
+        <!-- Date Inputs -->
+      <div id="dailyInput" class="hidden relative mt-4">
+  <input
+    type="date"
+    id="customDate"
+    name="customDate"
+    value="<%= typeof customDate !== 'undefined' ? customDate : '' %>"
+    class="peer w-full px-4 pt-5 pb-2 border border-gray-300 rounded-xl 
+           focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
+           text-gray-800 bg-gray-50 shadow-sm transition-all duration-300"
+  />
+  <label
+    for="customDate"
+    class="absolute left-4 top-2.5 text-gray-500 text-sm 
+           transition-all duration-200 peer-focus:text-indigo-600 
+           peer-focus:-translate-y-3 peer-focus:text-xs
+           peer-[&:not(:placeholder-shown)]:-translate-y-3 
+           peer-[&:not(:placeholder-shown)]:text-xs"
+  >
+    Choose a Date
+  </label>
+
+  <div class="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
+    <i class="fa-solid fa-calendar-days text-lg"></i>
+  </div>
+</div>
+
+
+        <div id="weeklyInput" class="hidden">
+          <input type="date" id="customWeekStart" value="<%= customWeekStart || '' %>"
+            class="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2" />
+        </div>
+
+        <div id="monthlyInput" class="hidden flex gap-2">
+          <select id="customMonth" class="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2">
+            <% ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m, i) => { %>
+              <option value="<%= i + 1 %>" <%= customMonth == i + 1 ? 'selected' : '' %>><%= m %></option>
+            <% }) %>
+          </select>
+          <select id="customYear" class="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2">
+            <% for(let year = new Date().getFullYear() - 5; year <= new Date().getFullYear() + 1; year++) { %>
+              <option value="<%= year %>" <%= customYear == year ? 'selected' : '' %>><%= year %></option>
+            <% } %>
+          </select>
+        </div>
+
+        <div id="yearlyInput" class="hidden">
+          <select id="customYearOnly" class="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2">
+            <% for(let year = new Date().getFullYear() - 5; year <= new Date().getFullYear() + 1; year++) { %>
+              <option value="<%= year %>" <%= customYear == year ? 'selected' : '' %>><%= year %></option>
+            <% } %>
+          </select>
+        </div>
+
+        <button onclick="applyCustomPeriod()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+          Apply
+        </button>
       </div>
-    </header>
-    
+    </div>
 
-    <!-- Sales Summary Cards -->
-    <section class="grid grid-cols-4 gap-6 mb-8">
-      
-      <!-- Revenue -->
-      <div class="bg-purple-800 p-4 rounded-lg shadow-md">
-        <h2 class="text-lg font-semibold"></h2>
-        <p class="text-2xl font-bold"></p>
-        <p class="text-yellow-400"></p>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-gray-900 p-4 rounded-lg shadow-md">
+        <p class="text-gray-400">Revenue</p>
+        <h5 class="text-2xl font-bold">₹<%= metrics.revenue.toLocaleString() %></h5>
+        <small class="text-green-400">Current Period</small>
       </div>
 
-      <!-- Orders -->
-      <div class="bg-blue-900 p-4 rounded-lg shadow-md border border-blue-500">
-        <h2 class="text-lg font-semibold"></h2>
-        <p class="text-2xl font-bold"></p>
-        <p class="text-red-500"></p>
-      </div>  
-
-      <!-- Products Sold -->
-      <div class="bg-purple-800 p-4 rounded-lg shadow-md">
-        <h2 class="text-lg font-semibold"></h2>
-        <p class="text-2xl font-bold"></p>
-        <p class="text-green-400"></p>
+      <div class="bg-gray-900 p-4 rounded-lg shadow-md">
+        <p class="text-gray-400">Orders</p>
+        <h5 class="text-2xl font-bold"><%= metrics.orders %></h5>
+        <small class="text-blue-400">Total Orders</small>
       </div>
 
-      <!-- Total Customers -->
-      <div class="bg-purple-800 p-4 rounded-lg shadow-md">
-        <h2 class="text-lg font-semibold"></h2>
-        <p class="text-2xl font-bold"></p>
-        <p class="text-yellow-400"></p>
+      <div class="bg-gray-900 p-4 rounded-lg shadow-md">
+        <p class="text-gray-400">Products Sold</p>
+        <h5 class="text-2xl font-bold"><%= metrics.productsSold.toLocaleString() %></h5>
+        <small class="text-green-400">Units Sold</small>
       </div>
 
-    </section>
-
-    <!-- Orders Chart -->
-    <section class="bg-zinc-800 p-6 rounded-lg shadow-md">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold"></h2>
-        <a href="#" class="text-purple-400 hover:underline"></a>
+      <div class="bg-gray-900 p-4 rounded-lg shadow-md">
+        <p class="text-gray-400">Total Customers</p>
+        <h5 class="text-2xl font-bold"><%= metrics.customers %></h5>
+        <small class="text-yellow-400">Active Customers</small>
       </div>
-      <canvas id="ordersChart"></canvas>
-    </section>
+    </div>
+
+    <!-- Charts and Tables -->
+    <div class="bg-gray-900 p-5 rounded-lg shadow-md">
+      <div class="flex justify-between items-center mb-3">
+        <h6 class="text-white text-lg font-medium">Orders & Revenue Trend</h6>
+        <small class="text-gray-400"><%= period.charAt(0).toUpperCase() + period.slice(1) %> View</small>
+      </div>
+      <canvas id="ordersChart" height="100"></canvas>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Categories Table -->
+  <div class="bg-gray-900 p-5 rounded-lg shadow-md">
+    <h6 class="text-lg font-medium mb-4 text-white">Best Selling Categories (Top 10)</h6>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-gray-300">
+        <thead class="border-b border-gray-700">
+          <tr class="text-gray-400 uppercase text-xs">
+            <th class="py-2 px-3">Rank</th>
+            <th class="py-2 px-3">Category</th>
+            <th class="py-2 px-3">Quantity</th>
+            <th class="py-2 px-3">Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bestSellingCategories.forEach((category, index) => { %>
+            <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
+              <td class="py-2 px-3">#<%= index + 1 %></td>
+              <td class="py-2 px-3"><%= category.name %></td>
+              <td class="py-2 px-3"><%= category.quantity %></td>
+              <td class="py-2 px-3">₹<%= category.revenue.toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Products Table -->
+  <div class="bg-gray-900 p-5 rounded-lg shadow-md">
+    <h6 class="text-lg font-medium mb-4 text-white">Best Selling Products (Top 10)</h6>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-gray-300">
+        <thead class="border-b border-gray-700">
+          <tr class="text-gray-400 uppercase text-xs">
+            <th class="py-2 px-3">Rank</th>
+            <th class="py-2 px-3">Product</th>
+            <th class="py-2 px-3">Quantity</th>
+            <th class="py-2 px-3">Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bestSellingProducts.forEach((product, index) => { %>
+            <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
+              <td class="py-2 px-3">#<%= index + 1 %></td>
+              <td class="py-2 px-3"><%= product.name %></td>
+              <td class="py-2 px-3"><%= product.quantity %></td>
+              <td class="py-2 px-3">₹<%= product.revenue.toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Brands Table -->
+  <div class="bg-gray-900 p-5 rounded-lg shadow-md">
+    <h6 class="text-lg font-medium mb-4 text-white">Best Selling Brands (Top 10)</h6>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-gray-300">
+        <thead class="border-b border-gray-700">
+          <tr class="text-gray-400 uppercase text-xs">
+            <th class="py-2 px-3">Rank</th>
+            <th class="py-2 px-3">Brand</th>
+            <th class="py-2 px-3">Quantity</th>
+            <th class="py-2 px-3">Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bestSellingBrands.forEach((brand, index) => { %>
+            <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
+              <td class="py-2 px-3">#<%= index + 1 %></td>
+              <td class="py-2 px-3"><%= brand.name %></td>
+              <td class="py-2 px-3"><%= brand.quantity %></td>
+              <td class="py-2 px-3">₹<%= brand.revenue.toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
   </main>
+</div>
 
+
+
+  <!-- JS -->
+  <script>
+    const chartData = {
+      labels: JSON.parse('<%- JSON.stringify(chartData.labels) %>'),
+      orders: JSON.parse('<%- JSON.stringify(chartData.orders) %>'),
+      revenue: JSON.parse('<%- JSON.stringify(chartData.revenue) %>')
+    };
+
+    const ctx = document.getElementById('ordersChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartData.labels,
+        datasets: [
+          {
+            label: 'Orders',
+            data: chartData.orders,
+            backgroundColor: 'rgba(75, 192, 192, 0.5)'
+          },
+          {
+            label: 'Revenue (₹)',
+            data: chartData.revenue,
+            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: 'white' } }
+        },
+        scales: {
+          x: {
+            ticks: { color: 'white' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          y: {
+            ticks: { color: 'white' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          y1: {
+            position: 'right',
+            ticks: { color: 'white' },
+            grid: { drawOnChartArea: false }
+          }
+        }
+      }
+    });
+
+    function toggleCustomInputs() {
+      const period = document.getElementById('periodSelect').value;
+      ['daily', 'weekly', 'monthly', 'yearly'].forEach(p =>
+        document.getElementById(p + 'Input').classList.add('hidden')
+      );
+      document.getElementById(period + 'Input').classList.remove('hidden');
+    }
+
+    function applyCustomPeriod() {
+      const period = document.getElementById('periodSelect').value;
+      let url = `/admin/dashboard?period=${period}`;
+      if (period === 'daily') {
+        const d = document.getElementById('customDate').value;
+        if (d) url += `&customDate=${d}`;
+      } else if (period === 'weekly') {
+        const w = document.getElementById('customWeekStart').value;
+        if (w) url += `&customWeekStart=${w}`;
+      } else if (period === 'monthly') {
+        const m = document.getElementById('customMonth').value;
+        const y = document.getElementById('customYear').value;
+        url += `&customMonth=${m}&customYear=${y}`;
+      } else if (period === 'yearly') {
+        const y = document.getElementById('customYearOnly').value;
+        url += `&customYear=${y}`;
+      }
+      window.location.href = url;
+    }
+
+    toggleCustomInputs();
+  </script>
 </body>
 </html>

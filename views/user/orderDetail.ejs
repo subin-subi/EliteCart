@@ -131,7 +131,14 @@
 
 <!-- Cancel (only when pending) -->
 <div class="w-28 flex justify-center">
-  <% if (['Pending', 'Confirmed', 'Shipped', 'Out for Delivery'].includes(order.orderStatus)) { %>
+  <% if (order.paymentMethod === 'RAZORPAY' && order.paymentStatus === "Failed") { %>
+    <button 
+      onclick="retryPayment('<%= order._id %>', <%= order.grandTotal %>)"
+      type="button"
+      class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 w-full rounded-md font-semibold transition">
+      Retry Payment
+    </button>
+  <% } else if (['Pending', 'Confirmed', 'Shipped', 'Out for Delivery'].includes(order.orderStatus)) { %>
     <button 
       onclick="openCancelModal('<%= order._id %>')" 
       type="button"
@@ -142,6 +149,7 @@
     <div class="invisible px-4 py-2 w-full">Cancel</div>
   <% } %>
 </div>
+
 
 
 
@@ -219,36 +227,39 @@
    <!-- Action Button (Cancel or Return) -->
 <div class="text-right">
   <% 
-    const orderStatus = order.orderStatus; // renamed to avoid duplicate variable
+    const orderStatus = order.orderStatus;
     const canCancel = ['Pending', 'Confirmed', 'Shipped', 'Out for Delivery'].includes(orderStatus);
     const canReturn = orderStatus === 'Delivered';
+    const isRetryingPayment = order.paymentMethod === 'RAZORPAY' && ['Pending', 'Failed'].includes(order.paymentStatus);
   %>
 
-  <% if (canCancel && item.cancelStatus === 'Not Cancelled') { %>
+  <% if (isRetryingPayment) { %>
+    <!-- Hide all buttons when retrying Razorpay payment -->
+    <div></div>
+
+  <% } else if (canCancel && item.cancelStatus === 'Not Cancelled') { %>
     <!-- Cancel Button -->
     <button 
-  type="button"
-  onclick="openCancelModal('<%= order._id %>', '<%= item._id %>')"
-  class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
-         text-white font-semibold text-sm px-5 py-2 rounded-lg 
-         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
-         transition-all duration-300 ease-in-out">
-  Cancel
-</button>
-
+      type="button"
+      onclick="openCancelModal('<%= order._id %>', '<%= item._id %>')"
+      class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+             text-white font-semibold text-sm px-5 py-2 rounded-lg 
+             shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+             transition-all duration-300 ease-in-out">
+      Cancel
+    </button>
 
   <% } else if (canReturn && item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
     <!-- Return Button -->
     <button 
-  type="button" 
-  onclick="openReturnPrompt('<%= order._id %>', '<%= item._id %>')"
-  class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
-         text-white font-semibold text-sm px-5 py-2 rounded-lg 
-         shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
-         transition-all duration-300 ease-in-out">
-  Return
-</button>
-
+      type="button" 
+      onclick="openReturnPrompt('<%= order._id %>', '<%= item._id %>')"
+      class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
+             text-white font-semibold text-sm px-5 py-2 rounded-lg 
+             shadow-md hover:shadow-lg transform hover:-translate-y-0.5 
+             transition-all duration-300 ease-in-out">
+      Return
+    </button>
 
   <% } else { %>
     <!-- Disabled or No Action -->
@@ -260,6 +271,7 @@
   <% } %>
 </div>
 
+
       
     </div>
   </div>
@@ -268,14 +280,17 @@
 </div>
 
 
-                    <!-- Order Summary -->
-                    <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
-                      <h4 class="font-semibold mb-2">Order Summary</h4>
-                      <p class="text-sm text-gray-700">Subtotal: ₹<%= order.subtotal %></p>
-                      <p class="text-sm text-gray-700">Discount: ₹<%= order.discount %></p>
-                      <p class="text-sm text-gray-700">Shipping: ₹<%= order.shippingCharge %></p>
-                      <p class="font-semibold text-gray-900 mt-1">Grand Total: ₹<%= order.grandTotal %></p>
-                    </div>
+                  <!-- Order Summary -->
+<div class="mt-5 bg-white p-4 rounded-lg shadow-sm">
+  <h4 class="font-semibold mb-2">Order Summary</h4>
+  <p class="text-sm text-gray-700">Subtotal: ₹<%= order.subtotal %></p>
+  <p class="text-sm text-gray-700">
+    Discount: ₹<%= (order.subtotal + order.shippingCharge - order.grandTotal).toFixed(2) %>
+  </p>
+  <p class="text-sm text-gray-700">Shipping: ₹<%= order.shippingCharge %></p>
+  <p class="font-semibold text-gray-900 mt-1">Grand Total: ₹<%= order.grandTotal %></p>
+</div>
+
 
                     <!-- Address -->
                     <div class="mt-5 bg-white p-4 rounded-lg shadow-sm">

@@ -21,7 +21,7 @@ router.post("/login", authController.postAdmin);
 router.get("/logout", authController.getLogout);
 
 //Dashboard
-router.get("/dashboard", adminMiddleware.checkSession, dashboardController.getDashboard);
+router.get("/dashboard", dashboardController.getDashboard);
 
 // Brand Management
 router.get("/brand", brandController.getBrand);

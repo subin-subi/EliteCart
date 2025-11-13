@@ -182,3 +182,67 @@ function toggleDetails(orderId) {
     button.textContent = isHidden ? "View Details" : "Hide Details";
   }
 }
+
+
+
+//////////////////////////////////retry order/////////////////////////
+
+  async function retryPayment(orderId) {
+    try {
+      // Call backend to create a new Razorpay order
+      const res = await axios.post(`/retry-payment/${orderId}`);
+      if (res.data.success) {
+        const { razorpayOrder, order } = res.data;
+
+        const options = {
+          key: "<%= process.env.RAZORPAY_KEY_ID %>",
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: "Aromix",
+          description: "Retry Payment",
+          order_id: razorpayOrder.id,
+          handler: async function (response) {
+            try {
+              const verifyRes = await axios.post('/verify-razorpay-payment', {
+                orderId: razorpayOrder.id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                tempOrderId: order._id
+              });
+              if (verifyRes.data.success) {
+                window.location.href = `/oder-status/${order._id}`;
+              } else {
+                await axios.patch(`/payment-failed/${order._id}`);
+                window.location.href = `/payment-failed/${order._id}`;
+              }
+            } catch (err) {
+              await axios.patch(`/payment-failed/${order._id}`);
+              window.location.href = `/payment-failed/${order._id}`;
+            }
+          },
+          modal: {
+            ondismiss:async function () {
+              // User closed Razorpay popup
+              await axios.patch(`/payment-failed/${order._id}`);
+              window.location.href = `/payment-failed/${order._id}`;
+            }
+          },
+          theme: { color: "#2e0e46" }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on("payment.failed",async function (response) {
+          await axios.patch(`/payment-failed/${order._id}`);
+          window.location.href = `/payment-failed/${order._id}`;
+        });
+        rzp.open();
+      }
+    } catch (err) {
+      console.error(err);
+      // alert("Error retrying payment. Please try again later.");
+      showToast(err.response?.data?.message || "Internal Server Error", "danger");
+      setTimeout(() => location.reload(), 1500);
+    }
+  }
+  
+  
