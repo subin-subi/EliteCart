@@ -6,6 +6,9 @@
   <title>My Orders|EliteCart</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -133,7 +136,7 @@
 <div class="w-28 flex justify-center">
   <% if (order.paymentMethod === 'RAZORPAY' && order.paymentStatus === "Failed") { %>
     <button 
-      onclick="retryPayment('<%= order._id %>', <%= order.grandTotal %>)"
+      onclick="retryPayment('<%= order._id %>')"
       type="button"
       class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 w-full rounded-md font-semibold transition">
       Retry Payment
@@ -422,6 +425,12 @@
   <!-- Footer -->
   <%- include('../partials/footer') %>
 
+  <!-- Provide data for static order.js -->
+  <script>
+    window.__ORDER_PAGE_DATA = {
+      razorpayKey: "<%= process.env.RAZORPAY_KEY_ID %>"
+    };
+  </script>
  <script src="/javascript/user/order.js"></script>
 
 </body>

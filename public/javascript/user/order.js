@@ -1,6 +1,10 @@
 let cancelOrderId = null;
 let cancelItemId = null;
 
+// Data injected from orderDetail.ejs for static script usage
+const ORDER_PAGE_DATA = window.__ORDER_PAGE_DATA || {};
+const razorpayKey = ORDER_PAGE_DATA.razorpayKey || "";
+
 function openCancelModal(orderId, itemId = null) {
   cancelOrderId = orderId;
   cancelItemId = itemId;
@@ -16,7 +20,7 @@ function closeCancelModal() {
   document.getElementById("cancelReason").value = "";
 }
 
-// 🧩 Show textarea when "Other" is selected
+//  Show textarea when "Other" is selected
 document.getElementById("cancelSelect").addEventListener("change", function() {
   const reasonBox = document.getElementById("cancelReason");
   if (this.value === "Other") {
@@ -187,62 +191,74 @@ function toggleDetails(orderId) {
 
 //////////////////////////////////retry order/////////////////////////
 
-  async function retryPayment(orderId) {
-    try {
-      // Call backend to create a new Razorpay order
-      const res = await axios.post(`/retry-payment/${orderId}`);
-      if (res.data.success) {
-        const { razorpayOrder, order } = res.data;
+async function retryPayment(orderId) {
+  try {
+    const res = await axios.post(`/retry-payment/${orderId}`);
 
-        const options = {
-          key: "<%= process.env.RAZORPAY_KEY_ID %>",
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
-          name: "Aromix",
-          description: "Retry Payment",
-          order_id: razorpayOrder.id,
-          handler: async function (response) {
-            try {
-              const verifyRes = await axios.post('/verify-razorpay-payment', {
-                orderId: razorpayOrder.id,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
-                tempOrderId: order._id
-              });
-              if (verifyRes.data.success) {
-                window.location.href = `/oder-status/${order._id}`;
-              } else {
-                await axios.patch(`/payment-failed/${order._id}`);
-                window.location.href = `/payment-failed/${order._id}`;
-              }
-            } catch (err) {
-              await axios.patch(`/payment-failed/${order._id}`);
-              window.location.href = `/payment-failed/${order._id}`;
-            }
-          },
-          modal: {
-            ondismiss:async function () {
-              // User closed Razorpay popup
-              await axios.patch(`/payment-failed/${order._id}`);
-              window.location.href = `/payment-failed/${order._id}`;
-            }
-          },
-          theme: { color: "#2e0e46" }
-        };
+    if (res.data.success) {
+      const { razorpayOrder, order } = res.data;
 
-        const rzp = new Razorpay(options);
-        rzp.on("payment.failed",async function (response) {
-          await axios.patch(`/payment-failed/${order._id}`);
-          window.location.href = `/payment-failed/${order._id}`;
-        });
-        rzp.open();
+      if (!razorpayKey) {
+        console.error("Razorpay key missing on order page");
+        showToast("Unable to start payment. Please contact support.", "danger");
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      // alert("Error retrying payment. Please try again later.");
-      showToast(err.response?.data?.message || "Internal Server Error", "danger");
-      setTimeout(() => location.reload(), 1500);
+
+      const options = {
+        key: razorpayKey,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "Aromix",
+        description: "Retry Payment",
+        order_id: razorpayOrder.id,
+
+        handler: async function (response) {
+          try {
+            const verifyRes = await axios.post('/verify-razorpay-payment', {
+              orderId: razorpayOrder.id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+              tempOrderId: order._id
+            });
+
+            if (verifyRes.data.success) {
+              window.location.href = `/order-status/${order._id}`;
+            } else {
+              await axios.patch(`/payment-failed/${order._id}`);
+              window.location.href = `/payment-failed/${order._id}`;
+            }
+
+          } catch (err) {
+            await axios.patch(`/payment-failed/${order._id}`);
+            window.location.href = `/payment-failed/${order._id}`;
+          }
+        },
+
+        modal: {
+          ondismiss: async function () {
+            await axios.patch(`/payment-failed/${order._id}`);
+            window.location.href = `/payment-failed/${order._id}`;
+          }
+        },
+
+        theme: { color: "#2e0e46" }
+      };
+
+      const rzp = new Razorpay(options);
+
+      rzp.on("payment.failed", async function () {
+        await axios.patch(`/payment-failed/${order._id}`);
+        window.location.href = `/payment-failed/${order._id}`;
+      });
+
+      rzp.open();
     }
+
+  } catch (err) {
+    console.error(err);
+    showToast(err.response?.data?.message || "Internal Server Error", "danger");
+    setTimeout(() => location.reload(), 1500);
   }
-  
+}
+
   
