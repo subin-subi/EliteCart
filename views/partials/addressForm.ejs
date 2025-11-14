@@ -1,76 +1,149 @@
 <!-- Add Address Modal -->
-<div id="addAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center hidden">
-  <div class="bg-white rounded-lg p-6 w-full max-w-md mt-[120px] mb-[40px]">
-    <h3 class="text-lg font-semibold mb-4">Add Address</h3>
-    <form id="addAddressForm" class="space-y-3 mb-0">
-      <input type="text" id="addName" placeholder="Full Name" class="w-full px-3 py-2 border rounded">
-      <input type="text" id="addHouse" placeholder="House Name" class="w-full px-3 py-2 border rounded" >
-      <input type="text" id="addStreet" placeholder="Street" class="w-full px-3 py-2 border rounded">
-      <input type="text" id="addCity" placeholder="City" class="w-full px-3 py-2 border rounded" >
-      <input type="text" id="addState" placeholder="State" class="w-full px-3 py-2 border rounded" >
-      <input type="text" id="addPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded" >
-      <input type="text" id="addCountry" placeholder="Country" class="w-full px-3 py-2 border rounded" >
-      <input type="text" id="addMobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded" >
+<div id="addAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md 
+              max-h-[80vh] overflow-y-auto scrollbar-thin">
 
-      <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="closeAddModal()" class="px-2 py-1 text-sm bg-gray-200 rounded">Cancel</button>
-        <button type="submit" class="px-2 py-1 text-sm bg-black text-white rounded">Save</button>
+    <h3 class="text-lg font-semibold mb-4">Add Address</h3>
+
+    <form id="addAddressForm" class="space-y-4">
+
+      <!-- Name -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addName" placeholder="Full Name" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddName" class="text-red-500 text-xs hidden"></span>
       </div>
+
+      <!-- House -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addHouse" placeholder="House Name" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddHouse" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+      <!-- Street -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addStreet" placeholder="Street" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddStreet" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+      <!-- City -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addCity" placeholder="City" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddCity" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+      <!-- State -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addState" placeholder="State" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddState" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+      <!-- Pincode -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddPincode" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+      <!-- Country -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addCountry" placeholder="Country" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddCountry" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+      <!-- Mobile -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addMobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddMobile" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex justify-end gap-2 pt-4 sticky bottom-0 bg-white pb-2">
+        <button type="button" onclick="closeAddModal()" class="px-3 py-1 bg-gray-200 rounded text-sm">Cancel</button>
+        <button type="submit" class="px-3 py-1 bg-black text-white rounded text-sm">Save</button>
+      </div>
+
     </form>
   </div>
 </div>
 
+
+
+
 <!-- Edit Address Modal -->
-<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center hidden">
-  <div class="bg-white rounded-lg p-6 w-full max-w-md mt-[120px] mb-[40px]">
+<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md 
+              max-h-[80vh] overflow-y-auto scrollbar-thin">
+
     <h3 class="text-lg font-semibold mb-4">Edit Address</h3>
-    <form id="editAddressForm" class="space-y-3 mb-0">
+
+    <form id="editAddressForm" class="space-y-4">
+
       <input type="hidden" id="editAddressId">
 
-      <div>
-        <input type="text" id="editName" placeholder="Full Name" class="w-full px-3 py-2 border rounded" >
-        <span id="editNameError" class="text-red-500 text-sm"></span>
+      <!-- Full Name -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editName" placeholder="Full Name" 
+               class="w-full px-3 py-2 border rounded">
+        <span id="editNameError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div>
-        <input type="text" id="editHouse" placeholder="House Name" class="w-full px-3 py-2 border rounded" >
-        <span id="editHouseError" class="text-red-500 text-sm"></span>
+      <!-- House -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editHouse" placeholder="House Name" 
+               class="w-full px-3 py-2 border rounded">
+        <span id="editHouseError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div>
-        <input type="text" id="editStreet" placeholder="Street" class="w-full px-3 py-2 border rounded">
-        <span id="editStreetError" class="text-red-500 text-sm"></span>
+      <!-- Street -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editStreet" placeholder="Street"
+               class="w-full px-3 py-2 border rounded">
+        <span id="editStreetError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div>
-        <input type="text" id="editCity" placeholder="City" class="w-full px-3 py-2 border rounded" >
-        <span id="editCityError" class="text-red-500 text-sm"></span>
+      <!-- City -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editCity" placeholder="City"
+               class="w-full px-3 py-2 border rounded">
+        <span id="editCityError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div>
-        <input type="text" id="editState" placeholder="State" class="w-full px-3 py-2 border rounded" >
-        <span id="editStateError" class="text-red-500 text-sm"></span>
+      <!-- State -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editState" placeholder="State"
+               class="w-full px-3 py-2 border rounded">
+        <span id="editStateError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div>
-        <input type="text" id="editPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded" >
-        <span id="editPincodeError" class="text-red-500 text-sm"></span>
+      <!-- Pincode -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editPincode" placeholder="Pincode"
+               class="w-full px-3 py-2 border rounded">
+        <span id="editPincodeError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div>
-        <input type="text" id="editCountry" placeholder="Country" class="w-full px-3 py-2 border rounded" >
-        <span id="editCountryError" class="text-red-500 text-sm"></span>
+      <!-- Country -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editCountry" placeholder="Country"
+               class="w-full px-3 py-2 border rounded">
+        <span id="editCountryError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div>
-        <input type="text" id="editMobile" placeholder="Mobile Number" class="w-full px-3 py-2 border rounded" >
-        <span id="editMobileError" class="text-red-500 text-sm"></span>
+      <!-- Mobile -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="editMobile" placeholder="Mobile Number"
+               class="w-full px-3 py-2 border rounded">
+        <span id="editMobileError" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="closeEditModal()" class="px-2 py-1 text-sm bg-gray-200 rounded">Cancel</button>
-        <button type="submit" class="px-2 py-1 text-sm bg-black text-white rounded">Save</button>
+      <!-- Buttons -->
+      <div class="flex justify-end gap-2 pt-4 sticky bottom-0 bg-white pb-2">
+        <button type="button" onclick="closeEditModal()" 
+                class="px-3 py-1 bg-gray-200 rounded text-sm">Cancel</button>
+
+        <button type="submit" 
+                class="px-3 py-1 bg-black text-white rounded text-sm">Save</button>
       </div>
+
     </form>
   </div>
 </div>
@@ -84,6 +157,18 @@
 document.getElementById('addAddressForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  // Clear previous errors
+  const errorFields = [
+    "errorAddName", "errorAddHouse", "errorAddStreet", "errorAddCity",
+    "errorAddState", "errorAddPincode", "errorAddCountry", "errorAddMobile"
+  ];
+
+  errorFields.forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = "";
+    el.classList.add("hidden");
+  });
+
   const name = document.getElementById('addName').value.trim();
   const houseName = document.getElementById('addHouse').value.trim();
   const street = document.getElementById('addStreet').value.trim();
@@ -93,85 +178,151 @@ document.getElementById('addAddressForm').addEventListener('submit', async (e) =
   const country = document.getElementById('addCountry').value.trim();
   const mobile = document.getElementById('addMobile').value.trim();
 
-  // 🧩 Validation checks
+  // Regex
   const nameRegex = /^[A-Za-z\s]{3,40}$/;
   const mobileRegex = /^[6-9]\d{9}$/;
   const pincodeRegex = /^\d{6}$/;
 
+  let hasError = false;
+
   if (!name || !nameRegex.test(name)) {
-    return Swal.fire('Invalid Name', 'Please enter a valid full name (letters only, min 3 chars)', 'warning');
+    const el = document.getElementById("errorAddName");
+    el.textContent = "Please enter a valid name (letters only, min 3 chars).";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
   if (!houseName || houseName.length < 2) {
-    return Swal.fire('Invalid House Name', 'Please enter a valid house name.', 'warning');
+    const el = document.getElementById("errorAddHouse");
+    el.textContent = "Please enter a valid house name.";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
   if (street && street.length < 3) {
-    return Swal.fire('Invalid Street', 'Street name should be at least 3 characters.', 'warning');
+    const el = document.getElementById("errorAddStreet");
+    el.textContent = "Street must be at least 3 characters.";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
   if (!city || city.length < 2) {
-    return Swal.fire('Invalid City', 'Please enter a valid city name.', 'warning');
+    const el = document.getElementById("errorAddCity");
+    el.textContent = "Please enter a valid city.";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
   if (!state || state.length < 2) {
-    return Swal.fire('Invalid State', 'Please enter a valid state name.', 'warning');
+    const el = document.getElementById("errorAddState");
+    el.textContent = "Please enter a valid state.";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
   if (!pincode || !pincodeRegex.test(pincode)) {
-    return Swal.fire('Invalid Pincode', 'Pincode must be a 6-digit number.', 'warning');
+    const el = document.getElementById("errorAddPincode");
+    el.textContent = "Pincode must be a 6-digit number.";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
   if (!country || country.length < 2) {
-    return Swal.fire('Invalid Country', 'Please enter a valid country name.', 'warning');
+    const el = document.getElementById("errorAddCountry");
+    el.textContent = "Please enter a valid country.";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
   if (!mobile || !mobileRegex.test(mobile)) {
-    return Swal.fire('Invalid Mobile Number', 'Enter a valid 10-digit mobile number starting from 6–9.', 'warning');
+    const el = document.getElementById("errorAddMobile");
+    el.textContent = "Enter a valid 10-digit mobile number starting 6–9.";
+    el.classList.remove("hidden");
+    hasError = true;
   }
 
+  if (hasError) return;
 
+  // Submit to backend
   const data = { name, houseName, street, city, state, pincode, country, mobile };
 
-  try {
-    const res = await axios.post('/add-Address', data);
-    if (res.data.success) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Address added successfully!',
-        timer: 2000,
-        showConfirmButton: false,
-      }).then(() => window.location.reload());
-    } else {
-      Swal.fire('Error', res.data.message || 'Failed to add address!', 'error');
-    }
-  } catch (err) {
-    console.error('Error adding address:', err);
-    Swal.fire('Error', 'Something went wrong while adding address!', 'error');
+ try {
+  const res = await axios.post('/add-Address', data);
+
+  if (res.data.success) {
+    Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    }).fire({
+      icon: 'success',
+      title: 'Address added successfully!'
+    });
+
+    setTimeout(() => window.location.reload(), 2000);
+
+  } else {
+    Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    }).fire({
+      icon: 'error',
+      title: res.data.message || 'Failed to add address!'
+    });
   }
+
+} catch (err) {
+  console.error('Error adding address:', err);
+
+  Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  }).fire({
+    icon: 'error',
+    title: 'Something went wrong!'
+  });
+}
+
 });
 
 
 
   //////////////////////////// Prefill Edit form/////////////////////////
   
-  function editAddress(addr) {
-    document.getElementById('editAddressId').value = addr._id;
-    document.getElementById('editName').value = addr.name;
-    document.getElementById('editHouse').value = addr.houseName;
-    document.getElementById('editStreet').value = addr.street;
-    document.getElementById('editCity').value = addr.city;
-    document.getElementById('editState').value = addr.state;
-    document.getElementById('editPincode').value = addr.pincode;
-    document.getElementById('editCountry').value = addr.country;
-    document.getElementById('editMobile').value = addr.mobile;
-    document.getElementById('editAddressModal').classList.remove('hidden');
-  }
+function editAddress(addr) {
+  document.getElementById('editAddressId').value = addr._id;
+  document.getElementById('editName').value = addr.name;
+  document.getElementById('editHouse').value = addr.houseName;
+  document.getElementById('editStreet').value = addr.street;
+  document.getElementById('editCity').value = addr.city;
+  document.getElementById('editState').value = addr.state;
+  document.getElementById('editPincode').value = addr.pincode;
+  document.getElementById('editCountry').value = addr.country;
+  document.getElementById('editMobile').value = addr.mobile;
+
+  // Reset previous errors
+  document.querySelectorAll('#editAddressForm span').forEach(s => {
+    s.textContent = "";
+    s.classList.add("hidden");
+  });
+
+  document.getElementById('editAddressModal').classList.remove('hidden');
+}
+
 
 document.getElementById('editAddressForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const id = document.getElementById('editAddressId').value;
+  
   const name = document.getElementById('editName').value.trim();
   const houseName = document.getElementById('editHouse').value.trim();
   const street = document.getElementById('editStreet').value.trim();
@@ -192,83 +343,122 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
     mobile: document.getElementById('editMobileError')
   };
 
-  Object.values(errorFields).forEach(span => span.textContent = "");
+  // Clear previous errors
+  Object.values(errorFields).forEach(span => {
+    span.textContent = "";
+    span.classList.add("hidden");
+  });
 
   let isValid = true;
 
-  // Patterns
-  const namePattern = /^[A-Za-z]{3,}(?: [A-Za-z]+)*$/; // only letters and single spaces, min 3 letters
-  const housePattern = /^[A-Za-z0-9\s.-]{3,}$/;        // letters, numbers, dot, hyphen, space allowed
-  const cityPattern = /^[A-Za-z\s]{3,}$/;
-  const statePattern = /^[A-Za-z\s]{3,}$/;
-  const countryPattern = /^[A-Za-z\s]{3,}$/;
+  // Validation patterns
+  const onlyLetters = /^[A-Za-z ]{3,}$/;
+  const housePattern = /^[A-Za-z0-9 .-]{3,}$/;
 
-  // Name
-  if (!namePattern.test(name)) {
-    errorFields.name.textContent = "Enter a valid name (min 3 letters, no numbers/symbols)";
+  // Full Name
+  if (!onlyLetters.test(name)) {
+    errorFields.name.textContent = "Enter a valid name (letters only, min 3 chars)";
+    errorFields.name.classList.remove("hidden");
     isValid = false;
   }
 
   // House Name
   if (!housePattern.test(houseName)) {
-    errorFields.houseName.textContent = "Enter a valid house name (min 3 chars)";
+    errorFields.houseName.textContent = "Enter a valid house name (letters/numbers allowed)";
+    errorFields.houseName.classList.remove("hidden");
     isValid = false;
   }
 
-  // Street (optional but check format if provided)
-  if (street && street.length < 3) {
-    errorFields.street.textContent = "Street name must be at least 3 characters";
+  // Street
+  if (street.length < 3) {
+    errorFields.street.textContent = "Street must be at least 3 characters";
+    errorFields.street.classList.remove("hidden");
     isValid = false;
   }
 
   // City
-  if (!cityPattern.test(city)) {
-    errorFields.city.textContent = "Enter a valid city name (min 3 letters)";
+  if (!onlyLetters.test(city)) {
+    errorFields.city.textContent = "Enter a valid city (letters only)";
+    errorFields.city.classList.remove("hidden");
     isValid = false;
   }
 
   // State
-  if (!statePattern.test(state)) {
-    errorFields.state.textContent = "Enter a valid state name (min 3 letters)";
+  if (!onlyLetters.test(state)) {
+    errorFields.state.textContent = "Enter a valid state (letters only)";
+    errorFields.state.classList.remove("hidden");
     isValid = false;
   }
 
   // Pincode
   if (!/^\d{6}$/.test(pincode)) {
     errorFields.pincode.textContent = "Pincode must be exactly 6 digits";
+    errorFields.pincode.classList.remove("hidden");
     isValid = false;
   }
 
   // Country
-  if (!countryPattern.test(country)) {
-    errorFields.country.textContent = "Enter a valid country name (min 3 letters)";
+  if (!onlyLetters.test(country)) {
+    errorFields.country.textContent = "Enter a valid country (letters only)";
+    errorFields.country.classList.remove("hidden");
     isValid = false;
   }
 
   // Mobile
   if (!/^[6-9]\d{9}$/.test(mobile)) {
-    errorFields.mobile.textContent = "Enter a valid 10-digit mobile number starting from 6-9";
+    errorFields.mobile.textContent = "Enter a valid 10-digit mobile number";
+    errorFields.mobile.classList.remove("hidden");
     isValid = false;
   }
 
   if (!isValid) return;
 
-  // ✅ Send Request
+  // Send Data
   const data = { name, houseName, street, city, state, pincode, country, mobile };
 
-  try {
-    const res = await axios.patch(`/edit-Address/${id}`, data);
-    if (res.data.success) {
-      Swal.fire('Success', 'Address updated successfully!', 'success').then(() => {
-        window.location.reload();
-      });
-    } else {
-      Swal.fire('Error', res.data.message || 'Update failed', 'error');
-    }
-  } catch (err) {
-    console.error(err);
-    Swal.fire('Error', 'Something went wrong!', 'error');
+ try {
+  const res = await axios.patch(`/edit-Address/${id}`, data);
+
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  if (res.data.success) {
+    Toast.fire({
+      icon: 'success',
+      title: 'Address updated successfully!'
+    });
+
+    setTimeout(() => window.location.reload(), 2000);
+
+  } else {
+    Toast.fire({
+      icon: 'error',
+      title: res.data.message || 'Update failed!'
+    });
   }
+
+} catch (err) {
+  console.error(err);
+
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  Toast.fire({
+    icon: 'error',
+    title: 'Something went wrong!'
+  });
+}
+
 });
 
 </script>

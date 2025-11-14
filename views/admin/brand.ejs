@@ -261,7 +261,7 @@
                 currentUrl.searchParams.delete('search');
             }
             
-            currentUrl.searchParams.delete('page'); // Reset to first page
+            currentUrl.searchParams.delete('page');
             window.location.href = currentUrl.toString();
         }
 
@@ -295,21 +295,44 @@
             document.getElementById("brandModal").classList.add("hidden");
         }
 
- function saveBrand() {
+
+////////////////////////////save brand///////////////////////////////
+
+function saveBrand() {
     const nameInput = document.getElementById("brandName");
-    if (!nameInput) return Swal.fire("Error", "Brand name input not found.", "error");
+    if (!nameInput) {
+        return Swal.fire({
+            icon: "error",
+            title: "Brand name input not found.",
+            toast: true,
+            position: "top-end",
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
 
     const name = nameInput.value.trim();
-    if (!name) return Swal.fire("Warning", "Brand name cannot be empty!", "warning");
+    if (!name) {
+        return Swal.fire({
+            icon: "warning",
+            title: "Brand name cannot be empty!",
+            toast: true,
+            position: "top-end",
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
 
-   
     const namePattern = /^[A-Za-z.\s]{3,40}$/;
     if (!namePattern.test(name)) {
-        return Swal.fire(
-            "Warning",
-            "Brand name must be 3–40 characters and contain only alphabets, dots, and spaces.",
-            "warning"
-        );
+        return Swal.fire({
+            icon: "warning",
+            title: "Brand name must be 3–40 characters and contain only alphabets, dots, and spaces.",
+            toast: true,
+            position: "top-end",
+            timer: 2500,
+            showConfirmButton: false
+        });
     }
 
     const formattedName =
@@ -324,15 +347,35 @@
         .then(data => {
             if (!data || !data.success)
                 throw new Error(data?.message || "Unexpected error occurred");
-            Swal.fire("Success", "Brand added successfully!", "success").then(() => {
+
+            Swal.fire({
+                icon: "success",
+                title: "Brand added successfully!",
+                toast: true,
+                position: "top-end",
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+            setTimeout(() => {
                 closeModal();
                 window.location.reload();
-            });
+            }, 1200);
         })
-        .catch(error =>
-            Swal.fire("Error", "Failed to add brand: " + error.message, "error")
-        );
+        .catch(error => {
+            Swal.fire({
+                icon: "error",
+                title: "Failed to add brand: " + error.message,
+                toast: true,
+                position: "top-end",
+                timer: 2000,
+                showConfirmButton: false
+            });
+        });
 }
+
+
+//////////////////////////////////////edit//////////////////////////////////////
 
         function editBrand(id) {
             fetch(`/admin/brand/${id}`)
@@ -356,22 +399,33 @@
             document.getElementById("editBrandModal").classList.add("hidden");
         }
 
-        function updateBrand() {
+     function updateBrand() {
     const id = document.getElementById("editBrandId").value;
     const name = document.getElementById("editBrandName").value.trim();
 
+    // Create SweetAlert2 Toast
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+    });
+
     if (!name) {
-        return Swal.fire("Warning", "Brand name cannot be empty!", "warning");
+        return Toast.fire({
+            icon: "warning",
+            title: "Brand name cannot be empty!"
+        });
     }
 
-    // ✅ Updated validation
-    const namePattern = /^[A-Za-z.\s]{3,40}$/;
+    // Updated validation
+    const namePattern = /^[A-Za-z.\s]{3,20}$/;
     if (!namePattern.test(name)) {
-        return Swal.fire(
-            "Warning",
-            "Brand name must be 3–40 characters and can contain only alphabets, dots, and spaces.",
-            "warning"
-        );
+        return Toast.fire({
+            icon: "warning",
+            title: "Brand name must be 3–20 characters (alphabets, dots, spaces allowed)"
+        });
     }
 
     const formattedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
@@ -379,50 +433,87 @@
     fetch(`/admin/edit-brand/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brandName: formattedName }) 
+        body: JSON.stringify({ brandName: formattedName })
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            Swal.fire("Success", "Brand updated!", "success").then(() => {
+            Toast.fire({
+                icon: "success",
+                title: "Brand Name updated!"
+            }).then(() => {
                 closeEditModal();
                 window.location.reload();
             });
         } else {
-            Swal.fire("Error", data.message || "Failed to update", "error");
+            Toast.fire({
+                icon: "error",
+                title: data.message || "Failed to update"
+            });
         }
     })
     .catch(err => {
         console.error("Update error:", err);
-        Swal.fire("Error", "Something went wrong", "error");
+        Toast.fire({
+            icon: "error",
+            title: "Something went wrong"
+        });
     });
 }
 
-        function toggleBlockBrand(brandId, isActive) {
-            const action = isActive ? "block" : "unblock";
-            Swal.fire({
-                title: `Are you sure you want to ${action} this brand?`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: isActive ? "#d33" : "#28a745",
-                cancelButtonColor: "#6c757d",
-                confirmButtonText: `Yes, ${action} it!`
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`/admin/${action}-brand/${brandId}`, { method: "PATCH" })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire("Success", `Brand ${isActive ? 'blocked' : 'unblocked'} successfully!`, "success")
-                                    .then(() => window.location.reload());
-                            } else {
-                                Swal.fire("Error", data.message || `Failed to ${action} brand`, "error");
-                            }
-                        })
-                        .catch(() => Swal.fire("Error", `Error trying to ${action} brand`, "error"));
-                }
-            });
+
+///////////////////////////////////block/////////////////////////////////
+
+function toggleBlockBrand(brandId, isActive) {
+    const action = isActive ? "block" : "unblock";
+
+    // Toast setup
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+    });
+
+    
+    Swal.fire({
+        title: `Are you sure you want to ${action} this brand?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: isActive ? "#d33" : "#28a745",
+        cancelButtonColor: "#6c757d",
+        confirmButtonText: `Yes, ${action} it!`
+    }).then((result) => {
+        if (result.isConfirmed) {
+
+            fetch(`/admin/${action}-brand/${brandId}`, { method: "PATCH" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Toast.fire({
+                            icon: "success",
+                            title: `Brand ${isActive ? 'blocked' : 'unblocked'} successfully!`
+                        }).then(() => window.location.reload());
+                    } else {
+                        Toast.fire({
+                            icon: "error",
+                            title: data.message || `Failed to ${action} brand`
+                        });
+                    }
+                })
+
+                .catch(() => {
+                    Toast.fire({
+                        icon: "error",
+                        title: `Error trying to ${action} brand`
+                    });
+                });
         }
-    </script>
+    });
+}
+
+   
+   </script>
 </body>
 </html>

@@ -393,25 +393,54 @@
   async function updateOrderStatus(orderId) {
   const newStatus = document.getElementById("orderStatus").value;
 
-  try {
-    const res = await fetch(`/admin/orders/update-status/${orderId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    const data = await res.json();
+ try {
+  const res = await fetch(`/admin/orders/update-status/${orderId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: newStatus }),
+  });
 
-    if (data.success) {
-      alert("✅ " + data.message);
-      closeEditOrderModal();
-      location.reload();
-    } else {
-      alert("⚠️ " + data.message);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("⚠️ Something went wrong!");
+  const data = await res.json();
+
+  if (data.success) {
+    Swal.fire({
+      icon: "success",
+      title: data.message || "Status updated!",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+
+    closeEditOrderModal();
+
+    setTimeout(() => location.reload(), 1200);
+  } else {
+    Swal.fire({
+      icon: "warning",
+      title: data.message || "Update failed!",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
   }
+
+} catch (err) {
+  console.error(err);
+  Swal.fire({
+    icon: "error",
+    title: "Something went wrong!",
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+}
+
 }
 ///////////////////////////////return management///////////////////////////////////////
 
@@ -439,31 +468,43 @@ async function updateReturnStatus(orderId, productId, newStatus) {
     const data = await res.json();
 
     if (data.success) {
-      Swal.fire({
-        icon: "success",
-        title: "Updated!",
-        text: `Return request has been ${newStatus.toLowerCase()} successfully.`,
-        timer: 2000,
-        showConfirmButton: false,
-      });
+  Swal.fire({
+    icon: "success",
+    title: `Return request ${newStatus.toLowerCase()} successfully!`,
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
 
-    
-      setTimeout(() => openEditOrderModal(orderId), 1200);
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Failed!",
-        text: data.message || "Unable to update return status.",
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: "Something went wrong while updating the return status.",
-    });
-  }
+  setTimeout(() => openEditOrderModal(orderId), 1200);
+
+} else {
+  Swal.fire({
+    icon: "error",
+    title: data.message || "Unable to update return status.",
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+}
+
+ } catch (error) {
+  console.error(error);
+  Swal.fire({
+    icon: "error",
+    title: "Something went wrong!",
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+}
+
 }
 
 

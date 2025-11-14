@@ -40,6 +40,12 @@ const getAddress = async (req, res) => {
 const saveAddress = async (req, res) => {
   try {
 
+       if (!req.session.user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not logged in"
+      });
+    }
 const userId = req.session.user
 const user = await User.findById(userId)
 

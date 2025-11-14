@@ -151,30 +151,43 @@ async function openReturnPrompt(orderId, itemId) {
 
     const result = await response.json();
 
-    if (result.success) {
-      Swal.fire({
-        icon: "success",
-        title: "Return Requested!",
-        text: "Your return request has been submitted.",
-        confirmButtonColor: "#16a34a"
-      }).then(() => window.location.reload());
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Failed!",
-        text: result.message || "Could not process return.",
-        confirmButtonColor: "#ef4444"
-      });
-    }
-  } catch (err) {
-    console.error("Return request error:", err);
-    Swal.fire({
-      icon: "error",
-      title: "Server Error",
-      text: "Something went wrong. Please try again later.",
-      confirmButtonColor: "#ef4444"
-    });
-  }
+   if (result.success) {
+  Swal.fire({
+    icon: "success",
+    title: "Return request submitted!",
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  }).then(() => window.location.reload());
+
+} else {
+  Swal.fire({
+    icon: "error",
+    title: result.message || "Could not process return.",
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+}
+
+ } catch (err) {
+  console.error("Return request error:", err);
+
+  Swal.fire({
+    icon: "error",
+    title: "Something went wrong. Please try again!",
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+}
+
 }
 
 function toggleDetails(orderId) {
