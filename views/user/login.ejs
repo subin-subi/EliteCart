@@ -205,5 +205,27 @@
         });
     });
     </script>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const msg = urlParams.get("msg");
+
+  if (msg === "please_login") {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'warning',
+      title: 'Please login to continue',
+      showConfirmButton: false,
+      timer: 2000
+    });
+  }
+</script>
+
   </body>
 </html>

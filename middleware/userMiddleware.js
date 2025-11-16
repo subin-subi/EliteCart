@@ -65,17 +65,18 @@ const checkSession = async (req, res, next) => {
     }
 };
 
-    const isLogin = async (req, res, next) => {
-        try {
-            if (!req.session.user) {
-                return res.redirect('/signup');
-            }
-            next();
-        } catch (error) {
-            console.error('Login Check Error:', error);
-            next();
-        }
+   const isLogin = async (req, res, next) => {
+  try {
+    if (!req.session.user) {
+      return res.redirect('/login?msg=please_login');
     }
+    next();
+  } catch (error) {
+    console.error('Login Check Error:', error);
+    next();
+  }
+};
+
 
  const noCache = (req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
