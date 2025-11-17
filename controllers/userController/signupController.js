@@ -466,6 +466,10 @@ const getProfileImg = async (req, res) => {
   }
 };
 
+const aboutPage = (req, res)=>{
+  res.render("user/aboutPage")
+}
+
 export default {
   getSignUp,
   postSignup,
@@ -483,4 +487,5 @@ export default {
   checkSession,
 
   getProfileImg,
+  aboutPage
 };

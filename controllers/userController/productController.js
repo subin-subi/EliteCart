@@ -394,7 +394,7 @@ const getProductDetailPage = async (req, res) => {
     const userId = req.session.user;
     const { productId, variantId } = req.body;
     if (!userId) {
-      return res.status(401).json({ success: false, message: "User not logged in" });
+      return res.status(401).json({ success: false, message: "Please log in first" });
     }
 
     let wishlist = await Wishlist.findOne({ userId });

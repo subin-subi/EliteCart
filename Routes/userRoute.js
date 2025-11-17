@@ -15,6 +15,7 @@ import pdfController from "../controllers/userController/pdfController.js"
 import redeemController from "../controllers/userController/redeemController.js";
 import razorpayController from "../controllers/userController/razorpayController.js";
 import paymentController from "../controllers/userController/paymentController.js";
+import signupController from "../controllers/userController/signupController.js";
 
 const route = Router();
 
@@ -55,9 +56,11 @@ route.get('/auth/google/callback',  authController.getGoogleCallback);
 
 route.post("/logout", authController.getLogout)
 
+route.get("/about",userMiddleware.checkSession,signupController.aboutPage)
+
 ////////////product Controller/////////////////////
 
-route.get("/product",productController.getProductsPage)
+route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
 route.get("/search-products",userMiddleware.checkBlocked,productController.searchProduct)
 route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
 
@@ -65,7 +68,7 @@ route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.ge
 
 
 
-route.get("/profile" , profileController.getProfile)
+route.get("/profile" ,userMiddleware.checkSession, profileController.getProfile)
 route.post("/profile",profileController.editDetail)
 
 route.post("/sendotp", profileController.sendOtp)
@@ -75,10 +78,10 @@ route.post("/resendOtp",profileController.resendOtp)
 
 
 
-route.get("/change-password", passwordController.getPage)
+route.get("/change-password",userMiddleware.checkSession, passwordController.getPage)
 route.post("/changePassword",passwordController.changePassword)
 
-route.get("/address", addressController.getAddress)
+route.get("/address",userMiddleware.checkSession, addressController.getAddress)
 route.post("/add-Address", addressController.saveAddress)
 route.post("/set-default-address/:id", addressController.setDefaultAddress)
 route.patch("/block-address/:id", addressController.blockAddress);
@@ -88,15 +91,15 @@ route.patch("/edit-Address/:id", addressController.editAddress)
 
 
 
-route.get("/cart" ,userMiddleware.isLogin, cartController.getCart)
-route.post("/cart/add", cartController.addToCart);
+route.get("/cart" ,userMiddleware.isLogin,userMiddleware.checkSession, cartController.getCart)
+route.post("/cart/add",userMiddleware.isLogin, cartController.addToCart);
 route.patch("/cart/update-quantity/:itemId", cartController.updateQuantity )
 route.delete("/cart/remove/:itemId",cartController.removeProduct)
 
 
 
 
-route.get("/checkout/cart", checkoutController.getCartCheckout)
+route.get("/checkout/cart",userMiddleware.checkSession, checkoutController.getCartCheckout)
 route.post('/select-address',checkoutController.selectAddres)
 
 route.get("/payment-failed/:id", checkoutController.getPaymentFailPage);
@@ -113,15 +116,15 @@ route.post("/retry-payment/:id",razorpayController.retryPayment)
 
 route.post("/checkout/order-cod",paymentController.userOrderCOD)
 route.post("/wallet-payment", paymentController.walletPayment)
-route.get("/wallet",walletController.getWallet)
+route.get("/wallet",userMiddleware.checkSession,walletController.getWallet)
 
-route.get("/wishlist",userMiddleware.isLogin,wishlistController.getWishlist)
+route.get("/wishlist",userMiddleware.isLogin,userMiddleware.checkSession,wishlistController.getWishlist)
 route.post("/wishlist/add",productController.addToWishlist)
 route.post("/cart/add-to-wish",wishlistController.addToCartFromWishlist)
 route.post("/wishlist/remove/:productId",wishlistController.removeWishlist)
 route.get('/get-counts',wishlistController.notificationCount)
 
-route.get("/orders",orderDetailController.getOrderDetail)
+route.get("/orders",userMiddleware.checkSession,orderDetailController.getOrderDetail)
 route.post("/order-cancel/:orderId",orderDetailController.cancelFullOrder)
 route.post("/item-cancel/:orderId/:itemId",orderDetailController.cancelIndividualItem)
 route.post("/order-return/:orderId/:itemId",orderDetailController.requestReturnItem)

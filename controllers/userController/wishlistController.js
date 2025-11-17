@@ -229,11 +229,11 @@ let notificationCount = async (req, res) => {
       return res.json({ wishlistCount: 0, cartCount: 0 });
     }
 
-    // ✅ Find wishlist and cart documents for this user
+    // ✅Find wishlist and cart documents for this user
     const wishlist = await Wishlist.findOne({ userId }, "items");
     const cart = await Cart.findOne({ userId }, "items");
 
-    // ✅ Count how many items are inside each array
+    //  Count how many items are inside each array
     const wishlistCount = wishlist ? wishlist.items.length : 0;
     const cartCount = cart ? cart.items.length : 0;
 
