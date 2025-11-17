@@ -25,25 +25,39 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
+const userSession = session({
+  name: "sessionId",
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: "sessions",
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: "strict",
+  },
+});
 
-app.use(
-    session({
-      secret: process.env.SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI, 
-        collectionName: "sessions",
-      }),
-      cookie: {
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: "strict",
-      },
-      name: "sessionId",
-    })
-  );
+const adminSession = session({
+  name: "adminSessionId",
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: "adminSessions",
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: "strict",
+  },
+});
 
 
 // Static files
@@ -51,11 +65,18 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Set view engine
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views")); 
+app.set("views", path.join(__dirname, "views"));
 
-// Routes
+
+// Admin session FIRST
+app.use("/admin", adminSession);
+app.use("/admin", adminRoute);
+
+// User session NEXT
+app.use(userSession);
 app.use("/", userRoute);
-app.use("/admin",adminRoute)
+
+
 
 app.use((req, res) => {
   res.status(404).render("partials/error", {

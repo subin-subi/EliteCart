@@ -18,7 +18,7 @@ const router = express.Router();
 // Auth Routes
 router.get("/login", adminMiddleware.isLogin, authController.getAdmin);
 router.post("/login", authController.postAdmin);
-router.get("/logout",adminMiddleware.checkSession, authController.getLogout);
+router.get("/logout",adminMiddleware.checkSession, authController.adminLogout);
 
 //Dashboard
 router.get("/dashboard",adminMiddleware.checkSession, dashboardController.getDashboard);

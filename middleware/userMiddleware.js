@@ -98,32 +98,18 @@ const requireLogin = (req, res, next) => {
   next();
 };
 
+
+
 //  1. Check if user is logged in and not blocked
 const isUserLoggedIn = async (req, res, next) => {
   try {
-    if (!req.session || !req.session.isLoggedIn || !req.session.user) {
-      return res.redirect("/login");
+    if (req.session.user) { 
+     res.redirect(req.get("Referer") || "/");
+    } else {
+      next()
     }
+    
 
-    // Always verify from DB (important for dynamic blocking)
-    const user = await userModel.findById(req.session.user.id);
-
-    if (!user) {
-      req.session.destroy(() => res.redirect("/login"));
-      return;
-    }
-
-    //If user blocked
-    if (user.blocked) {
-      req.session.destroy(() => {
-        res.redirect("/login?blocked=true");
-      });
-      return;
-    }
-
-    // Keep user in req for convenience
-    req.user = user;
-    next();
   } catch (err) {
     console.error("Auth middleware error:", err);
     res.redirect("/login");
@@ -144,6 +130,7 @@ export default {
   noCache,
   requireLogin,
   checkBlocked,
+  
   isUserLoggedIn,
   isUserLoggedOut,
 };

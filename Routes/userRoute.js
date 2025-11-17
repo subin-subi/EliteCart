@@ -22,7 +22,7 @@ route.get("/check-session",authController.checkSession)
 
 route.get("/get-user-profile", authController.getProfileImg)
 
-route.get("/signup",userMiddleware.isUserLoggedIn, authController.getSignUp);
+route.get("/signup",userMiddleware.isUserLoggedIn,  authController.getSignUp);
 
 route.post("/signup", authController.postSignup);
 
@@ -34,14 +34,14 @@ route.get("/test-otp", otpController.testOTP);
 
 route.get("/debug-otp/:email",userMiddleware.noCache, otpController.debugOTP)  
 
-route.get('/login', authController.getLogin)
+route.get('/login', userMiddleware.isUserLoggedIn, authController.getLogin)
 
 route.post("/login",authController.postLogin)
 
 route.get("/", authController.homepage)
 
 
-route.get('/forgot-password',userMiddleware.noCache, authController.getForgotPassword)
+route.get('/forgot-password',userMiddleware.isUserLoggedIn, authController.getForgotPassword)
 
 route.post("/forgot-password/send-otp", otpController.sendForgotPasswordOTP)
 
@@ -49,7 +49,7 @@ route.post("/forgot-password/verify-otp", otpController.verifyForgotPasswordOTP)
 
 route.post("/forgot-password/reset-password",authController.resetPassword)
 
-route.get("/auth/google", authController.getGoogle)
+route.get("/auth/google",  authController.getGoogle)
 
 route.get('/auth/google/callback',  authController.getGoogleCallback);
 

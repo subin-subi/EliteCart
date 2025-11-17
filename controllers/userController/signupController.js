@@ -276,16 +276,25 @@ const postLogin = async (req, res) => {
       });
     }
 
-    // Set session
-    req.session.user = user._id;
-    req.session.userEmail = user.email;
+  req.session.user = user._id;
+req.session.userEmail = user.email;
 
-    // Return success response with redirect URL
-    return res.json({
-      success: true,
-      message: "Login successful",
-      redirectUrl: "/",
+req.session.save((err) => {
+  if (err) {
+    console.error("Error saving session:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Session error",
     });
+  }
+
+  return res.json({
+    success: true,
+    message: "Login successful",
+    redirectUrl: "/",
+  });
+});
+
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({
@@ -416,23 +425,21 @@ const getGoogleCallback = (req, res) => {
 
 const getLogout = (req, res) => {
   try {
-    req.session.user = null;
-
     req.session.destroy((err) => {
       if (err) {
         console.error("Error destroying session:", err);
         return res.status(500).send("Error logging out");
       }
 
-      res.clearCookie("connect.sid");
-
-      res.redirect("/signup");
+      res.clearCookie("sessionId");  
+      return res.redirect("/signup");
     });
   } catch (error) {
     console.error("Logout error:", error);
     res.status(500).send("Something went wrong during logout");
   }
 };
+
 
 const checkSession = (req, res) => {
   if (!req.session || !req.session.user) {

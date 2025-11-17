@@ -104,7 +104,7 @@ orders.forEach((order) => {
 
  
     const itemPrice = item.productId?.variants?.[0]?.price || 0;
-      console.log( item.productId?.variants?.[0]?.price )
+ 
 
     // Update totals
     productSales[productId].quantity += item.quantity || 0;

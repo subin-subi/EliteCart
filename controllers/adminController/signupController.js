@@ -7,53 +7,59 @@ const getAdmin = (req, res) => {
 }
 
 const postAdmin = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      
-      if (!email || !password) {
-        return res.redirect('/admin/login?error=missing');
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.redirect('/admin/login?error=invalid_email');
-      }
-  
-      // Check credentials
-      if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-        req.session.isAdmin = true;
-        return res.redirect('/admin/dashboard');
-      } else {
-        return res.redirect('/admin/login?error=unauthorized');
-      }
-  
-    } catch (error) {
-      console.error('Admin login error:', error);
-      return res.redirect('/admin/login?error=server');
-    }
-  };
-
-
-const getLogout = (req, res) => {
   try {
-    
-    if (req.session.isAdmin) {
-      delete req.session.isAdmin;
+    const { email, password } = req.body;
+
+    // Validate fields
+    if (!email || !password) {
+      return res.redirect('/admin/login?error=missing');
     }
 
-    // Prevent caching
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Surrogate-Control', 'no-store');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.redirect('/admin/login?error=invalid_email');
+    }
 
-    res.redirect('/admin/login');
-  } catch (err) {
-    console.error('Admin logout error:', err);
-    res.status(500).send('Server error during logout');
+    // Check credentials
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+      // Store in admin session (separate cookie)
+      req.session.isAdmin = true;
+
+      // Optional: store admin email/id
+      req.session.adminEmail = email;
+
+      // Save session explicitly to ensure it’s written
+      req.session.save((err) => {
+        if (err) {
+          console.error('Error saving admin session:', err);
+          return res.redirect('/admin/login?error=server');
+        }
+        return res.redirect('/admin/dashboard');
+      });
+
+    } else {
+      return res.redirect('/admin/login?error=unauthorized');
+    }
+
+  } catch (error) {
+    console.error('Admin login error:', error);
+    return res.redirect('/admin/login?error=server');
   }
 };
 
 
-export default { getAdmin, postAdmin, getLogout }
+const adminLogout = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Admin logout error:", err);
+    }
+
+    res.clearCookie("adminSessionId"); 
+    return res.redirect("/admin/login");
+  });
+};
+
+
+
+
+export default { getAdmin, postAdmin, adminLogout }
