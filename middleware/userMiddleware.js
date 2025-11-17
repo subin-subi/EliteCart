@@ -1,90 +1,95 @@
-import userModel from "../models/userModel.js"
+import userModel from "../models/userModel.js";
 import Product from "../models/productModel.js";
-
+import mongoose from "mongoose";
 
 const checkBlocked = async (req, res, next) => {
-    try {
-        const productId = req.params.id;
+  try {
+    const productId = req.params.id;
 
-        if (productId) {
-           
-            const product = await Product.findById(productId)
-                .populate("category")
-                .populate("brand");
-
-            if (!product) return res.redirect("/");
-
-            if (product.isBlocked) return res.redirect("/");
-
-            const variantBlocked = product.variants.some(variant => variant.isBlocked);
-            if (variantBlocked) return res.redirect("/");
-
-           
-            const categoryBlocked = product.category && (!product.category.isActive || product.category.isHidden);
-            if (categoryBlocked) return res.redirect("/");
-
-            
-            const brandBlocked = product.brand && (!product.brand.isActive || product.brand.isHidden);
-            if (brandBlocked) return res.redirect("/");
-        }
-
-        next();
-    } catch (error) {
-        console.error("Error checking blocked status:", error);
-        return res.redirect("/"); 
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(404).render("user/noProduct", {
+        message: "Invalid product link. No product found.",
+      });
     }
+
+    const product = await Product.findById(productId)
+      .populate("category")
+      .populate("brand");
+
+    if (!product) {
+      return res.status(404).render("user/noProduct", {
+        message: "No product found.",
+      });
+    }
+
+    if (product.isBlocked) return res.redirect("/");
+
+    const hasBlockedVariant = product.variants.some((v) => v.isBlocked);
+    if (hasBlockedVariant) return res.redirect("/");
+
+    if (
+      product.category &&
+      (!product.category.isActive || product.category.isHidden)
+    ) {
+      return res.redirect("/");
+    }
+
+    if (product.brand && (!product.brand.isActive || product.brand.isHidden)) {
+      return res.redirect("/");
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error checking blocked status:", error);
+    return res.redirect("/");
+  }
 };
-
-
-
-
 
 const checkSession = async (req, res, next) => {
-    try {
-        if (!req.session || !req.session.user) {
-            
-            return next(); 
-        }
-
-        const user = await userModel.findById(req.session.user).select('-password').lean();
-
-        
-        if (user && user.blocked) {
-    req.session.destroy(() => {});
-    return res.redirect('/login?message=Account+blocked');
-}
-
-        if (user) {
-            req.user = user;
-        }
-
-        next();
-    } catch (error) {
-        console.error('Session Check Error:', error);
-        return res.redirect('/login?message=Server+error');
+  try {
+    if (!req.session || !req.session.user) {
+      return next();
     }
+
+    const user = await userModel
+      .findById(req.session.user)
+      .select("-password")
+      .lean();
+
+    if (user && user.blocked) {
+      req.session.destroy(() => {});
+      return res.redirect("/login?message=Account+blocked");
+    }
+
+    if (user) {
+      req.user = user;
+    }
+
+    next();
+  } catch (error) {
+    console.error("Session Check Error:", error);
+    return res.redirect("/login?message=Server+error");
+  }
 };
 
-   const isLogin = async (req, res, next) => {
+const isLogin = async (req, res, next) => {
   try {
     if (!req.session.user) {
-      return res.redirect('/login?msg=please_login');
+      return res.redirect("/login?msg=please_login");
     }
     next();
   } catch (error) {
-    console.error('Login Check Error:', error);
+    console.error("Login Check Error:", error);
     next();
   }
 };
 
-
- const noCache = (req, res, next) => {
+const noCache = (req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   res.set("Pragma", "no-cache");
   res.set("Expires", "0");
-next();
+  next();
 };
-
 
 const requireLogin = (req, res, next) => {
   if (!req.session || !req.session.user) {
@@ -93,10 +98,52 @@ const requireLogin = (req, res, next) => {
   next();
 };
 
-export default { 
-    isLogin, 
-    checkSession ,
-    noCache,
-    requireLogin,
-    checkBlocked
-}
+//  1. Check if user is logged in and not blocked
+const isUserLoggedIn = async (req, res, next) => {
+  try {
+    if (!req.session || !req.session.isLoggedIn || !req.session.user) {
+      return res.redirect("/login");
+    }
+
+    // Always verify from DB (important for dynamic blocking)
+    const user = await userModel.findById(req.session.user.id);
+
+    if (!user) {
+      req.session.destroy(() => res.redirect("/login"));
+      return;
+    }
+
+    //If user blocked
+    if (user.blocked) {
+      req.session.destroy(() => {
+        res.redirect("/login?blocked=true");
+      });
+      return;
+    }
+
+    // Keep user in req for convenience
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error("Auth middleware error:", err);
+    res.redirect("/login");
+  }
+};
+
+//  2. Restrict access to login/signup pages if already logged in
+const isUserLoggedOut = (req, res, next) => {
+  if (!req.session || !req.session.isLoggedIn) {
+    return next();
+  }
+  res.redirect("/home");
+};
+
+export default {
+  isLogin,
+  checkSession,
+  noCache,
+  requireLogin,
+  checkBlocked,
+  isUserLoggedIn,
+  isUserLoggedOut,
+};

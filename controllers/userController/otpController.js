@@ -102,6 +102,7 @@ const resendOTP = async (req, res) => {
     try {
         const { email } = req.body;
         
+        console.log("email", email  )
         if (!email) {
             return res.status(400).json({
                 success: false,
@@ -158,8 +159,7 @@ const sendForgotPasswordOTP = async (req, res) => {
     try {
         const { email } = req.body;
         
-        console.log('=== Send Forgot Password OTP ===');
-        console.log('Email:', email);
+       
         
         if (!email) {
             return res.status(400).json({ message: 'Email is required' });
@@ -170,7 +170,7 @@ const sendForgotPasswordOTP = async (req, res) => {
             email: { $regex: new RegExp("^" + email + "$", "i") }
         });
         
-        console.log('User found:', !!user);
+       
         if (user) {
            
         }

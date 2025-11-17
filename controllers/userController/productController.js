@@ -151,11 +151,20 @@ const getProductsPage = async (req, res) => {
 
 
 
- const searchProduct = async (req, res) => {
+const searchProduct = async (req, res) => {
     const { query } = req.query;
 
+   
     if (!query || query.trim() === "") {
-        return res.redirect("/product"); // If no query, show all products
+        return res.redirect("/product");
+    }
+
+    
+    const validSearch = /^[A-Za-z\s]+$/.test(query.trim());
+
+    if (!validSearch) {
+       
+        return res.redirect("/product");
     }
 
     try {
@@ -178,7 +187,8 @@ const getProductsPage = async (req, res) => {
         console.error("Search Error:", err);
         res.status(500).send("Server Error");
     }
-}
+};
+
 
 
 

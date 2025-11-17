@@ -18,23 +18,23 @@ const router = express.Router();
 // Auth Routes
 router.get("/login", adminMiddleware.isLogin, authController.getAdmin);
 router.post("/login", authController.postAdmin);
-router.get("/logout", authController.getLogout);
+router.get("/logout",adminMiddleware.checkSession, authController.getLogout);
 
 //Dashboard
-router.get("/dashboard", dashboardController.getDashboard);
+router.get("/dashboard",adminMiddleware.checkSession, dashboardController.getDashboard);
 
 // Brand Management
-router.get("/brand", brandController.getBrand);
+router.get("/brand",adminMiddleware.checkSession, brandController.getBrand);
 router.post("/add-brand", brandController.addBrand);
-router.get("/brand/:id", brandController.getBrandById);
+router.get("/brand/:id",adminMiddleware.checkSession, brandController.getBrandById);
 router.put("/edit-brand/:id", brandController.updateBrand);
 router.patch("/block-brand/:id", brandController.blockBrand);
 router.patch("/unblock-brand/:id", brandController.unblockBrand);
 
 // Category Management
-router.get("/category", categoryController.getCategory);
+router.get("/category",adminMiddleware.checkSession, categoryController.getCategory);
 router.post("/add-category", categoryController.addCategory);
-router.get("/category/:id", categoryController.getCategoryById);
+router.get("/category/:id",adminMiddleware.checkSession, categoryController.getCategoryById);
 router.put("/edit-category/:id", categoryController.updateCategory);
 router.patch("/block-category/:id", categoryController.blockCategory);
 router.patch("/unblock-category/:id", categoryController.unblockCategory);
@@ -44,37 +44,37 @@ router.get("/userlist", adminMiddleware.checkSession, userController.getUserList
 router.patch("/block-user/:id", adminMiddleware.checkSession, userController.blockUser);
 router.patch("/unblock-user/:id", adminMiddleware.checkSession, userController.unblockUser);
 
-router.get("/orders",orderController.getAdminOrders)
-router.get("/orders/:id",orderController.getOrderdetail)
+router.get("/orders",adminMiddleware.checkSession,orderController.getAdminOrders)
+router.get("/orders/:id",adminMiddleware.checkSession,orderController.getOrderdetail)
 router.post("/orders/update-status/:orderId", orderController.updateOrderStatus);
 router.post("/update-return-status",orderController.updateReturnStatus)
 
 
 
 
- router.get("/products", productController.getProduct);
+ router.get("/products",adminMiddleware.checkSession, productController.getProduct);
 router.patch("/products/:id/toggle-block", productController.toggleProductStatus);
-router.get("/product/:id", productController.getProductById);
+router.get("/product/:id",adminMiddleware.checkSession, productController.getProductById);
 
 
 
 
-router.get("/addProduct",addproductController.getaddProductPage)
+router.get("/addProduct",adminMiddleware.checkSession,addproductController.getaddProductPage)
 router.post("/addProduct", addproductController.addProduct)
-router.get("/editProduct/:id",addproductController.getEditPage)
+router.get("/editProduct/:id",adminMiddleware.checkSession,addproductController.getEditPage)
 router.post("/editProduct/:id",addproductController.editProduct)
 router.post("/addNewVariants/:id",addproductController.addNewVariants)
 
 
 
 
-router.get("/coupon", couponController.getCouponPage)
+router.get("/coupon",adminMiddleware.checkSession, couponController.getCouponPage)
 router.post("/add-coupon", couponController.addCoupon)
 router.put("/coupons/toggle-status",couponController.toggleCouponStatus)
 router.post("/edit-coupon/:couponId",couponController.editCoupon)
 
 
-router.get("/offer",offerController.getOfferPage)
+router.get("/offer",adminMiddleware.checkSession,offerController.getOfferPage)
 router.post("/add-offer",offerController.addOffer)
 router.post('/offer/toggle-status',offerController.toggleOffer)
 router.post("/edit-offer",offerController.editOffer)
@@ -82,8 +82,8 @@ router.post("/edit-offer",offerController.editOffer)
 
 
 
-router.get("/salesreport", salesReportController.getSalesReport)
-router.get("/salesreport/download/pdf", salesReportController.downloadSalesReportPdf)
-router.get("/salesreport/download/excel", salesReportController.downloadSalesReportExcel)
+router.get("/salesreport",adminMiddleware.checkSession, salesReportController.getSalesReport)
+router.get("/salesreport/download/pdf",adminMiddleware.checkSession, salesReportController.downloadSalesReportPdf)
+router.get("/salesreport/download/excel",adminMiddleware.checkSession, salesReportController.downloadSalesReportExcel)
 
 export default router;

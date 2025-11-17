@@ -57,6 +57,11 @@ app.set("views", path.join(__dirname, "views"));
 app.use("/", userRoute);
 app.use("/admin",adminRoute)
 
+app.use((req, res) => {
+  res.status(404).render("partials/error", {
+    message: "Page not found!"
+  });
+});
 
 
 // Start Server 

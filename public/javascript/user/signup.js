@@ -24,44 +24,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // OTP Timer function
   let otpTimerInterval;
-  const startOTPTimer = (seconds) => {
-    const timerDisplay = document.getElementById('timerDisplay');
-    const otpTimer = document.getElementById('otpTimer');
-    
-    // Clear any existing timer
-    if (otpTimerInterval) {
+ const resendOtpBtn = document.getElementById("resendOtp");
+
+
+const startOTPTimer = (seconds) => {
+  const timerDisplay = document.getElementById('timerDisplay');
+  const otpTimer = document.getElementById('otpTimer');
+
+  if (otpTimerInterval) clearInterval(otpTimerInterval);
+
+  otpTimer.classList.remove('hidden');
+  resendOtpBtn.classList.add('hidden'); 
+  ; 
+
+  const updateTimer = () => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    timerDisplay.textContent =
+      `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+
+    // Timer color change logic
+    if (seconds <= 0) {
       clearInterval(otpTimerInterval);
+      timerDisplay.textContent = '00:00';
+
+      //  Show Resend OTP button ONLY now
+      resendOtpBtn.classList.remove('hidden');
+   
+
+    } else if (seconds <= 30) {
+      timerDisplay.classList.add('text-red-600');
+      timerDisplay.classList.remove('text-green-600');
+    } else {
+      timerDisplay.classList.add('text-green-600');
+      timerDisplay.classList.remove('text-red-600');
     }
-    
-    // Show timer
-    otpTimer.classList.remove('hidden');
-    
-    const updateTimer = () => {
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      const display = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-      
-      timerDisplay.textContent = display;
-      
-      if (seconds <= 0) {
-        clearInterval(otpTimerInterval);
-        timerDisplay.textContent = '00:00';
-        timerDisplay.classList.add('text-red-600');
-        timerDisplay.classList.remove('text-green-600');
-      } else if (seconds <= 30) {
-        timerDisplay.classList.add('text-red-600');
-        timerDisplay.classList.remove('text-green-600');
-      } else {
-        timerDisplay.classList.add('text-green-600');
-        timerDisplay.classList.remove('text-red-600');
-      }
-      
-      seconds--;
-    };
-    
-    updateTimer(); // Initial call
-    otpTimerInterval = setInterval(updateTimer, 1000);
+
+    seconds--;
   };
+
+  updateTimer();
+  otpTimerInterval = setInterval(updateTimer, 1000);
+};
+
 
   const stopOTPTimer = () => {
     if (otpTimerInterval) {
@@ -202,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
-  const redeemCode = document.getElementById('redeemCode')?.value.trim(); // ✅ optional field
+  const redeemCode = document.getElementById('redeemCode')?.value.trim(); 
 
   // Validation
   if (!name || name.length < 3 || name.length > 10) {
@@ -250,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileNo,
         email,
         password,
-        redeemCode: redeemCode || null, // ✅ Include redeem code if present
+        redeemCode: redeemCode || null, 
       }),
     });
 
@@ -338,62 +344,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Resend OTP button
   document.getElementById('resendOtp').addEventListener('click', async function () {
-    const email = document.getElementById('email').value;
-    const resendButton = this;
-    const resendMessage = document.getElementById('resendMessage');
-    const resendTimer = document.getElementById('resendTimer');
+  const email = document.getElementById('email').value;
+  const resendButton = this;
+  const resendMessage = document.getElementById('resendMessage');
+  
 
-    resendButton.disabled = true;
-    resendMessage.classList.add('hidden');
-    resendTimer.classList.add('hidden');
-    otpError.classList.add('hidden');
-    loadingSpinner.classList.remove('hidden');
+  resendButton.disabled = true;
+  resendMessage.classList.add('hidden');
 
-    try {
-      const response = await fetch('/resend-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+  otpError.classList.add('hidden');
+  loadingSpinner.classList.remove('hidden');
 
-      const data = await response.json();
+  try {
+    const response = await fetch('/resend-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
 
-      loadingSpinner.classList.add('hidden');
+    const data = await response.json();
+    loadingSpinner.classList.add('hidden');
 
-      resendMessage.textContent = data.message || '';
-      resendMessage.style.color = data.success ? '#065F46' : '#9B1C1C';
-      resendMessage.classList.remove('hidden');
+    resendMessage.textContent = data.message || '';
+    resendMessage.style.color = data.success ? '#065F46' : '#9B1C1C';
+    resendMessage.classList.remove('hidden');
 
-      if (data.success) {
-        // Restart OTP timer
-        startOTPTimer(120);
-        
-        let timeLeft = 60;
-        resendTimer.classList.remove('hidden');
+    if (data.success) {
+      // Restart OTP timer for 2 minutes
+      startOTPTimer(120);
 
-        const countdownInterval = setInterval(() => {
-          resendTimer.textContent = `Resend available in ${timeLeft}s`;
-          timeLeft--;
+      // Hide button immediately after clicking
+      resendButton.classList.add('hidden');
 
-          if (timeLeft < 0) {
-            clearInterval(countdownInterval);
-            resendButton.disabled = false;
-            resendTimer.classList.add('hidden');
-            resendMessage.classList.add('hidden');
-          }
-        }, 1000);
-      } else {
-        resendButton.disabled = false;
-      }
-    } catch (error) {
-      loadingSpinner.classList.add('hidden');
+      // Button will appear automatically when studyOTPTimer reaches 00:00
+    } else {
       resendButton.disabled = false;
-      resendMessage.textContent = 'Failed to resend OTP';
-      resendMessage.style.color = '#9B1C1C';
-      resendMessage.classList.remove('hidden');
-      console.error('Resend OTP error:', error);
     }
-  });
+  } catch (error) {
+    loadingSpinner.classList.add('hidden');
+    resendButton.disabled = false;
+    resendMessage.textContent = 'Failed to resend OTP';
+    resendMessage.style.color = '#9B1C1C';
+    resendMessage.classList.remove('hidden');
+    console.error('Resend OTP error:', error);
+  }
+});
+
 
   
   const closeOtpModalBtn = document.getElementById('closeOtpModal');
