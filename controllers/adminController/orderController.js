@@ -58,7 +58,7 @@ const getAdminOrders = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Optionally, filter items inside each order to only those with return requests
+    //  filter items inside each order to only those with return requests
     const ordersWithReturnItems = orders.map(order => {
       const returnItems = order.items.filter(item => item.returnStatus === "Requested");
       return {
@@ -67,7 +67,6 @@ const getAdminOrders = async (req, res) => {
       };
     });
 
-    // Render EJS with filtered items
     res.render("admin/orderManagement", {
       orders: ordersWithReturnItems,
       currentPage: page,
