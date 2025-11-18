@@ -14,7 +14,7 @@ const getProductsPage = async (req, res) => {
     if (brand && brand !== "all") filter.brand = brand;
     if (search && search.trim()) filter.name = { $regex: search.trim(), $options: "i" };
 
-    // Pagination setup
+    // Pagination
     const currentPage = Math.max(parseInt(page || "1", 10), 1);
     const limit = 12;
     const skip = (currentPage - 1) * limit;
@@ -40,23 +40,12 @@ const getProductsPage = async (req, res) => {
       })
       .lean();
 
-    // Filter out invalid category/brand
-    products = products.filter((product) => product.category && product.brand);
+    // Remove products whose category/brand is invalid
+    products = products.filter((p) => p.category && p.brand);
 
-    // Apply offer & price logic
+    // Apply discount, then price filtering
     products = products
       .map((product) => {
-        const validVariants = product.variants.filter((v) => {
-          if (v.isBlocked) return false;
-          if (minPrice && v.price < Number(minPrice)) return false;
-          if (maxPrice && v.price > Number(maxPrice)) return false;
-          if (stock === "inStock" && v.stock <= 0) return false;
-          if (stock === "outOfStock" && v.stock > 0) return false;
-          return true;
-        });
-
-        if (validVariants.length === 0) return null;
-
         // Get applicable offers
         const productOffers = activeOffers.filter(
           (offer) =>
@@ -70,43 +59,53 @@ const getProductsPage = async (req, res) => {
             offer.categoryId?.toString() === product.category._id.toString()
         );
 
-        // Find maximum discount %
+        // Maximum discount percent
         let discountPercent = 0;
         if (productOffers.length > 0) {
-          const maxProductDiscount = Math.max(
-            ...productOffers.map((offer) => offer.discountPercent)
+          discountPercent = Math.max(
+            discountPercent,
+            ...productOffers.map((o) => o.discountPercent)
           );
-          discountPercent = Math.max(discountPercent, maxProductDiscount);
         }
         if (categoryOffers.length > 0) {
-          const maxCategoryDiscount = Math.max(
-            ...categoryOffers.map((offer) => offer.discountPercent)
+          discountPercent = Math.max(
+            discountPercent,
+            ...categoryOffers.map((o) => o.discountPercent)
           );
-          discountPercent = Math.max(discountPercent, maxCategoryDiscount);
         }
 
-        // Apply discount to all variants
-        const updatedVariants = validVariants.map((v) => {
-          const discountPrice =
-            discountPercent > 0
-              ? v.price - (v.price * discountPercent) / 100
-              : v.price;
+        // Step 1: Apply discount to all variants
+        const updatedVariants = product.variants
+          .filter((v) => !v.isBlocked)
+          .map((v) => {
+            const discountPrice =
+              discountPercent > 0
+                ? v.price - (v.price * discountPercent) / 100
+                : v.price;
 
-          return {
-            ...v,
-            discountPercent,
-            discountPrice: Math.round(discountPrice),
-          };
+            return {
+              ...v,
+              discountPercent,
+              discountPrice: Math.round(discountPrice),
+            };
+          });
+
+        // Step 2: Filter using discounted price
+        const validVariants = updatedVariants.filter((v) => {
+          if (minPrice && v.discountPrice < Number(minPrice)) return false;
+          if (maxPrice && v.discountPrice > Number(maxPrice)) return false;
+          if (stock === "inStock" && v.stock <= 0) return false;
+          if (stock === "outOfStock" && v.stock > 0) return false;
+          return true;
         });
 
-        return {
-          ...product,
-          variants: updatedVariants,
-        };
-      })
-      .filter((p) => p !== null);
+        if (validVariants.length === 0) return null;
 
-    //  Sort logic based on discounted price
+        return { ...product, variants: validVariants };
+      })
+      .filter((product) => product !== null);
+
+    // Sorting
     if (sort === "priceLowToHigh") {
       products.sort((a, b) => a.variants[0].discountPrice - b.variants[0].discountPrice);
     } else if (sort === "priceHighToLow") {
@@ -129,7 +128,6 @@ const getProductsPage = async (req, res) => {
       Brand.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean(),
     ]);
 
-    // Render
     res.render("user/product", {
       products: paginatedProducts,
       categories,

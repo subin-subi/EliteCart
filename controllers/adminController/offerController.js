@@ -107,24 +107,36 @@ const addOffer = async (req, res) => {
 
 
 const applyBestOffer = async (productId) => {
-  const product = await Product.findById(productId).populate("category");
-  if (!product) return;
+  try {
+    const product = await Product.findById(productId).populate("category");
+    if (!product) return null;
 
-  // Find all active offers related to this product or its category
-  const offers = await Offer.find({
-    isActive: true,
-    $or: [{ productId }, { categoryId: product.category._id }],
-  });
+    const currentDate = new Date();
 
-  // If no offers found, just return
-  if (offers.length === 0) {
-    return;
+    // Find active offers for this product OR its category
+    const offers = await Offer.find({
+      isActive: true,
+      isNonBlocked: true,
+      startAt: { $lte: currentDate },
+      endAt: { $gte: currentDate },
+      $or: [
+        { productId: productId },
+        { categoryId: product.category._id }
+      ]
+    });
+
+    if (offers.length === 0) return null;
+
+    // Pick the offer with the highest discount
+    const bestOffer = offers.reduce((best, offer) =>
+      offer.discountPercent > best.discountPercent ? offer : best
+    );
+
+    return bestOffer; // Return offer object
+  } catch (err) {
+    console.error("Error applying best offer:", err);
+    return null;
   }
-
-  // Find best discount percentage
-  const maxDiscount = Math.max(...offers.map((offer) => offer.discountPercent));
-
-  
 };
 
 
