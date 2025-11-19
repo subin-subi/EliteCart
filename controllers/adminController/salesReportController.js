@@ -5,10 +5,10 @@ import ExcelJS from "exceljs";
 
 
 
- const getSalesReport = async (req, res) => {
+const getSalesReport = async (req, res) => {
     try {
         const {
-            range = "day", 
+            range = "day",
             startDate,
             endDate,
             page = 1,
@@ -16,11 +16,15 @@ import ExcelJS from "exceljs";
         } = req.query;
 
         const { query, start, end } = buildDateFilter(range, startDate, endDate);
+console.log(query)
+        query.orderStatus = "Delivered";
 
         const pagination = await fetchSalesData(query, Number(page), Number(limit));
+
         const metrics = calculateMetrics(pagination.items);
 
         const urlQuery = new URLSearchParams(req.query).toString();
+
         res.render("admin/salesReport", {
             range,
             startDate: start ? start.toISOString().slice(0, 16) : "",
@@ -34,7 +38,10 @@ import ExcelJS from "exceljs";
         });
     } catch (err) {
         console.error("renderSalesReport error", err);
-        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", { status: 500, message: "Internal Server Error" });
+        res.status(500).render("error", {
+            status: 500,
+            message: "Internal Server Error"
+        });
     }
 };
 

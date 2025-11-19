@@ -217,6 +217,39 @@
 
   <script>
 
+function toggleCustomDates() {
+  const range = document.getElementById("range").value;
+  const startDate = document.getElementById("startDate");
+  const endDate = document.getElementById("endDate");
+
+  const disabled = range !== "custom";
+
+  startDate.disabled = disabled;
+  endDate.disabled = disabled;
+
+  // disable/enable flatpickr alt input
+  const startAlt = startDate.nextElementSibling;
+  const endAlt = endDate.nextElementSibling;
+
+  if (startAlt) startAlt.disabled = disabled;
+  if (endAlt) endAlt.disabled = disabled;
+
+  if (disabled) {
+    startAlt.classList.add("opacity-50", "pointer-events-none");
+    endAlt.classList.add("opacity-50", "pointer-events-none");
+  } else {
+    startAlt.classList.remove("opacity-50", "pointer-events-none");
+    endAlt.classList.remove("opacity-50", "pointer-events-none");
+  }
+}
+
+
+
+
+
+
+//////////////////////////////////////////////////////////
+
  const normalizeDateForQuery = (value) => {
    if (!value) return "";
    const sanitized = value.includes("T") ? value : value.replace(" ", "T");
@@ -267,12 +300,7 @@
       window.location.href = '/admin/salesreport';
     }
 
-    function toggleCustomDates(){
-      const range = document.getElementById('range').value;
-      const disabled = range !== 'custom';
-      document.getElementById('startDate').disabled = disabled;
-      document.getElementById('endDate').disabled = disabled;
-    }
+
     toggleCustomDates();
 
    async function downloadReport(type) {
@@ -327,31 +355,43 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-  const startPicker = flatpickr("#startDate", {
-    enableTime: true,
-    dateFormat: "Y-m-d H:i",
-    altInput: true,
-    altFormat: "F j, Y - h:i K",
-    allowInput: true,
-    defaultHour: 0,
-    defaultMinute: 0,
-    onChange: function(selectedDates, dateStr) {
-      document.getElementById("startDate").setAttribute("data-value", dateStr);
-    }
-  });
+const startInput = document.getElementById("startDate");
+const endInput = document.getElementById("endDate");
 
-  const endPicker = flatpickr("#endDate", {
-    enableTime: true,
-    dateFormat: "Y-m-d H:i",
-    altInput: true,
-    altFormat: "F j, Y - h:i K",
-    allowInput: true,
-    defaultHour: 23,
-    defaultMinute: 59,
-    onChange: function(selectedDates, dateStr) {
-      document.getElementById("endDate").setAttribute("data-value", dateStr);
-    }
-  });
+const startPicker = flatpickr(startInput, {
+  enableTime: true,
+  dateFormat: "Y-m-d H:i",
+  altInput: true,
+  altFormat: "F j, Y - h:i K",
+  allowInput: true,
+  defaultHour: 0,
+  defaultMinute: 0,
+  maxDate: "today",
+  onChange: function (selectedDates, dateStr) {
+    startInput.setAttribute("data-value", dateStr);
+
+    // 🔥 Refresh end date limit dynamically
+    endPicker.set("minDate", dateStr);
+  }
+});
+
+const endPicker = flatpickr(endInput, {
+  enableTime: true,
+  dateFormat: "Y-m-d H:i",
+  altInput: true,
+  altFormat: "F j, Y - h:i K",
+  allowInput: true,
+  defaultHour: 23,
+  defaultMinute: 59,
+  maxDate: "today",
+  onChange: function (selectedDates, dateStr) {
+    endInput.setAttribute("data-value", dateStr);
+
+    // 🔥 Refresh start date limit dynamically
+    startPicker.set("maxDate", dateStr);
+  }
+});
+
 </script>
 
 </body>
