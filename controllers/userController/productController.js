@@ -7,29 +7,38 @@ import Offer from "../../models/offerModel.js";
 const getProductsPage = async (req, res) => {
   try {
     const { category, brand, minPrice, maxPrice, stock, search, page, sort } = req.query;
+    const userId = req.session.user;
 
-    // Base filter
+    // ---------------------------
+    // 1. BASE FILTER
+    // ---------------------------
     const filter = { isBlocked: { $ne: true } };
+
     if (category && category !== "all") filter.category = category;
     if (brand && brand !== "all") filter.brand = brand;
-   if (search && search.trim()) {
-  const trimmed = search.trim();
 
-  // Block queries with only special characters
-  const hasValidChars = /[A-Za-z0-9]/.test(trimmed);
-  if (!hasValidChars) {
-    return res.redirect("/product");
-  }
+    // ---------------------------
+    // 2. SEARCH FILTER (Prevent ***** etc.)
+    // ---------------------------
+    if (search && search.trim()) {
+      const trimmed = search.trim();
 
-  filter.name = { $regex: trimmed, $options: "i" };
-}
+      const hasValidChars = /[A-Za-z0-9]/.test(trimmed);
+      if (!hasValidChars) return res.redirect("/product");
 
-    // Pagination
+      filter.name = { $regex: trimmed, $options: "i" };
+    }
+
+    // ---------------------------
+    // 3. PAGINATION CONFIG
+    // ---------------------------
     const currentPage = Math.max(parseInt(page || "1", 10), 1);
     const limit = 12;
     const skip = (currentPage - 1) * limit;
 
-    // Fetch active offers
+    // ---------------------------
+    // 4. FETCH ACTIVE OFFERS
+    // ---------------------------
     const now = new Date();
     const activeOffers = await Offer.find({
       isActive: true,
@@ -38,7 +47,9 @@ const getProductsPage = async (req, res) => {
       endAt: { $gte: now },
     }).lean();
 
-    // Fetch products
+    // ---------------------------
+    // 5. FETCH PRODUCTS
+    // ---------------------------
     let products = await Product.find(filter)
       .populate({
         path: "category",
@@ -50,13 +61,14 @@ const getProductsPage = async (req, res) => {
       })
       .lean();
 
-    // Remove products whose category/brand is invalid
+    // Remove invalid category/brand
     products = products.filter((p) => p.category && p.brand);
 
-    // Apply discount, then price filtering
+    // ---------------------------
+    // 6. APPLY OFFERS & FILTER VARIANTS
+    // ---------------------------
     products = products
       .map((product) => {
-        // Get applicable offers
         const productOffers = activeOffers.filter(
           (offer) =>
             offer.offerType === "PRODUCT" &&
@@ -69,22 +81,17 @@ const getProductsPage = async (req, res) => {
             offer.categoryId?.toString() === product.category._id.toString()
         );
 
-        // Maximum discount percent
+        // Max discount per product
         let discountPercent = 0;
+
         if (productOffers.length > 0) {
-          discountPercent = Math.max(
-            discountPercent,
-            ...productOffers.map((o) => o.discountPercent)
-          );
+          discountPercent = Math.max(...productOffers.map((o) => o.discountPercent));
         }
         if (categoryOffers.length > 0) {
-          discountPercent = Math.max(
-            discountPercent,
-            ...categoryOffers.map((o) => o.discountPercent)
-          );
+          discountPercent = Math.max(discountPercent, ...categoryOffers.map((o) => o.discountPercent));
         }
 
-        // Step 1: Apply discount to all variants
+        // Apply discount to variants
         const updatedVariants = product.variants
           .filter((v) => !v.isBlocked)
           .map((v) => {
@@ -100,7 +107,7 @@ const getProductsPage = async (req, res) => {
             };
           });
 
-        // Step 2: Filter using discounted price
+        // Variant filters
         const validVariants = updatedVariants.filter((v) => {
           if (minPrice && v.discountPrice < Number(minPrice)) return false;
           if (maxPrice && v.discountPrice > Number(maxPrice)) return false;
@@ -115,7 +122,9 @@ const getProductsPage = async (req, res) => {
       })
       .filter((product) => product !== null);
 
-    // Sorting
+    // ---------------------------
+    // 7. SORTING
+    // ---------------------------
     if (sort === "priceLowToHigh") {
       products.sort((a, b) => a.variants[0].discountPrice - b.variants[0].discountPrice);
     } else if (sort === "priceHighToLow") {
@@ -128,20 +137,40 @@ const getProductsPage = async (req, res) => {
       products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-    // Pagination
+    // ---------------------------
+    // 8. PAGINATION
+    // ---------------------------
     const totalProducts = products.length;
     const paginatedProducts = products.slice(skip, skip + limit);
 
-    // Fetch categories & brands
+    // ---------------------------
+    // 9. FETCH CATEGORIES & BRANDS
+    // ---------------------------
     const [categories, brands] = await Promise.all([
       Category.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean(),
       Brand.find({ isActive: true, isHidden: false }).sort({ name: 1 }).lean(),
     ]);
 
+    // ---------------------------
+    // 10. FETCH USER WISHLIST
+    // ---------------------------
+    let wishlistItems = [];
+
+    if (userId) {
+      const wishlist = await Wishlist.findOne({ userId }).lean();
+      if (wishlist) {
+        wishlistItems = wishlist.items.map((item) => item.productId.toString());
+      }
+    }
+
+    // ---------------------------
+    // 11. RENDER PAGE
+    // ---------------------------
     res.render("user/product", {
       products: paginatedProducts,
       categories,
       brands,
+      wishlistItems, // ⭐ Send wishlist to EJS
       filters: { category, brand, minPrice, maxPrice, stock, search, sort },
       pagination: {
         currentPage,
@@ -157,45 +186,6 @@ const getProductsPage = async (req, res) => {
 
 
 
-
-
-// const searchProduct = async (req, res) => {
-//     const { query } = req.query;
-
-//     if (!query || query.trim() === "") {
-//         return res.redirect("/product");
-//     }
-
-//     const trimmed = query.trim();
-
-//     // BLOCK inputs with only special characters (no letters or numbers)
-//     const hasValidChars = /[A-Za-z0-9]/.test(trimmed);
-
-//     if (!hasValidChars) {
-//         return res.redirect("/product");
-//     }
-
-//     try {
-//         const products = await Product.find({
-//             name: { $regex: trimmed, $options: 'i' },
-//             isBlocked: { $ne: true }
-//         })
-//         .populate("category")
-//         .populate("brand")
-//         .lean();
-
-//         res.render("user/product", {
-//             products,
-//             categories: await Category.find({ isActive: true, isHidden: false }).lean(),
-//             brands: await Brand.find({ isActive: true, isHidden: false }).lean(),
-//             filters: { search: query },
-//             pagination: { currentPage: 1, totalPages: 1, totalProducts: products.length }
-//         });
-//     } catch (err) {
-//         console.error("Search Error:", err);
-//         res.status(500).send("Server Error");
-//     }
-// };
 
 
 
@@ -443,6 +433,5 @@ const getProductDetailPage = async (req, res) => {
 export default {
   getProductsPage,
   getProductDetailPage,
-  // searchProduct,
  addToWishlist
 };

@@ -221,7 +221,7 @@ const addToCartFromWishlist = async (req, res) => {
   }
 };
 
-let notificationCount = async (req, res) => {
+const notificationCount = async (req, res) => {
   try {
     const userId = req.session.user;
 
@@ -229,15 +229,14 @@ let notificationCount = async (req, res) => {
       return res.json({ wishlistCount: 0, cartCount: 0 });
     }
 
-    // ✅Find wishlist and cart documents for this user
     const wishlist = await Wishlist.findOne({ userId }, "items");
     const cart = await Cart.findOne({ userId }, "items");
 
-    //  Count how many items are inside each array
     const wishlistCount = wishlist ? wishlist.items.length : 0;
     const cartCount = cart ? cart.items.length : 0;
 
     res.json({ wishlistCount, cartCount });
+
   } catch (err) {
     console.error("Error getting counts:", err);
     res.status(500).json({ wishlistCount: 0, cartCount: 0 });

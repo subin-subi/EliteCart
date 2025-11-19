@@ -31,7 +31,8 @@
     <div class="flex items-center space-x-8">
    
       <!-- Icons -->
-      <div class="hidden sm:flex items-center space-x-6 text-white text-xl">
+  <div class="hidden sm:flex items-center space-x-6 text-white text-xl">
+
   <!-- Wishlist Icon -->
   <div class="relative">
     <a href="/wishlist" class="hover:text-yellow-400">
@@ -53,7 +54,9 @@
       0
     </span>
   </div>
+
 </div>
+
 
 
       <!-- Profile Dropdown -->
@@ -201,16 +204,15 @@ if (data.isLoggedIn) {
 
   ////////////////////////whishlist / cart count //////////////////////////////
 
-
-  async function updateCounts() {
+async function updateCounts() {
   try {
-    const response = await fetch('/get-counts'); // Example endpoint
+    const response = await fetch("/get-counts");
     const data = await response.json();
 
     const wishlistBadge = document.getElementById("wishlistCount");
-    const cartBadge = document.getElementById("cartCount");
+    const cartBadge = document.getElementById("cartCount"); 
 
-    // Wishlist count
+    // Wishlist count update
     if (data.wishlistCount > 0) {
       wishlistBadge.textContent = data.wishlistCount;
       wishlistBadge.classList.remove("hidden");
@@ -218,21 +220,20 @@ if (data.isLoggedIn) {
       wishlistBadge.classList.add("hidden");
     }
 
-    // Cart count
+    // Cart count update
     if (data.cartCount > 0) {
       cartBadge.textContent = data.cartCount;
       cartBadge.classList.remove("hidden");
     } else {
       cartBadge.classList.add("hidden");
     }
+
   } catch (error) {
     console.error("Error fetching counts:", error);
   }
 }
 
-// Call when page loads
 document.addEventListener("DOMContentLoaded", updateCounts);
-
 
 ///////////////////////////////////image //////////////////////////////////
 

@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
  <link rel="stylesheet" href="css/output.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 </head>
 
 <body class="bg-gray-100 pt-16 sm:pt-20">
@@ -101,6 +103,21 @@
         />
       </a>
 
+
+
+<!-- Wishlist Heart Icon -->
+<button 
+  class="absolute top-3 right-3"
+  onclick="toggleWishlist('<%= product._id %>')"
+>
+  <% if (wishlistItems.includes(product._id.toString())) { %>
+      <i id="heart-<%= product._id %>" class="fa-solid fa-heart text-red-600 text-xl"></i>
+  <% } else { %>
+      <i id="heart-<%= product._id %>" class="fa-regular fa-heart text-gray-400 text-xl"></i>
+  <% } %>
+</button>
+
+
       <!--  Product Info -->
       <div class="p-4 flex-1 flex flex-col justify-between">
         <div>
@@ -159,6 +176,8 @@
 
   <!-- Footer -->
   <div class="pt-6"><%- include("../partials/footer") %></div>
+
+  <script src="javascript/user/product.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
       const mainImage = document.getElementById('mainImage');
@@ -218,6 +237,59 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+////////////////////////////wishlist//////////////////////////////////////////
+
+async function toggleWishlist(productId) {
+  try {
+    const res = await axios.post("/wishlist/add", { productId });
+
+    const heart = document.getElementById(`heart-${productId}`);
+
+    if (res.data.success && res.data.alreadyExists) {
+      Swal.fire({
+        icon: "info",
+        title: "Already in wishlist",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      return;
+    }
+
+    if (res.data.success) {
+      // Change icon to filled heart
+      heart.classList.remove("fa-regular", "text-gray-400");
+      heart.classList.add("fa-solid", "text-red-600");
+
+      Swal.fire({
+        icon: "success",
+        title: "Added to wishlist",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      updateCounts();
+    }
+
+  } catch (err) {
+    console.error(err);
+
+    if (err.response?.status === 401) {
+      return window.location.href = "/login";
+    }
+
+    Swal.fire({
+      icon: "error",
+      title: "Error adding to wishlist",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 1500,
+    });
+  }
+}
 
   </script>
 </body>
