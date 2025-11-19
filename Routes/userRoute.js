@@ -61,7 +61,7 @@ route.get("/about",userMiddleware.checkSession,signupController.aboutPage)
 ////////////product Controller/////////////////////
 
 route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
-route.get("/search-products",userMiddleware.checkBlocked,productController.searchProduct)
+
 route.get("/productDetail/:id",userMiddleware.checkBlocked, productController.getProductDetailPage)
 
 

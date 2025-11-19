@@ -183,31 +183,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!searchInput || !searchButton || !clearButton) return;
 
-  
+  // Load search value from URL
   const urlParams = new URLSearchParams(window.location.search);
-  const searchQuery = urlParams.get("query") || "";
+  const searchQuery = urlParams.get("search") || "";
   searchInput.value = searchQuery;
 
-  
+  // Show clear button only when there is text
   clearButton.classList.toggle("hidden", searchInput.value.trim() === "");
 
-  
   searchInput.addEventListener("input", () => {
     clearButton.classList.toggle("hidden", searchInput.value.trim() === "");
   });
 
- 
+  // Clear search input + reload product page
   clearButton.addEventListener("click", () => {
     searchInput.value = "";
     clearButton.classList.add("hidden");
-    window.location.href = "/product"; // reload all products
+    window.location.href = "/product"; 
   });
 
-  
+  // Search action
   const doSearch = () => {
     const query = searchInput.value.trim();
     if (query) {
-      window.location.href = `/search-products?query=${encodeURIComponent(query)}`;
+      window.location.href = `/product?search=${encodeURIComponent(query)}`;
     } else {
       window.location.href = "/product";
     }
