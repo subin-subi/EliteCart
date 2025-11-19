@@ -12,7 +12,7 @@
 
 <body class="bg-gray-100 pt-16 sm:pt-20">
   
-
+ <%- include("../partials/pageLoader") %>
 
 
 <!-- cart.ejs -->
@@ -100,7 +100,7 @@
 
               <span id="cartQuantity-<%= item._id %>" 
                     class="mx-3 text-black font-semibold text-base min-w-[24px] text-center inline-block">
-                <%= item.quantity %>
+                   <%= item.productQuantity %>
               </span>
 
               <button onclick="updateCartQuantity('<%= item._id %>', 1)" 
@@ -195,6 +195,7 @@
 </section>
 
  <%- include("../partials/footer") %>
+
 
 
 <script>
