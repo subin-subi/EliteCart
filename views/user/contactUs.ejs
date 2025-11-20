@@ -6,84 +6,121 @@
     <title>Contact || EliteCart</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   </head>
 
-  <body
-    class="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-200"
-  >
+  <body class="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-200">
+
     <!-- Navbar -->
     <%- include("../partials/nav") %>
 
     <!-- Header -->
     <section class="pt-24 pb-10 text-center">
-      <h1
-        class="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight"
-      >
+      <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">
         Get in Touch
       </h1>
       <p class="text-gray-600 max-w-2xl mx-auto mt-3">
-        Have questions or need support? Our team is here to assist you anytime.
+        Have questions or need support? Contact us anytime.
       </p>
     </section>
 
-    <!-- Contact Layout -->
-    <div class="px-6 pb-20 md:px-20">
-      <div
-        class="max-w-2xl mx-auto bg-white p-10 rounded-2xl shadow-xl border border-gray-100"
-      >
-        <h3 class="text-2xl font-semibold text-gray-800 mb-6">
-          Send a Message
-        </h3>
+    <!-- 2 Column Layout -->
+    <section class="px-6 pb-20 md:px-20">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
 
-        <form id="contactForm">
-          <!-- Full Name -->
-          <div class="mb-5">
-            <label class="block font-medium mb-2 text-gray-700"
-              >Full Name</label
+        <!-- LEFT SIDE: Company Details -->
+        <div class="backdrop-blur-lg bg-white/40 shadow-xl p-8 rounded-2xl border border-white/60">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-800">Reach Us</h2>
+
+          <p class="text-gray-700 mb-8">
+            We value your feedback, queries, and concerns. Let's connect!
+          </p>
+
+          <div class="space-y-8">
+
+            <!-- Phone -->
+            <div class="flex items-center gap-4">
+              <span class="material-icons text-green-600 text-4xl">call</span>
+              <div>
+                <h4 class="font-semibold text-gray-800">Phone</h4>
+                <p class="text-gray-600">+91 98765 43210</p>
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="flex items-center gap-4">
+              <span class="material-icons text-green-600 text-4xl">mail</span>
+              <div>
+                <h4 class="font-semibold text-gray-800">Email</h4>
+                <p class="text-gray-600">support@elitecart.com</p>
+              </div>
+            </div>
+
+            <!-- Location -->
+            <div class="flex items-start gap-4">
+              <span class="material-icons text-green-600 text-4xl">location_on</span>
+              <div>
+                <h4 class="font-semibold text-gray-800">Address</h4>
+                <p class="text-gray-600">
+                  EliteCart Headquarters, Kochi, Kerala, India
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT SIDE: Contact Form -->
+        <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+          <h3 class="text-2xl font-semibold text-gray-800 mb-6">Send a Message</h3>
+
+          <form id="contactForm">
+            
+            <!-- Full Name -->
+            <div class="mb-5">
+              <label class="block font-medium mb-2 text-gray-700">Full Name</label>
+              <input
+                id="fullName"
+                type="text"
+                class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                placeholder="Your name"
+              />
+            </div>
+
+            <!-- Email -->
+            <div class="mb-5">
+              <label class="block font-medium mb-2 text-gray-700">Email</label>
+              <input
+                id="email"
+                type="email"
+                class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                placeholder="your@gmail.com"
+              />
+            </div>
+
+            <!-- Message -->
+            <div class="mb-6">
+              <label class="block font-medium mb-2 text-gray-700">Message</label>
+              <textarea
+                id="message"
+                rows="5"
+                class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                placeholder="Write your message..."
+              ></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              class="w-full bg-green-600 hover:bg-green-700 transition text-white font-semibold py-3 rounded-xl text-lg"
             >
-            <input
-              id="fullName"
-              type="text"
-              class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-              placeholder="Name"
-            />
-          </div>
+              Send Message
+            </button>
+          </form>
 
-          <!-- Email -->
-          <div class="mb-5">
-            <label class="block font-medium mb-2 text-gray-700">Email</label>
-            <input
-              id="email"
-              type="email"
-              class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-              placeholder="your@gmail.com"
-            />
-          </div>
+        </div>
 
-          <!-- Message -->
-          <div class="mb-6">
-            <label class="block font-medium mb-2 text-gray-700">Message</label>
-            <textarea
-              id="message"
-              rows="5"
-              class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
-              placeholder="Write your message..."
-            ></textarea>
-          </div>
-
-          <!-- Submit Button -->
-          <button
-            class="w-full bg-green-600 hover:bg-green-700 transition text-white font-semibold py-3 rounded-xl text-lg"
-          >
-            Send Message
-          </button>
-        </form>
       </div>
-    </div>
+    </section>
 
     <!-- Footer -->
     <%- include("../partials/footer") %>
@@ -105,7 +142,7 @@
           const email = emailInput.value.trim();
           const message = msgInput.value.trim();
 
-          // Basic Validation
+          // Validation – Full Name
           if (!name) {
             return Swal.fire({
               icon: "warning",
@@ -117,6 +154,7 @@
             });
           }
 
+          // Validation – Email Format
           const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!email || !emailPattern.test(email)) {
             return Swal.fire({
@@ -129,6 +167,7 @@
             });
           }
 
+          // Validation – Message
           if (!message) {
             return Swal.fire({
               icon: "warning",
@@ -140,20 +179,21 @@
             });
           }
 
-          // Success Toast
+          // Success
           Swal.fire({
             icon: "success",
             title: "Message sent successfully!",
-            text: "Thank you for reaching out. Our support team will get back to you soon.",
+            text: "Thank you for contacting us. We will get back to you soon.",
             confirmButtonColor: "#16a34a",
           });
 
-          // Clear Fields
+          // Clear
           nameInput.value = "";
           emailInput.value = "";
           msgInput.value = "";
         });
       });
     </script>
+
   </body>
 </html>

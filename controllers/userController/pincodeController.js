@@ -17,8 +17,7 @@ const getLocationByPinCode = async (req, res) => {
 
     if (data[0].Status === "Success") {
       const postOffice = data[0].PostOffice[0];
-      console.log( "city:" ,postOffice.District,
-       " state:", postOffice.State)
+
       return res.json({
         city: postOffice.District,
         state: postOffice.State,
