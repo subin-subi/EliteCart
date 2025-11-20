@@ -58,6 +58,8 @@ route.post("/logout", authController.getLogout)
 
 route.get("/about",userMiddleware.checkSession,signupController.aboutPage)
 
+route.get("/contact",userMiddleware.checkSession,signupController.contactPage)
+
 ////////////product Controller/////////////////////
 
 route.get("/product",userMiddleware.checkSession,productController.getProductsPage)
