@@ -8,9 +8,6 @@ import userRoute from "./Routes/userRoute.js";
 import adminRoute from "./Routes/adminRoute.js"
 import MongoStore from "connect-mongo";
 import startOfferCron from "./utils/cronjob.js"
-import { initSocket } from "./utils/socket.js";
-import http  from "http"
-
 
 
 startOfferCron()
@@ -18,8 +15,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
-const server = http.createServer(app);
-initSocket(server)
+
 
 // Get __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -91,6 +87,6 @@ app.use((req, res) => {
 
 
 // Start Server 
-server.listen(3000, () => {
+app.listen(3000, () => {
     console.log("Running on http://localhost:3000");  
 });

@@ -16,7 +16,7 @@ import redeemController from "../controllers/userController/redeemController.js"
 import razorpayController from "../controllers/userController/razorpayController.js";
 import paymentController from "../controllers/userController/paymentController.js";
 import signupController from "../controllers/userController/signupController.js";
-
+import pincodeController from "../controllers/userController/pincodeController.js"
 const route = Router();
 
 route.get("/check-session",authController.checkSession)
@@ -91,6 +91,7 @@ route.patch("/unblock-address/:id",addressController.unblockAddress );
 route.patch("/edit-Address/:id", addressController.editAddress)
 
 
+route.get("/get-location",pincodeController.getLocationByPinCode)
 
 
 route.get("/cart" ,userMiddleware.isLogin,userMiddleware.checkSession, cartController.getCart)

@@ -25,6 +25,13 @@
         <span id="errorAddStreet" class="text-red-500 text-xs hidden"></span>
       </div>
 
+        <!-- Pincode -->
+      <div class="flex flex-col gap-1">
+        <input type="text" id="addPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded">
+        <span id="errorAddPincode" class="text-red-500 text-xs hidden"></span>
+      </div>
+
+
       <!-- City -->
       <div class="flex flex-col gap-1">
         <input type="text" id="addCity" placeholder="City" class="w-full px-3 py-2 border rounded">
@@ -37,11 +44,7 @@
         <span id="errorAddState" class="text-red-500 text-xs hidden"></span>
       </div>
 
-      <!-- Pincode -->
-      <div class="flex flex-col gap-1">
-        <input type="text" id="addPincode" placeholder="Pincode" class="w-full px-3 py-2 border rounded">
-        <span id="errorAddPincode" class="text-red-500 text-xs hidden"></span>
-      </div>
+      
 
       <!-- Country -->
       <div class="flex flex-col gap-1">
@@ -66,9 +69,9 @@
 </div>
 
 
+<!-- //////////////////////////////edit  address model///////////////////////////////////////////// -->
 
 
-<!-- Edit Address Modal -->
 <div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 hidden">
   <div class="bg-white rounded-lg p-6 w-full max-w-md 
               max-h-[80vh] overflow-y-auto scrollbar-thin">
@@ -460,5 +463,117 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
 }
 
 });
+
+
+///////////////////////////////// add address pincode/////////////////////////////////////
+
+
+document.getElementById("addPincode").addEventListener("input", async function () {
+    const pincode = this.value.trim();
+    const pincodeError = document.getElementById("errorAddPincode");
+    const cityInput = document.getElementById("addCity");
+    const stateInput = document.getElementById("addState");
+
+    // Always clear previous error while typing
+    pincodeError.textContent = "";
+    pincodeError.classList.add("hidden");
+
+    // Clear city/state when pincode changes
+    cityInput.value = "";
+    stateInput.value = "";
+
+    // Validation 1: Only digits allowed
+    if (!/^\d*$/.test(pincode)) {
+        pincodeError.textContent = "Pincode must contain numbers only.";
+        pincodeError.classList.remove("hidden");
+        return;
+    }
+
+    // Validation 2: Less than 6 characters
+    if (pincode.length > 0 && pincode.length < 6) {
+        pincodeError.textContent = "Pincode must be exactly 6 digits.";
+        pincodeError.classList.remove("hidden");
+        return;
+    }
+
+    // Validation 3: More than 6 characters
+    if (pincode.length > 6) {
+        pincodeError.textContent = "Pincode cannot be more than 6 digits.";
+        pincodeError.classList.remove("hidden");
+        return;
+    }
+
+    // Validation 4: If exactly 6 digits → Call API
+    if (pincode.length === 6) {
+        try {
+            const res = await axios.get(`/get-location?pincode=${pincode}`);
+
+            if (res.data.city && res.data.state) {
+                cityInput.value = res.data.city;
+                stateInput.value = res.data.state;
+            }
+        } catch (err) {
+            pincodeError.textContent = "Invalid or unavailable pincode.";
+            pincodeError.classList.remove("hidden");
+        }
+    }
+});
+
+
+////////////////////////////// edit address pincode //////////////////////////////
+
+document.getElementById("editPincode").addEventListener("input", async function () {
+    const pincode = this.value.trim();
+    const pincodeError = document.getElementById("editPincodeError");
+    const cityInput = document.getElementById("editCity");
+    const stateInput = document.getElementById("editState");
+
+    // Clear old errors when typing
+    pincodeError.textContent = "";
+    pincodeError.classList.add("hidden");
+
+    // Clear autofilled city/state whenever pincode changes
+    cityInput.value = "";
+    stateInput.value = "";
+
+    // Only digits allowed
+    if (!/^\d*$/.test(pincode)) {
+        pincodeError.textContent = "Pincode must contain numbers only.";
+        pincodeError.classList.remove("hidden");
+        return;
+    }
+
+    // Less than 6 digits
+    if (pincode.length > 0 && pincode.length < 6) {
+        pincodeError.textContent = "Pincode must be exactly 6 digits.";
+        pincodeError.classList.remove("hidden");
+        return;
+    }
+
+    // More than 6 digits
+    if (pincode.length > 6) {
+        pincodeError.textContent = "Pincode cannot be more than 6 digits.";
+        pincodeError.classList.remove("hidden");
+        return;
+    }
+
+    // If exactly 6 digits → call backend API
+    if (pincode.length === 6) {
+        try {
+            const res = await axios.get(`/get-location?pincode=${pincode}`);
+
+            if (res.data.city && res.data.state) {
+                cityInput.value = res.data.city;
+                stateInput.value = res.data.state;
+            }
+        } catch (err) {
+            pincodeError.textContent = "Invalid or unavailable pincode.";
+            pincodeError.classList.remove("hidden");
+        }
+    }
+});
+
+
+
 
 </script>
