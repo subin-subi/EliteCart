@@ -1,17 +1,15 @@
+import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
-import cloudinary from "cloudinary";
-import pkg from "multer-storage-cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-const CloudinaryStorage = pkg.CloudinaryStorage || pkg.default;
-
-cloudinary.v2.config({
+cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary.v2,
+  cloudinary: cloudinary, // now v2 is guaranteed
   params: {
     folder: "Elitecart",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
@@ -19,4 +17,5 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage });
+
 export default upload;
