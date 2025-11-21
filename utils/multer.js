@@ -1,12 +1,9 @@
 // config/multerStorage.js
 
 import multer from 'multer';
-import pkg from 'multer-storage-cloudinary';
-const { CloudinaryStorage } = pkg;
-
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
-
 
 dotenv.config();
 
@@ -19,15 +16,13 @@ cloudinary.config({
 
 // Configure Multer with Cloudinary Storage
 const storage = new CloudinaryStorage({
-  cloudinary,
+  cloudinary: cloudinary,
   params: {
-      folder: 'Elitecart',
-     allowed_formats:["jpg", "jpeg", "png", "webp"],
-    
+    folder: 'Elitecart',
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
 
+const upload = multer({ storage });
 
-
-const upload = multer({storage})
-export default upload
+export default upload;
