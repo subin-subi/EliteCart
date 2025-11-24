@@ -160,6 +160,8 @@
   function closeEditModal() { document.getElementById('editAddressModal').classList.add('hidden'); }
 
 
+  //////////////////////////////////////add address /////////////////////////////////////
+
 document.getElementById('addAddressForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -168,13 +170,13 @@ document.getElementById('addAddressForm').addEventListener('submit', async (e) =
     "errorAddName", "errorAddHouse", "errorAddStreet", "errorAddCity",
     "errorAddState", "errorAddPincode", "errorAddCountry", "errorAddMobile"
   ];
-
   errorFields.forEach(id => {
     const el = document.getElementById(id);
     el.textContent = "";
     el.classList.add("hidden");
   });
 
+  // Get values
   const name = document.getElementById('addName').value.trim();
   const houseName = document.getElementById('addHouse').value.trim();
   const street = document.getElementById('addStreet').value.trim();
@@ -184,92 +186,80 @@ document.getElementById('addAddressForm').addEventListener('submit', async (e) =
   const country = document.getElementById('addCountry').value.trim();
   const mobile = document.getElementById('addMobile').value.trim();
 
-  // Regex
-  const nameRegex = /^[A-Za-z\s]{3,40}$/;
-  const mobileRegex = /^[6-9]\d{9}$/;
-  const pincodeRegex = /^\d{6}$/;
-
   let hasError = false;
 
-  if (!name || !nameRegex.test(name)) {
-    const el = document.getElementById("errorAddName");
-    el.textContent = "Please enter a valid name (letters only, min 3 chars).";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
+  // REGEX DEFINITIONS
+  const nameRegex = /^[A-Za-z\s]{3,15}$/; // letters + spaces
+  const houseRegex = /^[A-Za-z\s]{3,40}$/; // letters + spaces
+  const streetRegex = /^[A-Za-z\s]{3,40}$/; // letters + spaces
+  const cityStateRegex = /^[A-Za-z\s]{2,50}$/; // letters + spaces
+  const pincodeRegex = /^\d{6}$/; // exactly 6 digits
+  const countryRegex = /^[A-Za-z\s]{2,50}$/; // letters + spaces
+  const mobileRegex = /^[6-9]\d{9}$/; // 10 digits starting 6–9
 
-  if (!houseName || houseName.length < 2) {
-    const el = document.getElementById("errorAddHouse");
-    el.textContent = "Please enter a valid house name.";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
+  // VALIDATIONS
+  const validateField = (value, regex, errorId, errorMessage) => {
+    const el = document.getElementById(errorId);
+    if (!value) {
+      el.textContent = "This field is required.";
+      el.classList.remove("hidden");
+      hasError = true;
+      return;
+    }
+    if (!regex.test(value)) {
+      el.textContent = errorMessage;
+      el.classList.remove("hidden");
+      hasError = true;
+    }
+  };
 
-  if (street && street.length < 3) {
-    const el = document.getElementById("errorAddStreet");
-    el.textContent = "Street must be at least 3 characters.";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
-
-  if (!city || city.length < 2) {
-    const el = document.getElementById("errorAddCity");
-    el.textContent = "Please enter a valid city.";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
-
-  if (!state || state.length < 2) {
-    const el = document.getElementById("errorAddState");
-    el.textContent = "Please enter a valid state.";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
-
-  if (!pincode || !pincodeRegex.test(pincode)) {
-    const el = document.getElementById("errorAddPincode");
-    el.textContent = "Pincode must be a 6-digit number.";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
-
-  if (!country || country.length < 2) {
-    const el = document.getElementById("errorAddCountry");
-    el.textContent = "Please enter a valid country.";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
-
-  if (!mobile || !mobileRegex.test(mobile)) {
-    const el = document.getElementById("errorAddMobile");
-    el.textContent = "Enter a valid 10-digit mobile number starting 6–9.";
-    el.classList.remove("hidden");
-    hasError = true;
-  }
+  validateField(name, nameRegex, "errorAddName", "Name must be 3- 15 letters only, no symbols.");
+  validateField(houseName, houseRegex, "errorAddHouse", "House must be 2-50 characters, no symbols.");
+  if (street) validateField(street, streetRegex, "errorAddStreet", "Street must be 3-100 characters, letters and numbers only.");
+  validateField(city, cityStateRegex, "errorAddCity", "City must be 2-50 letters only, no symbols.");
+  validateField(state, cityStateRegex, "errorAddState", "State must be 2-50 letters only, no symbols.");
+  validateField(pincode, pincodeRegex, "errorAddPincode", "Pincode must be exactly 6 digits.");
+  validateField(country, countryRegex, "errorAddCountry", "Country must be 2-50 letters only, no symbols.");
+  validateField(mobile, mobileRegex, "errorAddMobile", "Mobile must be 10 digits starting 6–9.");
 
   if (hasError) return;
 
-  // Submit to backend
+  // SUBMIT TO BACKEND
   const data = { name, houseName, street, city, state, pincode, country, mobile };
 
- try {
-  const res = await axios.post('/add-Address', data);
+  try {
+    const res = await axios.post('/add-Address', data);
 
-  if (res.data.success) {
-    Swal.mixin({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    }).fire({
-      icon: 'success',
-      title: 'Address added successfully!'
-    });
+    if (res.data.success) {
+      Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      }).fire({
+        icon: 'success',
+        title: 'Address added successfully!'
+      });
 
-    setTimeout(() => window.location.reload(), 2000);
+      setTimeout(() => window.location.reload(), 2000);
 
-  } else {
+    } else {
+      Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      }).fire({
+        icon: 'error',
+        title: res.data.message || 'Failed to add address!'
+      });
+    }
+
+  } catch (err) {
+    console.error('Error adding address:', err);
+
     Swal.mixin({
       toast: true,
       position: 'top-end',
@@ -278,25 +268,9 @@ document.getElementById('addAddressForm').addEventListener('submit', async (e) =
       timerProgressBar: true,
     }).fire({
       icon: 'error',
-      title: res.data.message || 'Failed to add address!'
+      title: 'Something went wrong!'
     });
   }
-
-} catch (err) {
-  console.error('Error adding address:', err);
-
-  Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 2000,
-    timerProgressBar: true,
-  }).fire({
-    icon: 'error',
-    title: 'Something went wrong!'
-  });
-}
-
 });
 
 
@@ -328,7 +302,8 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
   e.preventDefault();
 
   const id = document.getElementById('editAddressId').value;
-  
+
+  // Get trimmed values
   const name = document.getElementById('editName').value.trim();
   const houseName = document.getElementById('editHouse').value.trim();
   const street = document.getElementById('editStreet').value.trim();
@@ -357,169 +332,162 @@ document.getElementById('editAddressForm').addEventListener('submit', async (e) 
 
   let isValid = true;
 
-  // Validation patterns
-  const onlyLetters = /^[A-Za-z ]{3,}$/;
-  const housePattern = /^[A-Za-z0-9 .-]{3,}$/;
+  // Validation regex
+  const onlyLetters = /^[A-Za-z\s]{2,15}$/; // letters + spaces
+  const housePattern = /^[A-Za-z\s]{2,50}$/; // letters + spaces-
+  const streetPattern =/^[A-Za-z\s]{2,50}$/; // letters + spaces
+  const pincodePattern = /^\d{6}$/; // exactly 6 digits
+  const mobilePattern = /^[6-9]\d{9}$/; // 10-digit starting 6–9
+const cityStatePattern = /^[A-Za-z\s]{2,50}$/;
+  // Helper function
+  const validateField = (value, regex, field, message) => {
+    if (!value) {
+      errorFields[field].textContent = "This field is required.";
+      errorFields[field].classList.remove("hidden");
+      isValid = false;
+      return;
+    }
+    if (!regex.test(value)) {
+      errorFields[field].textContent = message;
+      errorFields[field].classList.remove("hidden");
+      isValid = false;
+    }
+  };
 
-  // Full Name
-  if (!onlyLetters.test(name)) {
-    errorFields.name.textContent = "Enter a valid name (letters only, min 3 chars)";
-    errorFields.name.classList.remove("hidden");
-    isValid = false;
-  }
-
-  // House Name
-  if (!housePattern.test(houseName)) {
-    errorFields.houseName.textContent = "Enter a valid house name (letters/numbers allowed)";
-    errorFields.houseName.classList.remove("hidden");
-    isValid = false;
-  }
-
-  // Street
-  if (street.length < 3) {
-    errorFields.street.textContent = "Street must be at least 3 characters";
-    errorFields.street.classList.remove("hidden");
-    isValid = false;
-  }
-
-  // City
-  if (!onlyLetters.test(city)) {
-    errorFields.city.textContent = "Enter a valid city (letters only)";
-    errorFields.city.classList.remove("hidden");
-    isValid = false;
-  }
-
-  // State
-  if (!onlyLetters.test(state)) {
-    errorFields.state.textContent = "Enter a valid state (letters only)";
-    errorFields.state.classList.remove("hidden");
-    isValid = false;
-  }
-
-  // Pincode
-  if (!/^\d{6}$/.test(pincode)) {
-    errorFields.pincode.textContent = "Pincode must be exactly 6 digits";
-    errorFields.pincode.classList.remove("hidden");
-    isValid = false;
-  }
-
-  // Country
-  if (!onlyLetters.test(country)) {
-    errorFields.country.textContent = "Enter a valid country (letters only)";
-    errorFields.country.classList.remove("hidden");
-    isValid = false;
-  }
-
-  // Mobile
-  if (!/^[6-9]\d{9}$/.test(mobile)) {
-    errorFields.mobile.textContent = "Enter a valid 10-digit mobile number";
-    errorFields.mobile.classList.remove("hidden");
-    isValid = false;
-  }
+  validateField(name, onlyLetters, "name", "Name must be 2-15 letters, no symbols.");
+  validateField(houseName, housePattern, "houseName", "House must be 2-50 chars, letters/numbers allowed.");
+  if (street) validateField(street, streetPattern, "street", "Street must be 3-100 chars, letters/numbers allowed.");
+  validateField(city, cityStatePattern, "city", "City must be 2-50 letters, no symbols.");
+  validateField(state, cityStatePattern, "state", "State must be 2-50 letters, no symbols.");
+  validateField(pincode, pincodePattern, "pincode", "Pincode must be exactly 6 digits.");
+  validateField(country, onlyLetters, "country", "Country must be 2-50 letters, no symbols.");
+  validateField(mobile, mobilePattern, "mobile", "Mobile must be 10 digits starting 6–9.");
 
   if (!isValid) return;
 
-  // Send Data
+  // Submit data
   const data = { name, houseName, street, city, state, pincode, country, mobile };
 
- try {
-  const res = await axios.patch(`/edit-Address/${id}`, data);
+  try {
+    const res = await axios.patch(`/edit-Address/${id}`, data);
 
-  const Toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 2000,
-    timerProgressBar: true,
-  });
-
-  if (res.data.success) {
-    Toast.fire({
-      icon: 'success',
-      title: 'Address updated successfully!'
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
     });
 
-    setTimeout(() => window.location.reload(), 2000);
+    if (res.data.success) {
+      Toast.fire({ icon: 'success', title: 'Address updated successfully!' });
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      Toast.fire({ icon: 'error', title: res.data.message || 'Update failed!' });
+    }
 
-  } else {
-    Toast.fire({
-      icon: 'error',
-      title: res.data.message || 'Update failed!'
-    });
+  } catch (err) {
+    console.error(err);
+    Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    }).fire({ icon: 'error', title: 'Something went wrong!' });
   }
-
-} catch (err) {
-  console.error(err);
-
-  const Toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 2000,
-    timerProgressBar: true,
-  });
-
-  Toast.fire({
-    icon: 'error',
-    title: 'Something went wrong!'
-  });
-}
-
 });
 
 
 ///////////////////////////////// add address pincode/////////////////////////////////////
 
 
-document.getElementById("addPincode").addEventListener("input", async function () {
-    const pincode = this.value.trim();
-    const pincodeError = document.getElementById("errorAddPincode");
+document.addEventListener("DOMContentLoaded", () => {
+    // ELEMENT REFERENCES
+    const pincodeInput = document.getElementById("addPincode");
     const cityInput = document.getElementById("addCity");
     const stateInput = document.getElementById("addState");
 
-    // Always clear previous error while typing
-    pincodeError.textContent = "";
-    pincodeError.classList.add("hidden");
+    const pincodeError = document.getElementById("errorAddPincode");
+    const cityError = document.getElementById("errorAddCity");
+    const stateError = document.getElementById("errorAddState");
 
-    // Clear city/state when pincode changes
-    cityInput.value = "";
-    stateInput.value = "";
+    // HELPER FUNCTION: Show error
+    const showError = (element, message) => {
+        element.textContent = message;
+        element.classList.remove("hidden");
+    };
 
-    // Validation 1: Only digits allowed
-    if (!/^\d*$/.test(pincode)) {
-        pincodeError.textContent = "Pincode must contain numbers only.";
-        pincodeError.classList.remove("hidden");
-        return;
-    }
+    // HELPER FUNCTION: Hide error
+    const hideError = (element) => {
+        element.textContent = "";
+        element.classList.add("hidden");
+    };
 
-    // Validation 2: Less than 6 characters
-    if (pincode.length > 0 && pincode.length < 6) {
-        pincodeError.textContent = "Pincode must be exactly 6 digits.";
-        pincodeError.classList.remove("hidden");
-        return;
-    }
+    // PINCODE VALIDATION
+    pincodeInput.addEventListener("input", async function () {
+        const pincode = this.value.trim();
+        hideError(pincodeError);
+        cityInput.value = "";
+        stateInput.value = "";
 
-    // Validation 3: More than 6 characters
-    if (pincode.length > 6) {
-        pincodeError.textContent = "Pincode cannot be more than 6 digits.";
-        pincodeError.classList.remove("hidden");
-        return;
-    }
-
-    // Validation 4: If exactly 6 digits → Call API
-    if (pincode.length === 6) {
-        try {
-            const res = await axios.get(`/get-location?pincode=${pincode}`);
-
-            if (res.data.city && res.data.state) {
-                cityInput.value = res.data.city;
-                stateInput.value = res.data.state;
-            }
-        } catch (err) {
-            pincodeError.textContent = "Invalid or unavailable pincode.";
-            pincodeError.classList.remove("hidden");
+        // No symbols or whitespace
+        if (!/^\d*$/.test(pincode)) {
+            showError(pincodeError, "Pincode must contain numbers only.");
+            return;
         }
-    }
+
+        if (pincode.length > 0 && pincode.length < 6) {
+            showError(pincodeError, "Pincode must be exactly 6 digits.");
+            return;
+        }
+
+        if (pincode.length > 6) {
+            showError(pincodeError, "Pincode cannot be more than 6 digits.");
+            return;
+        }
+
+        // Fetch city/state for valid 6-digit pincode
+        if (pincode.length === 6) {
+            try {
+                const res = await axios.get(`/get-location?pincode=${pincode}`);
+                if (res.data.city && res.data.state) {
+                    cityInput.value = res.data.city;
+                    stateInput.value = res.data.state;
+                } else {
+                    showError(pincodeError, "Invalid or unavailable pincode.");
+                }
+            } catch (err) {
+                showError(pincodeError, "Invalid or unavailable pincode.");
+            }
+        }
+    });
+
+    // CITY VALIDATION (Only letters, no symbols, no whitespace start/end)
+    cityInput.addEventListener("input", function () {
+        const city = this.value.trim();
+        hideError(cityError);
+
+        if (!/^[a-zA-Z\s]*$/.test(city)) {
+            showError(cityError, "City must contain letters only.");
+        }
+        if (/^\s|\s$/.test(this.value)) {
+            showError(cityError, "City cannot start or end with whitespace.");
+        }
+    });
+
+    // STATE VALIDATION (Only letters, no symbols, no whitespace start/end)
+    stateInput.addEventListener("input", function () {
+        const state = this.value.trim();
+        hideError(stateError);
+
+        if (!/^[a-zA-Z\s]*$/.test(state)) {
+            showError(stateError, "State must contain letters only.");
+        }
+        if (/^\s|\s$/.test(this.value)) {
+            showError(stateError, "State cannot start or end with whitespace.");
+        }
+    });
 });
 
 

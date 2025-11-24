@@ -309,12 +309,12 @@
   }
 
   const name = nameInput.value.trim();
-  const namePattern = /^[A-Za-z.\s]{3,40}$/;
+  const namePattern = /^[A-Za-z.\s]{3,15}$/;
 
   if (!namePattern.test(name)) {
     return Swal.fire({
       icon: "warning",
-      title: "Category name must be 3–40 characters and only alphabets, dots, spaces.",
+      title: "Category name must be 3–15 characters and only alphabets, dots, spaces.",
       toast: true,
       position: "top-end",
       showConfirmButton: false,
@@ -415,12 +415,12 @@
   const id = document.getElementById("editCategoryId").value;
   const name = document.getElementById("editCategoryName").value.trim();
 
-  const namePattern = /^[A-Za-z.\s]{3,20}$/;
+  const namePattern = /^[A-Za-z.\s]{3,15}$/;
 
   if (!namePattern.test(name)) {
     return Swal.fire({
       icon: "warning",
-      title: "Category name must be 3–20 characters",
+      title: "Category name must be 3–15 characters",
       toast: true,
       position: "top-end",
       timer: 2000,

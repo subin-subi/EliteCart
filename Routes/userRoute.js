@@ -95,7 +95,7 @@ route.get("/get-location",pincodeController.getLocationByPinCode)
 
 
 route.get("/cart" ,userMiddleware.isLogin,userMiddleware.checkSession, cartController.getCart)
-route.post("/cart/add",userMiddleware.isLogin, cartController.addToCart);
+route.post("/cart/add", cartController.addToCart);
 route.patch("/cart/update-quantity/:itemId", cartController.updateQuantity )
 route.delete("/cart/remove/:itemId",cartController.removeProduct)
 

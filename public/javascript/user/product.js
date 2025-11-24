@@ -167,15 +167,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         updateCounts();
       } catch (err) {
-        Swal.fire({
-          icon: "error",
-          title: "Error!",
-          text: err.response?.data?.message || "Something went wrong",
-          toast: true,
-          position: "top-end",
-          timer: 2000,
-          showConfirmButton: false,
-        });
+        showToast(
+          err.response?.data?.message || "Error adding to wishlist",
+          "error"
+        );
 
         if (err.response?.status === 401) {
           setTimeout(() => (window.location.href = "/login"), 1500);

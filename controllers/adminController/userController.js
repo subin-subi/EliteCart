@@ -4,7 +4,7 @@ import HTTP_STATUS from "../../utils/responseHandler.js";
 const getUserList = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const limit = 5;
         const skip = (page - 1) * limit;
         const rawSearch = req.query.search || '';
         const search = String(rawSearch).trim();
