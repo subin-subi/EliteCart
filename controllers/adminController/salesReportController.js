@@ -63,13 +63,13 @@ const downloadSalesReportPdf = async (req, res) => {
         const periodDescription = describeRange(range, start, end);
 
         res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename=EliteCart_SalesReport_${range}_${new Date().toISOString().split('T')[0]}.pdf`);
+        res.setHeader("Content-Disposition", `attachment; filename=EliteKart_SalesReport_${range}_${new Date().toISOString().split('T')[0]}.pdf`);
 
         const doc = new PDFDocument({ size: "A4", margin: 40 });
         doc.pipe(res);
 
         // Company Header
-        doc.fontSize(24).text("ELITECART", { align: "center" });
+        doc.fontSize(24).text("ELITEKART", { align: "center" });
         doc.fontSize(16).text("Sales Report", { align: "center" });
         doc.moveDown();
 
@@ -327,7 +327,7 @@ const downloadSalesReportExcel = async (req, res) => {
     const sheet = workbook.addWorksheet("Sales Report");
 
     // Header
-    sheet.addRow(["EliteCart SALES REPORT"]);
+    sheet.addRow(["EliteKart SALES REPORT"]);
     sheet.addRow([]);
     sheet.addRow([`Report Range: ${range.toUpperCase()}`]);
     sheet.addRow([`Period: ${periodDescription}`]);
@@ -395,7 +395,7 @@ const downloadSalesReportExcel = async (req, res) => {
     // Send Excel file
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=EliteCart_SalesReport_${range}_${new Date()
+      `attachment; filename=EliteKart_SalesReport_${range}_${new Date()
         .toISOString()
         .split("T")[0]}.xlsx`
     );

@@ -210,7 +210,7 @@ if (paymentMethod === "cod") {
           key: razorpayKey,
           amount: order.amount,
           currency: order.currency,
-          name: "EliteCart",
+          name: "EliteKart",
           description: "Order Payment",
           order_id: order.id,
           handler: async function (response) {

@@ -332,8 +332,8 @@ function toggleCustomDates() {
       // Set download filename
       const today = new Date().toISOString().split('T')[0];
       link.download = type === 'pdf'
-        ? `EliteCart_SalesReport_${today}.pdf`
-        : `EliteCart_SalesReport_${today}.xlsx`;
+        ? `EliteKart_SalesReport_${today}.pdf`
+        : `EliteKart_SalesReport_${today}.xlsx`;
 
       // Trigger download
       document.body.appendChild(link);

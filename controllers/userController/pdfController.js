@@ -27,7 +27,7 @@ const generateInvoice = async (req, res) => {
     doc
       .fontSize(22)
       .fillColor("#16a34a")
-      .text("EliteCart", { align: "center" })
+      .text("EliteKart", { align: "center" })
       .moveDown(0.2)
       .fontSize(14)
       .fillColor("black")
@@ -150,8 +150,8 @@ doc.text(`Rs: ${order.grandTotal.toFixed(2)}`, valueX, yPos);
 doc.moveDown(2);
 
     // ---------- FOOTER ----------
-    doc.fontSize(11).fillColor("black").text("Thank you for shopping with EliteCart!", { align: "center" });
-    doc.fontSize(9).fillColor("gray").text("For support, contact support@elitecart.com", { align: "center" });
+    doc.fontSize(11).fillColor("black").text("Thank you for shopping with EliteKart!", { align: "center" });
+    doc.fontSize(9).fillColor("gray").text("For support, contact support@eliteKart.com", { align: "center" });
 
     doc.end();
   } catch (error) {
