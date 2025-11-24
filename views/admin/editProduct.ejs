@@ -115,18 +115,31 @@
                 </select>
               </div>
 
-              <div>
-                <label class="block text-gray-600 mb-1">Price*</label>
-                <input type="number" name="variants[<%= index %>][price]" class="variant-price w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                       placeholder="Enter price" value="<%= variant.price %>" step="1">
-              </div>
+      <div>
+  <label class="block text-gray-600 mb-1">Price*</label>
+  <input 
+    type="number" 
+    name="variants[<%= index %>][price]" 
+    class="variant-price w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+    placeholder="Enter price" 
+    value="<%= variant.price %>" 
+    step="1"
+  >
+  <span class="price-error text-red-500 text-sm"></span>
+</div>
 
-              <div>
-                <label class="block text-gray-600 mb-1">Quantity*</label>
-                <input type="number" name="variants[<%= index %>][stock]" class="variant-stock w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                       placeholder="Enter quantity" min="0" value="<%= variant.stock %>">
-              </div>
-            </div>
+<div>
+  <label class="block text-gray-600 mb-1">Quantity*</label>
+  <input 
+    type="number" 
+    name="variants[<%= index %>][stock]" 
+    class="variant-stock w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+    placeholder="Enter quantity" 
+    min="0" 
+    value="<%= variant.stock %>"
+  >
+  <span class="stock-error text-red-500 text-sm"></span>
+</div>
 
             <!-- Variant Images -->
   <div>

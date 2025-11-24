@@ -123,14 +123,14 @@ function editSubImage(variantId, subIndex) {
 function removeSubImage(variantId, imageUrl) {
   const form = document.getElementById("editProductForm");
 
-  // ✅ Add a hidden input for server to delete old image
+  //  Add a hidden input for server to delete old image
   const hiddenInput = document.createElement("input");
   hiddenInput.type = "hidden";
   hiddenInput.name = "removeSubImages[]";
   hiddenInput.value = imageUrl;
   form.appendChild(hiddenInput);
 
-  // ✅ Remove from DOM
+  //  Remove from DOM
   const imageWrapper = document.querySelector(
     `.subImageWrapper[data-variant="${variantId}"][data-url="${imageUrl}"]`
   );
@@ -138,14 +138,14 @@ function removeSubImage(variantId, imageUrl) {
     imageWrapper.remove();
   }
 
-  // ✅ Remove from croppedFiles (if it's a newly added image)
+  //  Remove from croppedFiles (if it's a newly added image)
   if (croppedFiles[variantId]?.subImages) {
     croppedFiles[variantId].subImages = croppedFiles[variantId].subImages.filter(
       (f) => f.name !== imageUrl && f.url !== imageUrl
     );
   }
 
-  // ✅ Correct counting — only count DOM elements now
+  //  Correct counting — only count DOM elements now
   const totalImages = document.querySelectorAll(
     `#subImagesContainer-${variantId} .subImageWrapper`
   ).length;
@@ -193,7 +193,7 @@ function handleExistingSubImages(event, variantId) {
 
       // create wrapper and mark as "new" (so we don't count it as existing)
       const wrapper = document.createElement("div");
-      wrapper.className = "relative w-20 h-20 subImageWrapper new"; // <-- important: 'new' flag
+      wrapper.className = "relative w-20 h-20 subImageWrapper new"; 
 
       const img = document.createElement("img");
       img.src = URL.createObjectURL(croppedFile);
@@ -254,21 +254,81 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const formData = new FormData();
 
-    // Append product fields
-    formData.append("name", document.getElementById("productName").value);
+    let hasErrors = false; //  
+
+   // Validate Product Name (3–15 characters)
+const nameInput = document.getElementById("productName");
+const nameError = document.getElementById("errorName");
+const productName = nameInput.value.trim();
+
+if (productName.length < 3 || productName.length > 15) {
+  nameError.textContent = "Product name must be 3–15 characters.";
+  nameInput.classList.add("border-red-500");
+  return; //  stop form submission
+} else {
+  nameError.textContent = "";
+  nameInput.classList.remove("border-red-500");
+}
+
+// Append product fields only after validation passes
+formData.append("name", productName);
+
     formData.append("brand", document.getElementById("productBrand").value);
     formData.append("category", document.getElementById("productCategory").value);
     formData.append("description", document.getElementById("productDescription").value);
 
-    // Variants
     const variants = [];
+    
+
     document.querySelectorAll(".variant-row").forEach((row, index) => {
+
+      const priceInput = row.querySelector(".variant-price");
+      const stockInput = row.querySelector(".variant-stock");
+
+      const priceError = row.querySelector(".price-error");
+      const stockError = row.querySelector(".stock-error");
+
       const variantId = row.getAttribute("data-variant-id");
       const volume = row.querySelector(`[name="variants[${index}][volume]"]`)?.value;
-      const price = row.querySelector(`[name="variants[${index}][price]"]`)?.value;
-      const stock = row.querySelector(`[name="variants[${index}][stock]"]`)?.value;
+      const price = priceInput?.value;
+      const stock = stockInput?.value;
 
-      variants.push({ index, volume, price, stock });
+      let isValid = true;
+
+      // Validate Price
+      if (!price || isNaN(price) || Number(price) < 0) {
+        priceError.textContent = "Price must be a non-negative number.";
+        priceInput.classList.add("border-red-500");
+        isValid = false;
+      } else {
+        priceError.textContent = "";
+        priceInput.classList.remove("border-red-500");
+      }
+
+      // Validate Stock
+      if (!stock || isNaN(stock) || Number(stock) < 0) {
+        stockError.textContent = "Stock cannot be negative.";
+        stockInput.classList.add("border-red-500");
+        isValid = false;
+      } else {
+        stockError.textContent = "";
+        stockInput.classList.remove("border-red-500");
+      }
+
+      // ❗ If invalid, block submission
+      if (!isValid) {
+        hasErrors = true;
+        return;
+      }
+
+      // Push variant only if valid
+      variants.push({
+        index,
+        variantId,
+        volume,
+        price: Number(price),
+        stock: Number(stock),
+      });
 
       // Append cropped main image
       if (croppedFiles[variantId]?.mainImage) {
@@ -284,7 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Append new un-cropped files from input
       const mainInput = row.querySelector(`[name="variants[${index}][mainImage]"]`);
-      if (mainInput?.files[0]) formData.append(`variants[${index}][mainImage]`, mainInput.files[0]);
+      if (mainInput?.files[0]) {
+        formData.append(`variants[${index}][mainImage]`, mainInput.files[0]);
+      }
 
       const subInput = row.querySelector(`[name="variants[${index}][subImages]"]`);
       if (subInput?.files) {
@@ -293,6 +355,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     });
+
+    // ❗ STOP SUBMISSION IF ANY ERROR
+    if (hasErrors) {
+      return;
+    }
 
     // Append removed sub-images
     document.querySelectorAll('input[name="removeSubImages[]"]').forEach(input => {
@@ -307,22 +374,22 @@ document.addEventListener("DOMContentLoaded", () => {
     // Send variants info as JSON
     formData.append("variants", JSON.stringify(variants));
 
+    // Submit to backend
     try {
       const response = await axios.post(form.action, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      console.log("Product updated:", response.data);
+      Swal.fire("Success", "Product updated successfully!", "success")
+        .then(() => window.location.href = '/admin/products');
 
-      Swal.fire("Success", "Product updated successfully!", "success").then(() => {
-        window.location.href = '/admin/products';
-      });
     } catch (err) {
-      console.error("Error updating product:", err);
       Swal.fire("Error", "Failed to update product", "error");
+      console.error("Error updating product:", err);
     }
   });
 });
+
 
 
 

@@ -78,10 +78,7 @@
         <div class="px-6 py-4 border-b border-gray-200">
           <div class="flex justify-between items-center">
             <h2 class="text-lg font-semibold text-gray-800">User List</h2>
-            <div class="flex items-center space-x-2">
-              <input type="checkbox" id="selectAllUsers" class="rounded border-gray-300" />
-              <label for="selectAllUsers" class="text-sm text-gray-600">Select All</label>
-            </div>
+          
           </div>
         </div>
 
@@ -120,9 +117,7 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <input type="checkbox" id="selectAllUsersHeader" class="rounded border-gray-300" />
-                </th>
+               
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -133,9 +128,7 @@
               <% if (userList && userList.length > 0) { %>
                 <% userList.forEach(user => { %>
                   <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <input type="checkbox" class="user-checkbox rounded border-gray-300" value="<%= user._id %>" />
-                    </td>
+                  
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
@@ -308,7 +301,7 @@ function toggleBlockUser(userId, blocked) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // Setup select all functionality
       const selectAllHeader = document.getElementById('selectAllUsersHeader');
-      const selectAllMain = document.getElementById('selectAllUsers');
+   
       
       function setupSelectAll(selectAllElement) {
         if (selectAllElement) {

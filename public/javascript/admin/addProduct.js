@@ -322,7 +322,11 @@ form.addEventListener("submit", async function (e) {
    } else if (name.length < 3) {
      document.getElementById("errorName").textContent = "Name must be at least 3 letters";
      isValid = false;
-   }
+   }else if (name.length > 15) {
+  document.getElementById("errorName").textContent = "Name cannot exceed 15 characters";
+  isValid = false;
+}
+
 
    if (!brand) {
      document.getElementById("errorBrand").textContent = "Brand is required";
@@ -365,11 +369,11 @@ form.addEventListener("submit", async function (e) {
        isValid = false;
      }
      if (!price || price <= 0) {
-       item.querySelector(".errorVariantPrice").textContent = "Price must be greater than 0";
+       item.querySelector(".errorVariantPrice").textContent = "Price must be positive";
        isValid = false;
      }
      if (!stock || stock < 0) {
-       item.querySelector(".errorVariantStock").textContent = "Quantity must be 0 or more";
+       item.querySelector(".errorVariantStock").textContent = "Quantity must be positive";
        isValid = false;
      }
 
@@ -403,9 +407,25 @@ form.addEventListener("submit", async function (e) {
 
   const variantsArray = [];
   document.querySelectorAll("#variantsContainer .variant-item").forEach((item) => {
-    const volume = item.querySelector(".variant-volume").value;
-    const price = item.querySelector(".variant-price").value;
-    const stock = item.querySelector(".variant-stock").value;
+const volume = item.querySelector(".variant-volume").value;
+const price = item.querySelector(".variant-price").value;
+const stock = item.querySelector(".variant-stock").value;
+
+// Convert to numbers
+const volNum = Number(volume);
+const priceNum = Number(price);
+const stockNum = Number(stock);
+
+// Validation for negative values
+if (volNum < 0 || priceNum < 0 || stockNum < 0) {
+  Toast.fire({
+    icon: "error",
+    title: "Volume, Price & Stock cannot be negative!"
+  });
+  return; // stop form submit
+}
+
+
     variantsArray.push({ volume, price, stock });
   });
   formData.append("variantsData", JSON.stringify(variantsArray));

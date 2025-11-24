@@ -230,6 +230,45 @@
 <%- include('../partials/footer') %>
 
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const mainImage = document.getElementById("mainImage");
+  const thumbnails = document.getElementById("thumbnails");
+
+  thumbnails.addEventListener("click", function (e) {
+    const btn = e.target.closest(".thumbnail");
+    if (!btn) return;
+
+    const newSrc = btn.dataset.src;
+    const oldSrc = mainImage.src;
+
+    // Smooth transition
+    mainImage.classList.add("opacity-0");
+    
+    setTimeout(() => {
+      // Swap images
+      mainImage.src = newSrc;
+
+      // Update clicked thumbnail → previous main image
+      btn.dataset.src = oldSrc;
+      btn.querySelector("img").src = oldSrc;
+
+      // Fade in effect
+      mainImage.classList.remove("opacity-0");
+    }, 200);
+  });
+});
+</script>
+
+<style>
+#mainImage {
+  transition: opacity 0.2s ease-in-out;
+}
+</style>
+
+
+
+
+<script>
   window.allVariants = <%- JSON.stringify(product.variants) %>;
 </script>
 
