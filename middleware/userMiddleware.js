@@ -94,10 +94,22 @@ const noCache = (req, res, next) => {
 
 const requireLogin = (req, res, next) => {
   if (!req.session || !req.session.user) {
+
+    // If AJAX request → send JSON
+    if (req.headers["x-requested-with"] === "XMLHttpRequest") {
+      return res.status(401).json({
+        success: false,
+        message: "Please login first"
+      });
+    }
+
+    // Normal browser request → redirect
     return res.redirect("/login?message=Please+login+first");
   }
+
   next();
 };
+
 
 
 

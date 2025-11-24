@@ -21,7 +21,6 @@ const getCart = async (req, res) => {
       return res.render("user/cart", { cartItems: [], subtotal: 0 });
     }
 
-    // Fetch all active offers
     const now = new Date();
     const activeOffers = await Offer.find({
       isActive: true,
@@ -51,7 +50,36 @@ const getCart = async (req, res) => {
 
       const variant = product.variants[item.variantIndex];
 
-      // Calculate discount for this product
+      // ---------------------------
+      // 🔥 STOCK VALIDATION
+      // ---------------------------
+      let finalQuantity = item.quantity;
+
+      // 1. Max 10 quantity rule
+      if (finalQuantity > 10) {
+        finalQuantity = 10;
+      }
+
+      // 2. If stock is less than cart quantity → reduce quantity
+      if (variant.stock < finalQuantity) {
+        finalQuantity = variant.stock;
+
+        await Cart.updateOne(
+          { _id: cart._id, "items._id": item._id },
+          { $set: { "items.$.quantity": finalQuantity } }
+        );
+      }
+
+      // 3. If stock becomes zero → remove the item
+      if (variant.stock === 0) {
+        removedItemIds.push(item._id);
+        continue;
+      }
+
+      // ----------------------------------------------
+      // 🔥 OFFER CALCULATION
+      // ----------------------------------------------
+
       let discountPercent = 0;
       let appliedOffer = null;
 
@@ -63,24 +91,23 @@ const getCart = async (req, res) => {
       );
 
       if (productOffers.length > 0) {
-        const bestProductOffer = productOffers.reduce((max, offer) =>
+        const best = productOffers.reduce((max, offer) =>
           offer.discountPercent > max.discountPercent ? offer : max
         );
-        discountPercent = bestProductOffer.discountPercent;
-        appliedOffer = bestProductOffer;
+        discountPercent = best.discountPercent;
+        appliedOffer = best;
       }
 
       if (categoryOffers.length > 0) {
-        const bestCategoryOffer = categoryOffers.reduce((max, offer) =>
+        const best = categoryOffers.reduce((max, offer) =>
           offer.discountPercent > max.discountPercent ? offer : max
         );
-        if (bestCategoryOffer.discountPercent > discountPercent) {
-          discountPercent = bestCategoryOffer.discountPercent;
-          appliedOffer = bestCategoryOffer;
+        if (best.discountPercent > discountPercent) {
+          discountPercent = best.discountPercent;
+          appliedOffer = best;
         }
       }
 
-      // Calculate offer price
       let offerPrice = variant.price;
       if (discountPercent > 0) {
         offerPrice = Math.round(variant.price - (variant.price * discountPercent) / 100);
@@ -90,9 +117,9 @@ const getCart = async (req, res) => {
         _id: item._id,
         productId: product,
         variant,
-        productQuantity: item.quantity,
-        total: offerPrice * item.quantity,
-        offerPrice, 
+        productQuantity: finalQuantity,
+        total: offerPrice * finalQuantity,
+        offerPrice,
         discountPercent,
         appliedOfferName: appliedOffer?.name || null,
       });
@@ -110,9 +137,10 @@ const getCart = async (req, res) => {
     res.render("user/cart", { cartItems: validItems, subtotal });
   } catch (err) {
     console.error("Error loading cart:", err);
-     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Something went wrong");
+    res.status(500).send("Something went wrong");
   }
 };
+
 
 
 
@@ -189,14 +217,39 @@ const addToCart = async (req, res) => {
         item => item.productId.toString() === productId && item.variantIndex === variantIndex
       );
 
-      if (existingItem) {
-        if (existingItem.quantity + 1 > variant.stock) {
-          return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Not enough stock" });
-        }
-        existingItem.quantity += quantity;
-        existingItem.price = price;
-        existingItem.total = existingItem.quantity * price;
-      } else {
+   if (existingItem) {
+
+  // If quantity already 10 → block adding more
+  if (existingItem.quantity >= 10) {
+    return res.status(400).json({
+      success: false,
+      limitReached: true,
+      message: "You can only buy up to 10 units of this product"
+    });
+  }
+
+  // Normal adding but do not exceed 10
+  if (existingItem.quantity + 1 > 10) {
+    return res.status(400).json({
+      success: false,
+      limitReached: true,
+      message: "Maximum 10 quantity allowed"
+    });
+  }
+
+  // Stock check
+  if (existingItem.quantity + 1 > variant.stock) {
+    return res.status(400).json({
+      success: false,
+      message: "Not enough stock"
+    });
+  }
+
+  existingItem.quantity += 1;
+  existingItem.price = price;
+  existingItem.total = existingItem.quantity * price;
+
+} else {
         cart.items.push({ productId, variantIndex, quantity, price, total });
       }
 

@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-
   /* ------------------------------------------------------------
       ELEMENT REFERENCES
   ------------------------------------------------------------ */
@@ -21,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // All variants passed from EJS
   const allVariants = window.allVariants || [];
-  
+
   /* ------------------------------------------------------------
       DESCRIPTION TOGGLE
   ------------------------------------------------------------ */
@@ -49,7 +48,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (variantSelect) {
     variantSelect.addEventListener("change", (e) => {
       const selectedVariantId = e.target.value;
-      const selectedVariant = allVariants.find((v) => v._id === selectedVariantId);
+      const selectedVariant = allVariants.find(
+        (v) => v._id === selectedVariantId
+      );
 
       if (!selectedVariant) return;
 
@@ -74,8 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
           thumbnailsContainer.appendChild(button);
         });
       } else {
-        thumbnailsContainer.innerHTML =
-          `<p class="text-gray-500 text-sm">No images available</p>`;
+        thumbnailsContainer.innerHTML = `<p class="text-gray-500 text-sm">No images available</p>`;
       }
 
       /* ---------- Price Section ---------- */
@@ -149,7 +149,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       try {
-        const res = await axios.post("/cart/add", { productId, variantId });
+        const res = await axios.post(
+          "/cart/add",
+          { productId, variantId },
+          { headers: { "X-Requested-With": "XMLHttpRequest" } }
+        );
 
         Swal.fire({
           icon: res.data.success ? "success" : "error",
@@ -162,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         updateCounts();
-
       } catch (err) {
         Swal.fire({
           icon: "error",
@@ -187,7 +190,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (wishlistBtn) {
     wishlistBtn.addEventListener("click", async () => {
       const productId = wishlistBtn.dataset.product;
-      const variantId = variantSelect ? variantSelect.value : wishlistBtn.dataset.variant;
+      const variantId = variantSelect
+        ? variantSelect.value
+        : wishlistBtn.dataset.variant;
 
       try {
         const res = await axios.post("/wishlist/add", { productId, variantId });
@@ -199,9 +204,11 @@ document.addEventListener("DOMContentLoaded", () => {
           showToast("Added to wishlist", "success");
           updateCounts();
         }
-
       } catch (err) {
-        showToast(err.response?.data?.message || "Error adding to wishlist", "error");
+        showToast(
+          err.response?.data?.message || "Error adding to wishlist",
+          "error"
+        );
 
         if (err.response?.status === 401) {
           setTimeout(() => (window.location.href = "/login"), 1500);
@@ -225,7 +232,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-
 /* ------------------------------------------------------------
     UPDATE WISHLIST & CART ICON COUNTS (GLOBAL)
 ------------------------------------------------------------ */
@@ -242,7 +248,6 @@ async function updateCounts() {
 
     wishlistBadge.classList.toggle("hidden", data.wishlistCount === 0);
     cartBadge.classList.toggle("hidden", data.cartCount === 0);
-
   } catch (error) {
     console.error("Failed to update counts:", error);
   }
