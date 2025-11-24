@@ -1,5 +1,6 @@
 import {generateOTP, sendOTPEmail} from "../../utils/sendOTP.js"
 import userSchema from "../../models/userModel.js"; 
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const validateOTP = async (req, res) => {
   try {
@@ -8,7 +9,7 @@ const validateOTP = async (req, res) => {
     
     if (!userOtp || !email) {
       console.log('Missing required fields');
-      return res.status(400).json({ 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ 
         success: false, 
         error: "OTP and email are required" 
       });
@@ -18,7 +19,7 @@ const validateOTP = async (req, res) => {
     console.log('User found:', !!user);
     
     if (!user) {
-      return res.status(400).json({ 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ 
         success: false, 
         error: "User not found" 
       });
@@ -28,7 +29,7 @@ const validateOTP = async (req, res) => {
 
     if (user.isverified) {
       console.log('User already verified');
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         error: "User is already verified",
       });
@@ -36,7 +37,7 @@ const validateOTP = async (req, res) => {
 
     if (user.otpAttempts >= 3) {
       console.log('Too many OTP attempts');
-      return res.status(400).json({ 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ 
         success: false,
         error: "Too many attempts. Please signup again."
       });
@@ -44,7 +45,7 @@ const validateOTP = async (req, res) => {
 
     if (!user.otpExpiresAt || Date.now() > user.otpExpiresAt) {
 
-      return res.status(400).json({ 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ 
         success: false,
         error: "OTP Expired" 
       });
@@ -52,7 +53,7 @@ const validateOTP = async (req, res) => {
 
     if (!user.otp) {
       console.log('No OTP found in user record');
-      return res.status(400).json({ 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ 
         success: false,
         error: "No OTP found. Please request a new OTP." 
       });
@@ -85,13 +86,13 @@ const validateOTP = async (req, res) => {
         $inc: { otpAttempts: 1 }
       });
 
-      return res.status(400).json({ 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ 
         success: false,
         error: "Invalid OTP" 
       });
     }
   } catch (error) {
-    return res.status(500).json({ 
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       error: "OTP verification failed" 
     });
@@ -104,7 +105,7 @@ const resendOTP = async (req, res) => {
         
         console.log("email", email  )
         if (!email) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: "Email is required"
             });
@@ -113,7 +114,7 @@ const resendOTP = async (req, res) => {
         const user = await userSchema.findOne({ email: email.toLowerCase() });
         
         if (!user) {
-            return res.status(400).json({
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: "User not found"
             });
@@ -121,7 +122,7 @@ const resendOTP = async (req, res) => {
 
         
         if (user.otpExpiresAt && Date.now() < user.otpExpiresAt) {
-            return res.status(400).json({
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: "Please wait before requesting a new OTP"
             });
@@ -147,7 +148,7 @@ const resendOTP = async (req, res) => {
 
     } catch (error) {
         console.error("Resend OTP error:", error);
-        return res.status(500).json({
+        return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: "Failed to resend OTP"
         });
@@ -162,7 +163,7 @@ const sendForgotPasswordOTP = async (req, res) => {
        
         
         if (!email) {
-            return res.status(400).json({ message: 'Email is required' });
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Email is required' });
         }
         
       
@@ -177,12 +178,12 @@ const sendForgotPasswordOTP = async (req, res) => {
         
         if (!user) {
             console.log("User not found in DB");
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'User not found' });
         }
         
         if (!user.password) {
             console.log('User has no password (Google login)');
-            return res.status(400).json({ 
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({ 
                 message: 'This email is linked to Google login. Please login with Google.' 
             });
         }
@@ -202,10 +203,10 @@ const sendForgotPasswordOTP = async (req, res) => {
         await sendOTPEmail(email, otp);
       
         
-        res.status(200).json({ message: 'OTP sent successfully' });
+        res.status(HTTP_STATUS.OK).json({ message: 'OTP sent successfully' });
     } catch (error) {
         console.error(' Send forgot password OTP error:', error);
-        res.status(500).json({ message: 'Failed to send OTP' });
+         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Failed to send OTP' });
     }
 };
 
@@ -215,7 +216,7 @@ const verifyForgotPasswordOTP = async (req, res) => {
         
       
         if (!email || !otp) {
-            return res.status(400).json({ message: 'Email and OTP are required' });
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Email and OTP are required' });
         }
 
         const user = await userSchema.findOne({ email: email.toLowerCase() });
@@ -226,19 +227,19 @@ const verifyForgotPasswordOTP = async (req, res) => {
         }
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired OTP' });
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Invalid or expired OTP' });
         }
 
         if (!user.otp || !user.otpExpiresAt) {
-            return res.status(400).json({ message: 'No OTP found. Please request a new OTP.' });
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'No OTP found. Please request a new OTP.' });
         }
 
         if (Date.now() > user.otpExpiresAt) {
-            return res.status(400).json({ message: 'OTP has expired. Please request a new OTP.' });
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'OTP has expired. Please request a new OTP.' });
         }
 
         if (user.otpAttempts >= 3) {
-            return res.status(400).json({ message: 'Too many attempts. Please request a new OTP.' });
+            return  res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Too many attempts. Please request a new OTP.' });
         }
 
 
@@ -254,14 +255,14 @@ const verifyForgotPasswordOTP = async (req, res) => {
         
         if (storedOTP === inputOTP) {
           
-            res.status(200).json({ message: 'OTP verified successfully' });
+            res.status(HTTP_STATUS.OK).json({ message: 'OTP verified successfully' });
         } else {
            
-            res.status(400).json({ message: 'Invalid OTP' });
+            res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Invalid OTP' });
         }
     } catch (error) {
         
-        res.status(500).json({ message: 'Failed to verify OTP' });
+         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Failed to verify OTP' });
     }
 };
 
@@ -276,7 +277,7 @@ const testOTP = async (req, res) => {
     const { email } = req.query;
     
     if (!email) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Email is required"
       });
@@ -285,7 +286,7 @@ const testOTP = async (req, res) => {
     const user = await userSchema.findOne({ email: email.toLowerCase() });
     
     if (!user) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         message: "User not found"
       });
@@ -307,7 +308,7 @@ const testOTP = async (req, res) => {
 
   } catch (error) {
     console.error('Test OTP error:', error);
-    return res.status(500).json({
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to test OTP'
     });
@@ -345,7 +346,7 @@ const debugOTP = async (req, res) => {
     });
   } catch (error) {
     console.error("Debug OTP error:", error);
-    res.status(500).json({ success: false, message: "Debug failed" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Debug failed" });
   }
 }
 

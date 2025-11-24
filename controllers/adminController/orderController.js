@@ -3,6 +3,8 @@ import HTTP_STATUS from "../../utils/responseHandler.js"
 import Wallet from "../../models/walletModel.js"
 import User from "../../models/userModel.js"
 
+
+
 const getAdminOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -78,7 +80,7 @@ const getAdminOrders = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading orders:", error);
-    res.status(500).send("Error loading orders");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Error loading orders");
   }
 };
 
@@ -96,12 +98,12 @@ const getOrderdetail =  async (req, res)=>{
 
     
     if(!order){
-       return res.status(404).json({ success: false, message: "Order not found" });
+       return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
     }
  res.json({ success: true, order });
   }catch (error) {
     console.error("Error fetching order details:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 }
 
@@ -304,7 +306,7 @@ const updateReturnStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error updating return status:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 

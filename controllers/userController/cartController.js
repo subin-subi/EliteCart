@@ -1,7 +1,7 @@
 import Cart from "../../models/cartModel.js";
 import Product from "../../models/productModel.js";
 import Offer from "../../models/offerModel.js";
-
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getCart = async (req, res) => {
   try {
@@ -110,7 +110,7 @@ const getCart = async (req, res) => {
     res.render("user/cart", { cartItems: validItems, subtotal });
   } catch (err) {
     console.error("Error loading cart:", err);
-    res.status(500).send("Something went wrong");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Something went wrong");
   }
 };
 
@@ -125,22 +125,22 @@ const addToCart = async (req, res) => {
 
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Please log in first" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: "Please log in first" });
     }
 
     
     const product = await Product.findById(productId);
     if (!product)
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Product not found" });
 
     const variantIndex = product.variants.findIndex(v => v._id.toString() === variantId);
     if (variantIndex === -1)
-      return res.status(404).json({ success: false, message: "Variant not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Variant not found" });
 
     const variant = product.variants[variantIndex];
 
     if (!variant.stock || variant.stock <= 0) {
-      return res.status(400).json({ success: false, message: "Out of stock" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Out of stock" });
     }
 
     const today = new Date();
@@ -191,7 +191,7 @@ const addToCart = async (req, res) => {
 
       if (existingItem) {
         if (existingItem.quantity + 1 > variant.stock) {
-          return res.status(400).json({ success: false, message: "Not enough stock" });
+          return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Not enough stock" });
         }
         existingItem.quantity += quantity;
         existingItem.price = price;
@@ -208,7 +208,7 @@ const addToCart = async (req, res) => {
     res.json({ success: true, message: "Product added to cart" });
   } catch (err) {
     console.error("Add to cart error:", err);
-    res.status(500).json({ success: false, message: "Something went wrong" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong" });
   }
 };
 
@@ -300,7 +300,7 @@ const updateQuantity = async (req, res) => {
     });
   } catch (err) {
     console.error("Update quantity error:", err);
-    res.status(500).json({ success: false, message: "Something went wrong" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong" });
   }
 };
 
@@ -324,7 +324,7 @@ res.json({success:true})
   
 }catch (err) {
     console.error("Removing quantity error:", err);
-    res.status(500).json({ success: false, message: "Something went wrong" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong" });
   }
 }
 

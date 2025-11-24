@@ -2,6 +2,7 @@ import User from "../../models/userModel.js";
 import Order from "../../models/orderModel.js";
 import Product from "../../models/productModel.js";
 import Wallet from "../../models/walletModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getOrderDetail = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ const getOrderDetail = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).render("error", { message: "User not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).render("error", { message: "User not found" });
     }
 
     
@@ -43,7 +44,7 @@ const getOrderDetail = async (req, res) => {
     });
   } catch (error) {
     console.error(" Error in getOrderDetail:", error);
-    res.status(500).render("error", { message: "Failed to load order details" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", { message: "Failed to load order details" });
   }
 };
 
@@ -56,17 +57,17 @@ const cancelFullOrder = async (req, res) => {
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
     // Check if already cancelled
     if (order.orderStatus === "Cancelled") {
-      return res.status(400).json({ success: false, message: "Order already cancelled" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Order already cancelled" });
     }
 
     // Only allow cancel if still pending/processing
     if (!["Pending", "Confirmed", "Processing"].includes(order.orderStatus)) {
-      return res.status(400).json({ success: false, message: "Order cannot be cancelled now." });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Order cannot be cancelled now." });
     }
 
     // Refundable only if payment is Razorpay or Wallet
@@ -124,7 +125,7 @@ const cancelFullOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Error cancelling full order:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 
@@ -137,19 +138,19 @@ const cancelIndividualItem = async (req, res) => {
 
     const order = await Order.findById(orderId);
     if (!order)
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
 
     const item = order.items.id(itemId);
     if (!item)
-      return res.status(404).json({ success: false, message: "Item not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Item not found" });
 
     if (item.cancelStatus === "Cancelled")
-      return res.status(400).json({ success: false, message: "Item already cancelled" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Item already cancelled" });
 
     // Only allow cancellation if order is up to "Out for Delivery"
     const allowedStatuses = ["Pending", "Confirmed", "Shipped", "Out for Delivery"];
     if (!allowedStatuses.includes(order.orderStatus)) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Cannot cancel at this stage",
       });
@@ -206,7 +207,7 @@ const cancelIndividualItem = async (req, res) => {
 
   } catch (error) {
     console.error("❌ Error cancelling item:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 
@@ -220,34 +221,34 @@ const requestReturnItem = async (req, res) => {
 
    
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Please log in first" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: "Please log in first" });
     }
 
     
     if (!reason || reason.trim().length < 10) {
-      return res.status(400).json({ success: false, message: "Reason must be at least 10 characters long" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Reason must be at least 10 characters long" });
     }
 
   
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
 
     const item = order.items.id(itemId);
     if (!item) {
-      return res.status(404).json({ success: false, message: "Item not found in order" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Item not found in order" });
     }
 
    
     if (item.returnStatus !== "Not Requested") {
-      return res.status(400).json({ success: false, message: "Return already requested for this item" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Return already requested for this item" });
     }
 
     
     if (order.orderStatus !== "Delivered") {
-      return res.status(400).json({ success: false, message: "You can only request a return for delivered orders" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "You can only request a return for delivered orders" });
     }
 
  
@@ -264,7 +265,7 @@ const requestReturnItem = async (req, res) => {
 
   } catch (error) {
     console.error("Error requesting return:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 

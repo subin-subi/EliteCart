@@ -1,4 +1,5 @@
 import User from "../../models/userModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getRedeem = async (req, res) => {
   try {
@@ -10,7 +11,7 @@ const getRedeem = async (req, res) => {
     res.render("user/redeem", { user }); 
   } catch (err) {
     console.log(err);
-    res.status(500).send("Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 };
 

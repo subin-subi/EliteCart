@@ -2,7 +2,7 @@ import Category from "../../models/categoryModel.js";
 import Brand from "../../models/brandModel.js";
 import Product from "../../models/productModel.js";
 import upload from "../../utils/multer.js"
-
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 
 
@@ -10,18 +10,16 @@ import upload from "../../utils/multer.js"
 
 const getaddProductPage = async (req, res) => {
   try {
-const brands  = await Brand.find({isHidden : false})
-const categories = await Category.find({isHidden: false})
+    const brands = await Brand.find({ isHidden: false });
+    const categories = await Category.find({ isHidden: false });
 
-
-
-    res.render("admin/addProduct",{
-        brands,
-        categories
-    })
+    res.render("admin/addProduct", {
+      brands,
+      categories
+    });
   } catch (err) {
     console.error("Error:", err);
-    res.status(500).send("Server error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server error");
   }
 };
 
@@ -76,21 +74,19 @@ const addProduct = [
 
 const getEditPage = async (req, res) => {
   try {
-    
     const productId = req.params.id; 
     const product = await Product.findById(productId)
       .populate("brand")
       .populate("category")
       .lean();
 
-    
     const brands = await Brand.find().lean();
     const categories = await Category.find().lean();
 
     res.render("admin/editProduct", { product, brands, categories });
   } catch (err) {
     console.log("getEditPage error:", err);
-    res.status(500).send("Something went wrong");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Something went wrong");
   }
 };
 
@@ -105,7 +101,7 @@ const editProduct = [
 
       const existingProduct = await Product.findById(productId);
       if (!existingProduct) {
-        return res.status(404).json({ success: false, message: "Product not found" });
+        return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Product not found" });
       }
 
       // ------------------ Parse incoming variants ------------------
@@ -158,7 +154,7 @@ const editProduct = [
 
     } catch (err) {
       console.error("Error updating product:", err);
-      res.status(500).json({ success: false, message: "Server error" });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
   }
 ];
@@ -182,7 +178,7 @@ const addNewVariants = [
       // Validate product exists
       const product = await Product.findById(productId);
       if (!product) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: "Product not found",
         });
@@ -190,7 +186,7 @@ const addNewVariants = [
 
       // Ensure variants exist
       if (!Array.isArray(req.body.newVariants) || req.body.newVariants.length === 0) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "No variants provided",
         });
@@ -207,19 +203,19 @@ const addNewVariants = [
 
         // ===== VALIDATIONS =====
         if (isNaN(volume) || volume <= 0) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Volume must be a positive number`,
           });
         }
         if (!price || price <= 0) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Price must be a positive number`,
           });
         }
         if (stock < 0) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Stock must be a non-negative number`,
           });
@@ -234,14 +230,14 @@ const addNewVariants = [
         );
 
         if (!mainImageFile) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Main image is required`,
           });
         }
 
         if (!subImageFiles || subImageFiles.length === 0) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: At least one sub image is required`,
           });
@@ -272,14 +268,13 @@ const addNewVariants = [
       });
     } catch (err) {
       console.error("Error adding new variants:", err);
-      res.status(500).json({
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: "Internal server error",
       });
     }
   },
 ];
-
 
 
 

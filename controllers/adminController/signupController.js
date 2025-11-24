@@ -25,7 +25,7 @@ const postAdmin = async (req, res) => {
       // Store in admin session (separate cookie)
       req.session.isAdmin = true;
 
-      // Optional: store admin email/id
+      
       req.session.adminEmail = email;
 
       // Save session explicitly to ensure it’s written
@@ -62,4 +62,8 @@ const adminLogout = (req, res) => {
 
 
 
-export default { getAdmin, postAdmin, adminLogout }
+export default {
+   getAdmin,
+   postAdmin,
+    adminLogout 
+  }

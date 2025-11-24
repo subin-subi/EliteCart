@@ -4,6 +4,7 @@ import Address from "../../models/addressModel.js";
 import Order from "../../models/orderModel.js"
 import Coupon from "../../models/couponModel.js"
 import Offer from "../../models/offerModel.js"
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 
 
@@ -67,7 +68,7 @@ const getCartCheckout = async (req, res) => {
     const cart = await Cart.findOne({ userId }).populate("items.productId");
 
     if (!cart || cart.items.length === 0) {
-      return res.status(400).render("partials/error", {
+      return  res.status(HTTP_STATUS.BAD_REQUEST).render("partials/error", {
         message: "Your cart is empty. Please add items before proceeding to checkout.",
       });
     }
@@ -95,7 +96,7 @@ const getCartCheckout = async (req, res) => {
     });
 
     if (outOfStockItems.length > 0) {
-      return res.status(400).render("partials/error", {
+      return  res.status(HTTP_STATUS.BAD_REQUEST).render("partials/error", {
         message: `Some products are out of stock: ${outOfStockItems.join(", ")}. Please remove them from your cart.`,
       });
     }
@@ -166,7 +167,7 @@ const getCartCheckout = async (req, res) => {
 
   } catch (error) {
     console.error("🛒 Cart Checkout Error:", error);
-    res.status(500).send("Internal Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
   }
 };
 
@@ -176,7 +177,7 @@ const selectAddres = async (req, res) => {
     req.session.selectedAddress = addressId; 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Error selecting address' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Error selecting address' });
   }
 };
 
@@ -212,11 +213,11 @@ const paymentFailed = async (req, res) => {
       { paymentStatus: "Failed" }, 
       { new: true }
     );
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
     res.json({ success: true, message: "Payment failed status updated" });
   } catch (err) {
     console.error("Payment failed update error:", err);
-    res.status(500).json({ success: false, message: "Failed to update payment status" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to update payment status" });
   }
 };
 
@@ -230,14 +231,14 @@ const getPaymentFailPage = async (req, res) => {
     
     // Validate orderId is not undefined or invalid
     if (!orderId || orderId === "undefined" || orderId === "null") {
-      return res.status(400).render("partials/error", { 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).render("partials/error", { 
         message: "Invalid order ID. Please check your order details." 
       });
     }
 
     // Validate ObjectId format
     if (!orderId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).render("partials/error", { 
+      return  res.status(HTTP_STATUS.BAD_REQUEST).render("partials/error", { 
         message: "Invalid order ID format. Please check your order details." 
       });
     }
@@ -245,15 +246,15 @@ const getPaymentFailPage = async (req, res) => {
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).render("partials/error", { 
+      return res.status(HTTP_STATUS.NOT_FOUND).render("partials/error", { 
         message: "Order not found. Please check your order details." 
       });
     }
 
-    res.status(200).render("user/paymentFail.ejs", { order });
+    res.status(HTTP_STATUS.OK).render("user/paymentFail.ejs", { order });
   } catch (err) {
     console.error("Error loading payment fail page:", err);
-    res.status(500).render("partials/error", { 
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("partials/error", { 
       message: "Something went wrong while loading the page. Please try again later." 
     });
   }
@@ -280,7 +281,7 @@ const addCoupon = async (req, res) => {
 
     if (!coupon) {
       return res
-        .status(404)
+        .status(HTTP_STATUS.NOT_FOUND)
         .json({ success: false, message: "Invalid or inactive coupon." });
     }
 
@@ -288,13 +289,13 @@ const addCoupon = async (req, res) => {
     const now = new Date();
     if (coupon.expiryDate < now) {
       return res
-        .status(400)
+        .status(HTTP_STATUS.BAD_REQUEST)
         .json({ success: false, message: "Coupon has expired." });
     }
 
     // Minimum purchase check
     if (total < coupon.minPurchaseAmount) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: `Minimum purchase of ₹${coupon.minPurchaseAmount} required.`,
       });
@@ -306,7 +307,7 @@ const addCoupon = async (req, res) => {
     );
     if (alreadyUsed) {
       return res
-        .status(400)
+        .status(HTTP_STATUS.BAD_REQUEST)
         .json({ success: false, message: "You have already used this coupon." });
     }
 
@@ -331,7 +332,7 @@ const addCoupon = async (req, res) => {
   
     const discountedTotal = discountedSubtotal + shippingCharge;
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Coupon applied successfully!",
       discountAmount,
@@ -342,7 +343,7 @@ const addCoupon = async (req, res) => {
   } catch (err) {
     console.error("Error from addCoupon:", err);
     return res
-      .status(500)
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ success: false, message: "Internal server error." });
   }
 };

@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { generateOTP, sendOTPEmail } from "../../utils/sendOTP.js";
 import passport from "../../utils/googleAuth.js";
 import Wallet from "../../models/walletModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const saltRounds = 10;
 
@@ -12,7 +13,7 @@ const getSignUp = (req, res) => {
     res.render("user/signup");
   } catch (error) {
     console.error("Error rendering signup page:", error);
-    res.status(500).render("error", {
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", {
       message: "Error loading signup page",
       error: error.message,
     });
@@ -25,7 +26,7 @@ const postSignup = async (req, res) => {
 
     // ---------- VALIDATIONS ----------
     if (!name || !/^[a-zA-Z\s]{2,50}$/.test(name.trim())) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message:
           "Name should be 2-50 characters long and contain only letters and spaces",
@@ -33,14 +34,14 @@ const postSignup = async (req, res) => {
     }
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Please enter a valid email address",
       });
     }
 
     if (!mobileNo || !/^\d{10}$/.test(mobileNo)) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Please enter a valid 10-digit mobile number",
       });
@@ -48,7 +49,7 @@ const postSignup = async (req, res) => {
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: passwordValidation.message,
       });
@@ -62,7 +63,7 @@ const postSignup = async (req, res) => {
       });
 
       if (!referrer) {
-        return res.status(400).json({
+        return  res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message:
             "Invalid or inactive referral code. Please check and try again.",
@@ -70,7 +71,7 @@ const postSignup = async (req, res) => {
       }
 
       if (referrer.email === email) {
-        return res.status(400).json({
+        return  res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "You cannot use your own referral code.",
         });
@@ -89,7 +90,7 @@ const postSignup = async (req, res) => {
         const message = !existingUser.password
           ? "This email is linked to a Google login. Please log in with Google."
           : "Email or mobile number is already registered";
-        return res.status(400).json({ success: false, message });
+        return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message });
       }
     }
 
@@ -179,7 +180,7 @@ const postSignup = async (req, res) => {
     } catch (emailError) {
       console.error("Error sending OTP:", emailError);
       return res
-        .status(500)
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: "Failed to send OTP" });
     }
 
@@ -191,7 +192,7 @@ const postSignup = async (req, res) => {
     });
   } catch (error) {
     console.error("Signup error:", error);
-    res.status(500).json({
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Signup failed",
     });
@@ -203,7 +204,7 @@ const getLogin = (req, res) => {
     res.render("user/login");
   } catch (error) {
     console.error("Error rendering login page:", error);
-    res.status(500).render("error", {
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", {
       message: "Error loading login page",
       error: error.message,
     });
@@ -216,7 +217,7 @@ const postLogin = async (req, res) => {
 
     // Server-side validation
     if (!email || !password) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "All fields are required",
       });
@@ -225,7 +226,7 @@ const postLogin = async (req, res) => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Invalid email format",
       });
@@ -236,14 +237,14 @@ const postLogin = async (req, res) => {
 
     // Check if user exists
     if (!user) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Your email is not registered. Please signup first.",
       });
     }
 
     if (!user.password) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message:
           "This email is linked to a Google login. Please log in with Google.",
@@ -252,7 +253,7 @@ const postLogin = async (req, res) => {
 
     // Check if user is verified
     if (user.isverified === false) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Please verify your email first",
       });
@@ -260,7 +261,7 @@ const postLogin = async (req, res) => {
 
     // Check if user is blocked
     if (user.blocked) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Your account has been blocked",
       });
@@ -270,7 +271,7 @@ const postLogin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Invalid credentials",
       });
@@ -282,7 +283,7 @@ req.session.userEmail = user.email;
 req.session.save((err) => {
   if (err) {
     console.error("Error saving session:", err);
-    return res.status(500).json({
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Session error",
     });
@@ -297,7 +298,7 @@ req.session.save((err) => {
 
   } catch (error) {
     console.error("Login error:", error);
-    return res.status(500).json({
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Login failed",
     });
@@ -309,7 +310,7 @@ const homepage = (req, res) => {
     res.render("user/home");
   } catch (error) {
     console.error("Error in home page", error);
-    res.status(500).send("Internal Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
   }
 };
 
@@ -318,7 +319,7 @@ const getForgotPassword = (req, res) => {
     res.render("user/forgotPassword");
   } catch (error) {
     console.error("Error rendering forgot password page:", error);
-    res.status(500),
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR),
       render("error", {
         message: " error loading forgot password page",
         error: error.message,
@@ -332,13 +333,13 @@ const resetPassword = async (req, res) => {
 
     const user = await userSchema.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "User not found" });
     }
 
     // Validate new password
     const passwordValidation = validatePassword(newPassword);
     if (!passwordValidation.isValid) {
-      return res.status(400).json({ message: passwordValidation.message });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ message: passwordValidation.message });
     }
 
     // Hash new password
@@ -350,10 +351,10 @@ const resetPassword = async (req, res) => {
       $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 },
     });
 
-    res.status(200).json({ message: "Password reset successfully" });
+    res.status(HTTP_STATUS.OK).json({ message: "Password reset successfully" });
   } catch (error) {
     console.error("Reset password error:", error);
-    res.status(500).json({ message: "Failed to reset password" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: "Failed to reset password" });
   }
 };
 
@@ -428,7 +429,7 @@ const getLogout = (req, res) => {
     req.session.destroy((err) => {
       if (err) {
         console.error("Error destroying session:", err);
-        return res.status(500).send("Error logging out");
+        return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Error logging out");
       }
 
       res.clearCookie("sessionId");  
@@ -436,7 +437,7 @@ const getLogout = (req, res) => {
     });
   } catch (error) {
     console.error("Logout error:", error);
-    res.status(500).send("Something went wrong during logout");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Something went wrong during logout");
   }
 };
 
@@ -452,7 +453,7 @@ const checkSession = (req, res) => {
 const getProfileImg = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) return res.status(401).json({ loggedIn: false });
+    if (!userId) return res.status(HTTP_STATUS.UNAUTHORIZED).json({ loggedIn: false });
 
     const user = await userSchema.findById(userId).select("profileImage name");
     res.json({
@@ -462,7 +463,7 @@ const getProfileImg = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ loggedIn: false });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ loggedIn: false });
   }
 };
 

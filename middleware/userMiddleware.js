@@ -1,13 +1,14 @@
 import userModel from "../models/userModel.js";
 import Product from "../models/productModel.js";
 import mongoose from "mongoose";
+import HTTP_STATUS from "./../utils/responseHandler.js";
 
 const checkBlocked = async (req, res, next) => {
   try {
     const productId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(404).render("user/noProduct", {
+      return res.status(HTTP_STATUS.NOT_FOUND).render("user/noProduct", {
         message: "Invalid product link. No product found.",
       });
     }
@@ -17,7 +18,7 @@ const checkBlocked = async (req, res, next) => {
       .populate("brand");
 
     if (!product) {
-      return res.status(404).render("user/noProduct", {
+      return res.status(HTTP_STATUS.NOT_FOUND).render("user/noProduct", {
         message: "No product found.",
       });
     }

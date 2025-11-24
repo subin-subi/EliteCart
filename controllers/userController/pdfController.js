@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import Order from "../../models/orderModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const generateInvoice = async (req, res) => {
   try {
@@ -10,7 +11,7 @@ const generateInvoice = async (req, res) => {
       .populate("items.productId", "name");
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
     res.setHeader("Content-Type", "application/pdf");
@@ -155,7 +156,7 @@ doc.moveDown(2);
     doc.end();
   } catch (error) {
     console.error("Error generating invoice:", error);
-    res.status(500).json({ success: false, message: "Failed to generate invoice" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to generate invoice" });
   }
 };
 

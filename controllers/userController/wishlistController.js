@@ -2,6 +2,7 @@ import Cart from "../../models/cartModel.js";
 import Product from "../../models/productModel.js";
 import Wishlist from "../../models/wishlistModel.js";
 import Offer from "../../models/offerModel.js"
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 
 const getWishlist = async (req, res) => {
@@ -104,7 +105,7 @@ const getWishlist = async (req, res) => {
 
   } catch (err) {
     console.error("Error from wishlist:", err);
-    res.status(500).send("Internal Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
   }
 };
 
@@ -122,7 +123,7 @@ const removeWishlist = async(req, res)=>{
     res.redirect("/wishlist")
   }catch(err){
      console.error("Error removing product from wishlist:", err);
-    res.status(500).send("Internal Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
   }
 }
 
@@ -132,24 +133,24 @@ const addToCartFromWishlist = async (req, res) => {
     const { productId, variantId } = req.body || {};
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Please log in first" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: "Please log in first" });
     }
 
     if (!productId || !variantId) {
-      return res.status(400).json({ success: false, message: "Missing product or variant ID" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Missing product or variant ID" });
     }
 
     
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Product not found" });
     }
 
     const variantIndex = product.variants.findIndex(
       (v) => v._id.toString() === variantId
     );
     if (variantIndex === -1) {
-      return res.status(404).json({ success: false, message: "Variant not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Variant not found" });
     }
 
     const variant = product.variants[variantIndex];
@@ -185,7 +186,7 @@ const addToCartFromWishlist = async (req, res) => {
             { $pull: { items: { productId, $or: [{ variantId }, { variantId: null }] } } }
           );
 
-          return res.status(400).json({
+          return  res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `You can only add up to ${maxLimit} of this product. Product removed from wishlist.`,
           });
@@ -210,14 +211,14 @@ const addToCartFromWishlist = async (req, res) => {
       { $pull: { items: { productId, $or: [{ variantId }, { variantId: null }] } } }
     );
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Added to cart successfully and removed from wishlist",
     });
 
   } catch (err) {
     console.error("Error adding to cart from wishlist:", err);
-    res.status(500).json({ success: false, message: "Something went wrong" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong" });
   }
 };
 
@@ -239,7 +240,7 @@ const notificationCount = async (req, res) => {
 
   } catch (err) {
     console.error("Error getting counts:", err);
-    res.status(500).json({ wishlistCount: 0, cartCount: 0 });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ wishlistCount: 0, cartCount: 0 });
   }
 };
 

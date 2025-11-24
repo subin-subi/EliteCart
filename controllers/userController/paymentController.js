@@ -5,6 +5,7 @@ import Order from "../../models/orderModel.js"
 import Coupon from "../../models/couponModel.js"
 import Wallet from "../../models/walletModel.js"
 import {getProductOfferDiscount} from "../userController/checkoutController.js"
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 
 
@@ -18,24 +19,24 @@ const userOrderCOD = async (req, res) => {
     const { selectedAddressId, paymentMethod, coupon } = req.body;
 
     if (!selectedAddressId)
-      return res.status(404).json({ success: false, message: "Please select an address" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Please select an address" });
 
     if (paymentMethod !== "cod")
-      return res.status(400).json({ success: false, message: "Only Cash On Delivery is applicable" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only Cash On Delivery is applicable" });
 
     const address = await Address.findById(selectedAddressId);
     if (!address)
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address not found" });
 
     const cartData = await Cart.findOne({ userId }).populate("items.productId");
     const cartItems = cartData ? cartData.items : [];
     if (!cartItems.length)
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cart is empty" });
 
-    // 🧮 Step 1: Calculate subtotal before discounts
+    //  Calculate subtotal before discounts
     const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
 
-    // 🎟️ Step 2: Coupon logic
+    // Coupon logic
     let appliedCoupon = null;
     let couponAmount = 0;
 
@@ -48,7 +49,7 @@ const userOrderCOD = async (req, res) => {
 
       if (appliedCoupon) {
         if (subtotalBeforeDiscount < appliedCoupon.minPurchaseAmount) {
-          return res.status(400).json({
+          return  res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Minimum purchase of ₹${appliedCoupon.minPurchaseAmount} is required to use this coupon.`,
           });
@@ -81,7 +82,7 @@ const userOrderCOD = async (req, res) => {
     }
 
     if (outOfStockItems.length > 0) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Some items are out of stock",
         outOfStockItems,
@@ -185,7 +186,7 @@ const userOrderCOD = async (req, res) => {
     });
   } catch (err) {
     console.error("COD Order Error:", err);
-    res.status(500).json({
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: err.message || "Internal Server Error",
     });
@@ -202,27 +203,27 @@ const walletPayment = async (req, res) => {
     const { selectedAddressId, paymentMethod, coupon } = req.body;
 
     if (!selectedAddressId)
-      return res.status(400).json({ success: false, message: "Please select an address" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Please select an address" });
 
     if (paymentMethod !== "wallet")
-      return res.status(400).json({ success: false, message: "Invalid payment method" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid payment method" });
 
     const address = await Address.findById(selectedAddressId);
     if (!address)
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address not found" });
 
     const cartData = await Cart.findOne({ userId }).populate("items.productId");
     const cartItems = cartData ? cartData.items : [];
     if (!cartItems.length)
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cart is empty" });
 
-    // 🧮 Step 1: Calculate subtotal
+    // Calculate subtotal
     const subtotalBeforeDiscount = cartItems.reduce((sum, i) => sum + i.total, 0);
 
     let couponAmount = 0;
     let appliedCoupon = null;
 
-    // 🧾 Step 2: Apply coupon
+    //  Apply coupon
     if (coupon) {
       appliedCoupon = await Coupon.findOne({
         code: coupon,
@@ -232,7 +233,7 @@ const walletPayment = async (req, res) => {
 
       if (appliedCoupon) {
         if (subtotalBeforeDiscount < appliedCoupon.minPurchaseAmount) {
-          return res.status(400).json({
+          return  res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Minimum purchase of ₹${appliedCoupon.minPurchaseAmount} is required to use this coupon.`,
           });
@@ -258,18 +259,18 @@ const walletPayment = async (req, res) => {
     const finalSubtotal = subtotalBeforeDiscount - couponAmount;
     const grandTotal = finalSubtotal + shippingCharge;
 
-    // 💰 Step 3: Wallet check
+    //  Wallet check
     let wallet = await Wallet.findOne({ user: userId });
     if (!wallet) wallet = new Wallet({ user: userId, balance: 0 });
 
     if (wallet.balance < grandTotal) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: `Insufficient wallet balance. Required: ₹${grandTotal}, Available: ₹${wallet.balance}`,
       });
     }
 
-    // 🧩 Step 4: Check stock
+    // Check stock
     const outOfStockItems = [];
     for (let item of cartItems) {
       const variant = item.productId.variants[item.variantIndex];
@@ -279,14 +280,14 @@ const walletPayment = async (req, res) => {
     }
 
     if (outOfStockItems.length > 0) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Some items are out of stock",
         outOfStockItems,
       });
     }
 
-    // 🛒 Step 5: Build order items with offer & coupon discount distribution
+    //  Build order items with offer & coupon discount distribution
     let totalDiscountAmount = 0;
 
     const orderItems = await Promise.all(
@@ -300,7 +301,7 @@ const walletPayment = async (req, res) => {
           discountPercent > 0 ? Math.round((originalPrice * discountPercent) / 100) : 0;
         const priceAfterOffer = originalPrice - offerDiscountPerUnit;
 
-        // 🧮 Proportional coupon discount
+        //  Proportional coupon discount
         const itemShare = item.total / subtotalBeforeDiscount;
         const couponDiscountTotal = itemShare * couponAmount;
         const couponDiscountPerUnit = couponDiscountTotal / item.quantity;
@@ -325,14 +326,14 @@ const walletPayment = async (req, res) => {
 
     const subtotal = orderItems.reduce((sum, i) => sum + i.total, 0);
 
-    // 📦 Step 6: Update stock
+    //  Update stock
     for (let item of cartItems) {
       const variant = item.productId.variants[item.variantIndex];
       variant.stock -= item.quantity;
       await item.productId.save();
     }
 
-    // 💳 Step 7: Deduct wallet amount
+    //Deduct wallet amount
     wallet.balance -= grandTotal;
     wallet.transactions.push({
       type: "Debit",
@@ -342,7 +343,7 @@ const walletPayment = async (req, res) => {
     });
     await wallet.save();
 
-    // 🧾 Step 8: Create order
+    //  Create order
     const order = new Order({
       userId,
       items: orderItems,
@@ -368,13 +369,13 @@ const walletPayment = async (req, res) => {
 
     await order.save();
 
-    // 🎟️ Step 9: Mark coupon usage
+    //  Mark coupon usage
     if (appliedCoupon) {
       appliedCoupon.usedBy.push({ userId, usedAt: new Date() });
       await appliedCoupon.save();
     }
 
-    // 🧹 Step 10: Clear cart
+    //  Clear cart
     await Cart.findOneAndUpdate(
       { userId },
       { $set: { items: [], grandTotal: 0 } },
@@ -388,7 +389,7 @@ const walletPayment = async (req, res) => {
     });
   } catch (err) {
     console.error("Wallet payment error:", err);
-    res.status(500).json({
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: err.message || "Wallet payment failed",
     });

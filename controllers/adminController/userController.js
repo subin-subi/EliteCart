@@ -1,4 +1,5 @@
 import User from "../../models/userModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getUserList = async (req, res) => {
     try {
@@ -45,9 +46,9 @@ const getUserList = async (req, res) => {
     } catch (error) {
         console.error('Error in getUserList:', error);
         if (req.xhr) {
-            return res.status(500).json({ error: 'Failed to fetch users' });
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch users' });
         }
-        res.status(500).send('server error');
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('server error');
     }
 };
 

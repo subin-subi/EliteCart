@@ -1,11 +1,12 @@
 import axios from "axios";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 
 const getLocationByPinCode = async (req, res) => {
   const pincode = req.query.pincode;
 
   if (!pincode || pincode.length !== 6) {
-    return res.status(400).json({ error: "Invalid Pincode" });
+    return  res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Invalid Pincode" });
   }
 
   try {
@@ -23,11 +24,11 @@ const getLocationByPinCode = async (req, res) => {
         state: postOffice.State,
       });
     } else {
-      return res.status(404).json({ error: "Pincode not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: "Pincode not found" });
     }
   } catch (error) {
     console.error("Error", error.message);
-    res.status(500).json({ error: "Server error" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Server error" });
   }
 };
 

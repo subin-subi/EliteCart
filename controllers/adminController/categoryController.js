@@ -1,4 +1,5 @@
 import Category from "../../models/categoryModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 // Get all categories with search and pagination
 const getCategory = async (req, res) => {
@@ -54,14 +55,14 @@ const getCategory = async (req, res) => {
         });
     } catch (error) {
         console.error("Error fetching categories:", error);
-        res.status(500).send("Internal Server Error");
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
     }
 };
 
 const addCategory = async (req, res) => {
     try {
         if (!req.body || !req.body.categoryName) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Category name is required'
             });
@@ -74,7 +75,7 @@ const addCategory = async (req, res) => {
         const namePattern = /^[A-Za-z.\s]{3,40}$/;
 
         if (!namePattern.test(trimmedCategoryName)) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Category name must be 3–40 characters and contain only alphabets, dots, or spaces.'
             });
@@ -91,7 +92,7 @@ const addCategory = async (req, res) => {
         });
 
         if (existingCategory) {
-            return res.status(400).json({
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Category name already exists.'
             });
@@ -104,14 +105,14 @@ const addCategory = async (req, res) => {
 
         await newCategory.save();
 
-        return res.status(201).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Category added successfully',
             category: newCategory
         });
     } catch (error) {
         console.error('Error adding category:', error);
-        return res.status(500).json({
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Error adding category.',
             error: error.message
@@ -125,11 +126,11 @@ const getCategoryById = async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) {
-            return res.status(404).json({ success: false, message: "Category not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Category not found" });
         }
         res.json({ success: true, category });
     } catch (err) {
-        res.status(500).json({ success: false, message: "Server error" });
+       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
 };
 
@@ -145,12 +146,12 @@ const updateCategory = async (req, res) => {
         );
 
         if (!category)
-            return res.status(404).json({ success: false, message: "Category not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Category not found" });
 
         res.json({ success: true, message: "Category updated successfully", category });
     } catch (error) {
         console.error("Update error:", error);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
 };
 

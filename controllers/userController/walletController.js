@@ -1,5 +1,6 @@
 import Wallet from "../../models/walletModel.js";
 import User from "../../models/userModel.js"; 
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getWallet = async (req, res) => {
   try {
@@ -44,7 +45,7 @@ const getWallet = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading wallet:", error);
-    res.status(500).send("Server error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server error");
   }
 };
 

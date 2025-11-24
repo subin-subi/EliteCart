@@ -8,7 +8,7 @@ import userRoute from "./Routes/userRoute.js";
 import adminRoute from "./Routes/adminRoute.js"
 import MongoStore from "connect-mongo";
 import startOfferCron from "./utils/cronjob.js"
-
+import HTTP_STATUS from "./utils/responseHandler.js";
 
 startOfferCron()
 dotenv.config();
@@ -80,7 +80,7 @@ app.use("/", userRoute);
 
 
 app.use((req, res) => {
-  res.status(404).render("partials/error", {
+  res.status(HTTP_STATUS.NOT_FOUND).render("partials/error", {
     message: "Page not found!"
   });
 });

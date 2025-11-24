@@ -174,7 +174,7 @@ orders.forEach((order) => {
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 10);
 
-    // ✅ Chart Data
+    
     const chartData = {};
     let chartLabels = [];
     let chartOrdersData = [];

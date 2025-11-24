@@ -1,6 +1,7 @@
 import Offer from "../../models/offerModel.js"; 
 import Product from "../../models/productModel.js";
 import Category from "../../models/categoryModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 
 
@@ -50,7 +51,7 @@ import Category from "../../models/categoryModel.js";
     });
   } catch (err) {
     console.error("Error loading offer page:", err);
-    res.status(500).send("Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 };
 
@@ -146,11 +147,11 @@ const toggleOffer = async (req, res) => {
     console.log(offerId, isActive);
 
     if (!offerId)
-      return res.status(400).json({ success: false, message: "Offer ID required" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Offer ID required" });
 
     const offer = await Offer.findById(offerId);
     if (!offer)
-      return res.status(404).json({ success: false, message: "Offer not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Offer not found" });
 
     const now = new Date();
 
@@ -194,7 +195,7 @@ const toggleOffer = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error toggling offer:", error);
-    return res.status(500).json({
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Internal server error",
     });
@@ -223,18 +224,18 @@ const editOffer = async (req, res) => {
     //  Validate required fields
     if (!offerId)
       return res
-        .status(400)
+        .status(HTTP_STATUS.BAD_REQUEST)
         .json({ success: false, message: "Offer ID is required." });
 
     if (!name || !offerType || !selectionId)
       return res
-        .status(400)
+        .status(HTTP_STATUS.BAD_REQUEST)
         .json({ success: false, message: "Please fill all required fields." });
 
     const existingOffer = await Offer.findById(offerId);
     if (!existingOffer)
       return res
-        .status(404)
+        .status(HTTP_STATUS.NOT_FOUND)
         .json({ success: false, message: "Offer not found." });
 
     //  Update basic offer fields
@@ -273,7 +274,7 @@ const editOffer = async (req, res) => {
   } catch (error) {
     console.error("❌ Error updating offer:", error);
     return res
-      .status(500)
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ success: false, message: "Internal server error." });
   }
 };

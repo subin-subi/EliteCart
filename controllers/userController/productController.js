@@ -3,6 +3,7 @@ import Brand from "../../models/brandModel.js";
 import Category from "../../models/categoryModel.js";
 import Wishlist from "../../models/wishlistModel.js";
 import Offer from "../../models/offerModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getProductsPage = async (req, res) => {
   try {
@@ -180,7 +181,7 @@ const getProductsPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading products page:", error);
-    res.status(500).send("Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 };
 
@@ -203,7 +204,7 @@ const getProductDetailPage = async (req, res) => {
       .lean();
 
     if (!product) {
-      return res.status(404).send("Product not found");
+      return res.status(HTTP_STATUS.NOT_FOUND).send("Product not found");
     }
 
     const now = new Date();
@@ -380,7 +381,7 @@ const getProductDetailPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading product detail:", error);
-    res.status(500).send("Server Error");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 };
 
@@ -392,7 +393,7 @@ const getProductDetailPage = async (req, res) => {
     const userId = req.session.user;
     const { productId, variantId } = req.body;
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Please log in first" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: "Please log in first" });
     }
 
     let wishlist = await Wishlist.findOne({ userId });
@@ -425,7 +426,7 @@ const getProductDetailPage = async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Error adding to wishlist:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 

@@ -1,5 +1,6 @@
 import User from "../../models/userModel.js"
 import bcrypt from "bcrypt"
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getPage = async (req, res)=>{
     try{
@@ -17,18 +18,18 @@ const getPage = async (req, res)=>{
 
   
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({ success: false, message: "All fields are required." });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "All fields are required." });
     }
 
     
     if (newPassword !== confirmPassword) {
-      return res.status(400).json({ success: false, message: "New password and confirm password do not match." });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "New password and confirm password do not match." });
     }
 
     
     const passwordRegex = /^(?=.*[A-Z])(?=\S+$).{8,}$/;
     if (!passwordRegex.test(newPassword)) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Password must have 1 uppercase letter, no spaces, and minimum 8 characters."
       });
@@ -38,13 +39,13 @@ const getPage = async (req, res)=>{
     const userId = req.session.user;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "User not found." });
     }
 
    
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: "Current password is incorrect." });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Current password is incorrect." });
     }
 
 
@@ -56,7 +57,7 @@ const getPage = async (req, res)=>{
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Server error while changing password." });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while changing password." });
   }
 };
 

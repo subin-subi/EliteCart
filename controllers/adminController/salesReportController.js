@@ -16,7 +16,6 @@ const getSalesReport = async (req, res) => {
         } = req.query;
 
         const { query, start, end } = buildDateFilter(range, startDate, endDate);
-console.log(query)
         query.orderStatus = "Delivered";
 
         const pagination = await fetchSalesData(query, Number(page), Number(limit));
@@ -38,8 +37,8 @@ console.log(query)
         });
     } catch (err) {
         console.error("renderSalesReport error", err);
-        res.status(500).render("error", {
-            status: 500,
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", {
+            status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
             message: "Internal Server Error"
         });
     }
@@ -409,21 +408,13 @@ const downloadSalesReportExcel = async (req, res) => {
     res.end();
   } catch (err) {
     console.error("downloadSalesReportExcel error", err);
-    res.status(500).send("Internal Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
   }
 };
 
 
 
 
-// function escapeCsv(value) {
-//     if (value == null) return "";
-//     const str = String(value).replace(/"/g, '""');
-//     if (str.includes(",") || str.includes("\n") || str.includes("\r")) {
-//         return `"${str}"`;
-//     }
-//     return str;
-// }
 
 
 

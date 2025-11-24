@@ -2,6 +2,7 @@ import { console } from "inspector";
 import User from "../../models/userModel.js";
 import upload from "../../utils/multer.js"
 import {generateOTP, sendOTPEmail} from "../../utils/sendOTP.js"
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 
 const getProfile = async (req, res) => {
@@ -13,14 +14,14 @@ const getProfile = async (req, res) => {
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.status(404).send("User not found");
+            return res.status(HTTP_STATUS.NOT_FOUND).send("User not found");
         }
         const isGoogleUser = !!user.googleId;
        
         res.render("user/profile", { user, isGoogleUser });
     } catch (err) {
         console.error("Error from getProfile:", err);
-        res.status(500).send("Internal Server Error");
+         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
     }
 };
 
@@ -31,10 +32,10 @@ const editDetail = [
   async (req, res) => {
     try {
       const userId = req.session.user; 
-      if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+      if (!userId) return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: 'Unauthorized' });
 
       const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+      if (!user) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'User not found' });
 
       const { name, email, phone } = req.body;
       const updateData = {};
@@ -44,7 +45,7 @@ const editDetail = [
       if (email?.trim()) {
         const existingEmailUser = await User.findOne({ email: email.trim().toLowerCase(), _id: { $ne: userId } });
         if (existingEmailUser) {
-          return res.status(400).json({ success: false, message: 'This email is already in use by another user.' });
+          return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'This email is already in use by another user.' });
         }
         updateData.email = email.trim().toLowerCase();
       }
@@ -52,7 +53,7 @@ const editDetail = [
       if (phone?.trim()) {
         const existingUser = await User.findOne({ mobileNo: phone.trim(), _id: { $ne: userId } });
         if (existingUser) {
-          return res.status(400).json({ success: false, message: 'This phone number is already in use by another user.' });
+          return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'This phone number is already in use by another user.' });
         }
         updateData.mobileNo = phone.trim();
       }
@@ -61,10 +62,10 @@ const editDetail = [
 
       const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
 
-      res.status(200).json({ success: true, message: 'Profile updated', user: updatedUser });
+      res.status(HTTP_STATUS.OK).json({ success: true, message: 'Profile updated', user: updatedUser });
     } catch (err) {
       console.error('Error in editDetail:', err);
-      res.status(500).json({ success: false, message: 'Something went wrong' });
+       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Something went wrong' });
     }
   }
 ];
@@ -77,16 +78,16 @@ const sendOtp = async (req, res) => {
   try {
     const { email } = req.body; 
     if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Email is required" });
     }
 
     const userId = req.session.user;
-    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+    if (!userId) return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: "Unauthorized" });
 
 
      const existingUser = await User.findOne({ email: email.trim().toLowerCase(), _id: { $ne: userId } });
     if (existingUser) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "This email is already in use by another account."
       });
@@ -94,7 +95,7 @@ const sendOtp = async (req, res) => {
 
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "User not found" });
 
     const otp = generateOTP();
     const otpExpiresAt = Date.now() + 2 * 60 * 1000;
@@ -110,10 +111,10 @@ const sendOtp = async (req, res) => {
     await sendOTPEmail(email, otp); 
 
     console.log(` OTP sent to ${email}: ${otp}`);
-    return res.status(200).json({ success: true, message: "OTP sent successfully" });
+    return res.status(HTTP_STATUS.OK).json({ success: true, message: "OTP sent successfully" });
   } catch (err) {
     console.error(" Error in sendOtp:", err);
-    return res.status(500).json({ success: false, message: "Error sending OTP", error: err.message });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Error sending OTP", error: err.message });
   }
 };
 
@@ -122,20 +123,20 @@ const verifyOtp = async (req, res) => {
     const { otp } = req.body;
     const userId = req.session.user;
 
-    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
-    if (!otp) return res.status(400).json({ success: false, message: "OTP is required" });
+    if (!userId) return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: "Unauthorized" });
+    if (!otp) return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "OTP is required" });
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "User not found" });
 
      // Check if OTP is expired
     if (Date.now() > user.otpExpiresAt) {
-      return res.status(400).json({ success: false, message: "OTP expired" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "OTP expired" });
     } 
 
     // Check if OTP matches
     if (user.otp !== otp) {
-      return res.status(400).json({ success: false, message: "Invalid OTP" });
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid OTP" });
     }
 
    
@@ -146,11 +147,11 @@ const verifyOtp = async (req, res) => {
     user.otpExpiresAt = null; 
     await user.save();
 
-    return res.status(200).json({ success: true, message: "OTP verified successfully" });
+    return res.status(HTTP_STATUS.OK).json({ success: true, message: "OTP verified successfully" });
 
   } catch (err) {
     console.error("Error in verifyOtp:", err);
-    return res.status(500).json({ success: false, message: "Error verifying OTP", error: err.message });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Error verifying OTP", error: err.message });
   }
 };
 
@@ -159,7 +160,7 @@ const resendOtp = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Email is required"
       });
@@ -167,7 +168,7 @@ const resendOtp = async (req, res) => {
 
     const userId = req.session.user;
     if (!userId) {
-      return res.status(401).json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
         message: "Unauthorized"
       });
@@ -175,7 +176,7 @@ const resendOtp = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "User not found"
       });
@@ -183,7 +184,7 @@ const resendOtp = async (req, res) => {
 
     // Prevent multiple OTP requests
     if (user.otpExpiresAt && Date.now() < user.otpExpiresAt) {
-      return res.status(400).json({
+      return  res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Please wait before requesting a new OTP"
       });
@@ -205,7 +206,7 @@ const resendOtp = async (req, res) => {
 
   } catch (err) {
     console.log("Resend OTP error:", err);
-    res.status(500).json({
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Failed to resend OTP"
     });

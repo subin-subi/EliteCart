@@ -1,6 +1,8 @@
 import Category from "../../models/categoryModel.js";
 import Brand from "../../models/brandModel.js";
 import Product from "../../models/productModel.js";
+import HTTP_STATUS from "../../utils/responseHandler.js"
+
 
 const getProduct = async (req, res) => {
   try {
@@ -76,7 +78,7 @@ const getProduct = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading product page:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
   }
 };
 
@@ -90,12 +92,12 @@ const getProductById = async (req, res) => {
       .populate("brand")
       .lean();
 
-    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+    if (!product) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Product not found" });
 
     res.json({ success: true, data: product });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+   res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 
@@ -114,7 +116,7 @@ const toggleProductStatus = async (req, res) => {
     const product = await Product.findById(productId);
 
     if (!product) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         message: 'Product not found'
       });
@@ -130,7 +132,7 @@ const toggleProductStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Error toggling product status:', error);
-    res.status(500).json({
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Error updating product status',
       error: error.message

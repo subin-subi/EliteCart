@@ -1,5 +1,6 @@
 import Address from "../../models/addressModel.js"
 import User from "../../models/userModel.js"
+import HTTP_STATUS from "../../utils/responseHandler.js";
 
 const getAddress = async (req, res) => {
   try {
@@ -31,7 +32,7 @@ const getAddress = async (req, res) => {
 
   } catch (err) {
     console.log("Error fetching addresses:", err);
-    res.status(500).send("Something went wrong");
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Something went wrong");
   }
 };
 
@@ -41,7 +42,7 @@ const saveAddress = async (req, res) => {
   try {
 
        if (!req.session.user) {
-      return res.status(401).json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
         message: "User not logged in"
       });
@@ -68,14 +69,14 @@ const user = await User.findById(userId)
 
     await newAddress.save();
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Address saved successfully",
     });
 
   } catch (err) {
     console.error("Save address error:", err);
-    return res.status(500).json({
+    return  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Server error",
     });
@@ -91,7 +92,7 @@ const setDefaultAddress = async(req, res)=>{
         const addressId = req.params.id
 
             if (!addressId) {
-      return res.status(400).json({ success: false, message: "Address ID missing" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Address ID missing" });
     }
 
 await Address.updateMany({userId},{$set:{isDefault: false}})
@@ -101,7 +102,7 @@ await Address.findByIdAndUpdate(addressId,{$set:{isDefault:true}})
 res.json({success:true, message:"Default address updated"})
     }catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 }
 
@@ -169,14 +170,14 @@ const editAddress = async (req, res) => {
     );
 
     if (!updatedAddress) {
-      return res.status(404).json({ success: false, message: "Address not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address not found" });
     }
 
     res.json({ success: true, message: "Address updated successfully!", address: updatedAddress });
 
   } catch (err) {
     console.log("Error in editAddress:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 
