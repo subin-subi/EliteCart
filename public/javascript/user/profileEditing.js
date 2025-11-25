@@ -151,8 +151,9 @@ editProfileForm.addEventListener("submit", async (e) => {
 
   if (!nameValid || !emailValid || !phoneValid) return;
 
- 
+
   if (email !== originalEmail) {
+     
   try {
     const { data } = await axios.post("/sendotp", { email }, { withCredentials: true });
 
@@ -213,7 +214,7 @@ editProfileForm.addEventListener("submit", async (e) => {
       otpModal.classList.remove("flex");
       Swal.fire("Verified!", "OTP verified successfully!", "success");
 
-      // ✅ Continue updating profile after OTP success
+      // Continue updating profile after OTP success
       await submitProfileForm(pendingFormData);
     } else {
       otpError.textContent = data.message || "Invalid or expired OTP.";
@@ -296,4 +297,47 @@ window.addEventListener('click', (e) => {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
   }
+});
+
+
+
+
+///////////////////////////////otp  copy past//////////////////
+
+// OTP INPUT LOGIC (fix paste issue)
+const otpInputs = document.querySelectorAll(".otp-input");
+
+otpInputs.forEach((input, index) => {
+  // Allow only digits
+  input.addEventListener("input", (e) => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, "");
+
+    if (e.target.value && index < otpInputs.length - 1) {
+      otpInputs[index + 1].focus();
+    }
+  });
+
+  // Backspace → move focus to previous input
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !input.value && index > 0) {
+      otpInputs[index - 1].focus();
+    }
+  });
+
+  // Paste handling → allow pasting entire OTP
+  input.addEventListener("paste", (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "");
+
+    // Fill all inputs automatically
+    pastedData.split("").forEach((digit, i) => {
+      if (i < otpInputs.length) {
+        otpInputs[i].value = digit;
+      }
+    });
+
+    // Move focus to the last filled box
+    const lastIndex = Math.min(pastedData.length - 1, otpInputs.length - 1);
+    otpInputs[lastIndex].focus();
+  });
 });
