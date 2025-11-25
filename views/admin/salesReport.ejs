@@ -370,7 +370,7 @@ const startPicker = flatpickr(startInput, {
   onChange: function (selectedDates, dateStr) {
     startInput.setAttribute("data-value", dateStr);
 
-    // 🔥 Refresh end date limit dynamically
+    // Refresh end date limit dynamically
     endPicker.set("minDate", dateStr);
   }
 });
@@ -387,7 +387,7 @@ const endPicker = flatpickr(endInput, {
   onChange: function (selectedDates, dateStr) {
     endInput.setAttribute("data-value", dateStr);
 
-    // 🔥 Refresh start date limit dynamically
+    // Refresh start date limit dynamically
     startPicker.set("maxDate", dateStr);
   }
 });

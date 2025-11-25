@@ -17,6 +17,7 @@ const getCart = async (req, res) => {
         ],
       });
 
+
     if (!cart) {
       return res.render("user/cart", { cartItems: [], subtotal: 0 });
     }
@@ -51,7 +52,7 @@ const getCart = async (req, res) => {
       const variant = product.variants[item.variantIndex];
 
       // ---------------------------
-      // 🔥 STOCK VALIDATION
+      //  STOCK VALIDATION
       // ---------------------------
       let finalQuantity = item.quantity;
 
@@ -77,7 +78,7 @@ const getCart = async (req, res) => {
       }
 
       // ----------------------------------------------
-      // 🔥 OFFER CALCULATION
+      //  OFFER CALCULATION
       // ----------------------------------------------
 
       let discountPercent = 0;
