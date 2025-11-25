@@ -53,11 +53,15 @@ const downloadSalesReportPdf = async (req, res) => {
         const { query, start, end } = buildDateFilter(range, startDate, endDate);
         
         // Get ALL orders for the period (not paginated)
-        const orders = await Order.find(query)
-            .populate({ path: "userId", select: "name email" })
-            .populate({ path: "items.productId", select: "name" })
-            .sort({ createdAt: -1 })
-            .lean();
+      const orders = await Order.find({
+    ...query,              
+    orderStatus: "Delivered"  
+})
+    .populate({ path: "userId", select: "name email" })
+    .populate({ path: "items.productId", select: "name" })
+    .sort({ createdAt: -1 })
+    .lean();
+
 
         const metrics = calculateMetrics(orders);
         const periodDescription = describeRange(range, start, end);
@@ -135,8 +139,7 @@ const downloadSalesReportPdf = async (req, res) => {
         doc.fontSize(9).text(`• ${productName}`, 60, productY);
         doc.text(`  Quantity: ${item.quantity}`, 60, productY + 12);
         doc.text(`  Price: Rs: ${item.finalPrice || 0} each`, 60, productY + 24);
-        doc.text(`  Total: Rs: ${item.total || 0}`, 60, productY + 36);
-
+        
         productY += 50;
     });
 
@@ -315,11 +318,15 @@ const downloadSalesReportExcel = async (req, res) => {
     const { query, start, end } = buildDateFilter(range, startDate, endDate);
     const periodDescription = describeRange(range, start, end);
 
-    const orders = await Order.find(query)
-      .populate({ path: "userId", select: "name email" })
-      .populate({ path: "items.productId", select: "name" })
-      .sort({ createdAt: -1 })
-      .lean();
+     const orders = await Order.find({
+    ...query,              
+    orderStatus: "Delivered"  
+})
+    .populate({ path: "userId", select: "name email" })
+    .populate({ path: "items.productId", select: "name" })
+    .sort({ createdAt: -1 })
+    .lean();
+
 
     const metrics = calculateMetrics(orders);
 
