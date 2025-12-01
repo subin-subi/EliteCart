@@ -1,96 +1,231 @@
-<!-- Sidebar -->
-<aside class="fixed top-0 left-0 w-64 h-full bg-zinc-900 p-5 shadow-lg">
-  <!-- Logo -->
-  <div class="flex items-center justify-center mb-8">
-    <h1 class="admin-logo text-white font-bold text-2xl" style="font-family: 'Joan', serif;">
-      ELITEKART
-    </h1>
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collapsible Admin Dashboard</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Material Icons for dashboard icons and the chevron toggle -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Custom Font for Logo */
+        @import url('https://fonts.googleapis.com/css2?family=Joan&display=swap');
 
-  <!-- Navigation Links -->
-  <nav class="space-y-2">
-    <% const currentPath = typeof path !== 'undefined' ? path : ''; %>
-    <a href="/admin/dashboard" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/dashboard' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">dashboard</span>
-      <span>Dashboard</span>
-      <% if (currentPath === '/admin/dashboard') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+        /* Transition utility for smooth collapse/expand */
+        .sidebar {
+            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+        }
+        /* Since there is no main content to push, we can remove .main-content transition */
+        
+        /* Style for link text when hidden */
+        .sidebar-text.hidden {
+            display: none;
+        }
+        /* Style adjustments for the collapsed nav items */
+        .nav-item.collapsed-mode {
+            justify-content: center;
+            /* Overriding horizontal padding for vertical centering of icons */
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            /* Making the item look like a square button */
+            width: 100%; 
+            padding-top: 0.75rem !important; /* py-3 */
+            padding-bottom: 0.75rem !important; /* py-3 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
 
-    <a href="/admin/products" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/products' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">inventory_2</span>
-      <span>Products</span>
-      <% if (currentPath === '/admin/products') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+    <!-- Sidebar Container -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full bg-zinc-900 shadow-xl sidebar w-64 z-50 p-5">
+        <div class="flex flex-col h-full">
 
-    <a href="/admin/userlist" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/userlist' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">people</span>
-      <span>Customers</span>
-      <% if (currentPath === '/admin/userlist') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+            <!-- Logo -->
+            <div class="flex items-center justify-center mb-8 h-10 overflow-hidden">
+                <h1 id="logo-text" class="admin-logo text-white font-bold text-2xl whitespace-nowrap transition-opacity duration-300"
+                    style="font-family: 'Joan', serif;">
+                    ELITEKART
+                </h1>
+            </div>
 
-    <a href="/admin/Orders" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/Orders' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">shopping_cart</span>
-      <span>Orders</span>
-      <% if (currentPath === '/admin/Orders') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+            <!-- Navigation Links -->
+            <nav id="nav-links" class="flex-grow space-y-2">
+                <!-- Links will be populated by JS for demonstration -->
+            </nav>
 
-    <a href="/admin/category" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/category' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">category</span>
-      <span>Category</span>
-      <% if (currentPath === '/admin/category') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+            <!-- Logout Button -->
+            <form action="/admin/logout" method="GET" class="mt-8" id="logout-form">
+                <button type="submit"
+                    class="flex items-center justify-center space-x-2 px-4 py-3 w-full bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-400 transition group">
+                    <span class="material-icons">logout</span>
+                    <span id="logout-text" class="sidebar-text">Logout</span>
+                </button>
+            </form>
+        </div>
 
-    <a href="/admin/brand" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/brand' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">business</span>
-      <span>Brand</span>
-      <% if (currentPath === '/admin/brand') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+        <!-- Toggle Button (Chevron) -->
+        <button id="sidebar-toggle"
+            class="absolute top-1/4 -right-3 transform -translate-y-1/2 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg focus:outline-none z-50">
+            <span class="material-icons text-xl" id="toggle-icon">chevron_left"></span>
+        </button>
+    </aside>
 
-    <a href="/admin/offer" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/offer' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">local_offer</span>
-      <span>Offers</span>
-      <% if (currentPath === '/admin/offer') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+    <!-- The Main Content Area has been removed as requested -->
 
-    <a href="/admin/coupon" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/coupon' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">card_giftcard</span>
-      <span>Coupon</span>
-      <% if (currentPath === '/admin/coupon') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
+    <script>
+        // Data structure simulating your EJS navigation links
+        const navItems = [
+            { href: "/admin/dashboard", icon: "dashboard", text: "Dashboard" },
+            { href: "/admin/products", icon: "inventory_2", text: "Products" },
+            { href: "/admin/userlist", icon: "people", text: "Customers" },
+            { href: "/admin/Orders", icon: "shopping_cart", text: "Orders" },
+            { href: "/admin/category", icon: "category", text: "Category" },
+            { href: "/admin/brand", icon: "business", text: "Brand" },
+            { href: "/admin/offer", icon: "local_offer", text: "Offers" },
+            { href: "/admin/coupon", icon: "card_giftcard", text: "Coupon" },
+            { href: "/admin/salesreport", icon: "assessment", text: "Sales Report" }
+        ];
 
-    <a href="/admin/salesreport" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group <%= currentPath === '/admin/salesreport' ? 'bg-zinc-800 text-white' : '' %>">
-      <span class="material-icons">assessment</span>
-      <span>Sales Report</span>
-      <% if (currentPath === '/admin/salesreport') { %>
-        <div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>
-      <% } %>
-    </a>
-    
- 
+        // Constants for DOM elements and widths
+        const sidebar = document.getElementById('sidebar');
+        // mainContent and related margin variables removed
+        const toggleButton = document.getElementById('sidebar-toggle');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const navContainer = document.getElementById('nav-links');
+        const logoText = document.getElementById('logo-text');
+        const logoutText = document.getElementById('logout-text');
 
-    <!-- Logout Button -->
-    <form action="/admin/logout" method="GET" class="mt-8">
-      <button type="submit"
-        class="flex items-center justify-center space-x-2 px-4 py-3 w-full bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-400 transition group">
-        <span class="material-icons">logout</span>
-        <span>Logout</span>
-      </button>
-    </form>
-  </nav>
-</aside>
+        const W_EXPANDED = 'w-64';
+        const W_COLLAPSED = 'w-20';
+        
+        // This variable should be dynamically set by your server (like EJS) in a real app.
+        // We simulate it here by reading the URL path.
+        const currentPath = window.location.pathname.startsWith('/admin/') 
+            ? window.location.pathname : '/admin/dashboard';
+
+
+        // --- Core Functions ---
+
+        /**
+         * Renders the navigation links into the sidebar.
+         */
+        function renderNavLinks() {
+            navContainer.innerHTML = ''; // Clear previous links
+
+            navItems.forEach(item => {
+                // Use the global 'currentPath' which simulates the EJS 'currentPath' variable
+                const isActive = item.href === currentPath;
+                
+                // Base classes for navigation item
+                let linkClasses = `nav-item flex items-center text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group `;
+                
+                // Add active state classes
+                if (isActive) {
+                    linkClasses += 'bg-zinc-800 text-white';
+                }
+
+                const activeBar = isActive ? '<div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>' : '';
+
+                const linkElement = document.createElement('a');
+                linkElement.href = item.href;
+                linkElement.className = linkClasses;
+                
+                // NO e.preventDefault() HERE to allow native page routing
+                linkElement.innerHTML = `
+                    <span class="material-icons">${item.icon}</span>
+                    <span class="sidebar-text whitespace-nowrap">${item.text}</span>
+                    ${activeBar}
+                `;
+                navContainer.appendChild(linkElement);
+            });
+            // Apply collapsed state styling immediately after rendering
+            applyCollapsedStyles(localStorage.getItem('sidebarExpanded') !== 'true');
+        }
+
+
+        /**
+         * Toggles the sidebar between expanded and collapsed states.
+         * @param {boolean} shouldExpand - If true, expands; otherwise, collapses.
+         */
+        function toggleSidebar(shouldExpand) {
+            const isExpanded = shouldExpand;
+
+            // 1. Toggle Sidebar Width
+            sidebar.classList.toggle(W_EXPANDED, isExpanded);
+            sidebar.classList.toggle(W_COLLAPSED, !isExpanded);
+
+            // 2. Toggle Sidebar Content Visibility and Icon
+            logoText.classList.toggle('hidden', !isExpanded);
+            logoutText.classList.toggle('hidden', !isExpanded);
+            toggleIcon.textContent = isExpanded ? 'chevron_left' : 'chevron_right';
+
+            // 3. Adjust Nav Item Style
+            applyCollapsedStyles(!isExpanded);
+
+            // 4. Save state to localStorage
+            localStorage.setItem('sidebarExpanded', isExpanded);
+        }
+        
+        /**
+         * Applies the specific collapsed CSS utility classes to elements.
+         * This is called by both initialization and the main toggle function.
+         * @param {boolean} isCollapsed - True if the sidebar should be in collapsed mode.
+         */
+        function applyCollapsedStyles(isCollapsed) {
+            const textElements = document.querySelectorAll('.sidebar-text');
+            const navItems = navContainer.querySelectorAll('.nav-item');
+            
+            // Hide/Show text labels
+            textElements.forEach(el => {
+                el.classList.toggle('hidden', isCollapsed);
+            });
+            
+            // Adjust nav item layout for collapsed state
+            navItems.forEach(item => {
+                item.classList.toggle('collapsed-mode', isCollapsed);
+                item.classList.toggle('space-x-3', !isCollapsed);
+                item.classList.toggle('space-x-0', isCollapsed);
+            });
+        }
+
+
+        /**
+         * Initializes the sidebar state from localStorage or defaults to expanded.
+         */
+        function initializeSidebar() {
+            // Load state from localStorage. Default to 'true' (expanded) if not found.
+            const storedState = localStorage.getItem('sidebarExpanded');
+            const isExpanded = storedState === 'true' || storedState === null;
+
+            // Initial render of links, which handles the active state
+            renderNavLinks();
+
+            // Apply initial state (which also calls applyCollapsedStyles)
+            // We set the initial classes here.
+            sidebar.classList.add(isExpanded ? W_EXPANDED : W_COLLAPSED);
+            // mainContent margin application removed
+
+            // Hide/Show content based on initial state
+            logoText.classList.toggle('hidden', !isExpanded);
+            logoutText.classList.toggle('hidden', !isExpanded);
+            toggleIcon.textContent = isExpanded ? 'chevron_left' : 'chevron_right';
+            
+            // Ensure collapsed styles are applied correctly on load
+            applyCollapsedStyles(!isExpanded);
+        }
+
+
+        // --- Event Listeners ---
+
+        toggleButton.addEventListener('click', () => {
+            // Check the current state by looking at the toggle icon content
+            const currentlyExpanded = toggleIcon.textContent === 'chevron_left';
+            toggleSidebar(!currentlyExpanded);
+        });
+
+        // Initialize the app on page load
+        window.onload = initializeSidebar;
+    </script>
+</body>
+</html>

@@ -72,6 +72,10 @@
 
 </div>
 
+    <!-- HAMBURGER -->
+    <button id="mobileMenuBtn" class="text-white text-2xl md:hidden">
+      <i class="fa-solid fa-bars"></i>
+    </button>
 
 
       <!-- Profile Dropdown -->
@@ -125,61 +129,147 @@
   </div>
 
 
+<!-- MOBILE MENU -->
+<div id="mobileMenu"
+     class="hidden fixed top-16 left-0 w-full z-50 md:hidden
+            transition-all duration-300 ease-out
+            opacity-0 -translate-y-6 scale-95">
+
+  <nav class="flex flex-col items-center space-y-6 py-6 text-lg font-semibold">
+
+    <a href="/" 
+       class="text-black hover:text-orange-500 transition">
+      Home
+    </a>
+
+    <a href="/product"
+       class="text-black hover:text-orange-500 transition">
+      Shop
+    </a>
+
+    <a href="/contact"
+       class="text-black hover:text-orange-500 transition">
+      Contact
+    </a>
+
+    <a href="/about"
+       class="text-black hover:text-orange-500 transition">
+      About
+    </a>
+
+  </nav>
+</div>
+
+
+
 <script>
+document.addEventListener("DOMContentLoaded", async () => {
+
+  /* -----------------------------------
+     ELEMENT REFERENCES
+  ----------------------------------- */
+  const menuBtn = document.getElementById("mobileMenuBtn");
+  const mobileMenu = document.getElementById("mobileMenu");
+
   const profileBtn = document.getElementById("profileButton");
   const profileMenu = document.getElementById("profileMenu");
+
   const guestMenu = document.getElementById("guestMenu");
   const userMenu = document.getElementById("userMenu");
   const logoutBtn = document.getElementById("logoutButton");
-
-  // Toggle dropdown
-  profileBtn.addEventListener("click", () => {
-    profileMenu.classList.toggle("hidden");
-  });
-
-  // Close menu if clicked outside
-  document.addEventListener("click", (e) => {
-    if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
-      profileMenu.classList.add("hidden");
-    }
-  });
-
-  // Session check
-document.addEventListener("DOMContentLoaded", async function () {
-  const response = await fetch('/check-session');
-  const data = await response.json();
-
-if (data.isLoggedIn) {
-  guestMenu?.classList.add("hidden");
-  userMenu?.classList.remove("hidden");
 
   const avatar = document.getElementById("userAvatar");
   const nameEl = document.getElementById("userName");
   const icon = document.getElementById("defaultUserIcon");
 
-  if (avatar) {
-    avatar.src = data.profilePic || "/images/default-avatar.png";
-    avatar.classList.remove("hidden");
+  const wishlistBadge = document.getElementById("wishlistCount");
+  const cartBadge = document.getElementById("cartCount");
+  const profileImage = document.getElementById("userProfileImage");
+
+
+  /* -----------------------------------
+     MOBILE MENU
+  ----------------------------------- */
+ menuBtn.addEventListener("click", () => {
+
+  if (mobileMenu.classList.contains("hidden")) {
+    mobileMenu.classList.remove("hidden");
+
+    setTimeout(() => {
+      mobileMenu.classList.remove("opacity-0", "-translate-y-6", "scale-95");
+      mobileMenu.classList.add("opacity-100", "translate-y-0", "scale-100");
+    }, 5);
+  } 
+  else {
+    mobileMenu.classList.remove("opacity-100", "translate-y-0", "scale-100");
+    mobileMenu.classList.add("opacity-0", "-translate-y-6", "scale-95");
+
+    setTimeout(() => {
+      mobileMenu.classList.add("hidden");
+    }, 300);
   }
-
-  if (nameEl) {
-    nameEl.textContent = data.name || "User";
-    nameEl.classList.remove("hidden");
-  }
-
-  icon?.classList.add("hidden");
-} else {
-  guestMenu?.classList.remove("hidden");
-  userMenu?.classList.add("hidden");
-
-  document.getElementById("userAvatar")?.classList.add("hidden");
-  document.getElementById("userName")?.classList.add("hidden");
-  document.getElementById("defaultUserIcon")?.classList.remove("hidden");
-}
 
 });
 
-  // Logout with confirmation
+
+  /* -----------------------------------
+     PROFILE DROPDOWN MENU
+  ----------------------------------- */
+  if (profileBtn && profileMenu) {
+    profileBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      profileMenu.classList.toggle("hidden");
+    });
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+      if (!profileMenu.contains(e.target) && !profileBtn.contains(e.target)) {
+        profileMenu.classList.add("hidden");
+      }
+    });
+  }
+
+
+  /* -----------------------------------
+     SESSION CHECK
+  ----------------------------------- */
+  try {
+    const response = await fetch('/check-session');
+    const data = await response.json();
+
+    if (data.isLoggedIn) {
+      guestMenu?.classList.add("hidden");
+      userMenu?.classList.remove("hidden");
+
+      if (avatar) {
+        avatar.src = data.profilePic || "/images/default-avatar.png";
+        avatar.classList.remove("hidden");
+      }
+
+      if (nameEl) {
+        nameEl.textContent = data.name || "User";
+        nameEl.classList.remove("hidden");
+      }
+
+      icon?.classList.add("hidden");
+
+    } else {
+      guestMenu?.classList.remove("hidden");
+      userMenu?.classList.add("hidden");
+
+      avatar?.classList.add("hidden");
+      nameEl?.classList.add("hidden");
+      icon?.classList.remove("hidden");
+    }
+
+  } catch (err) {
+    console.error("Session check failed:", err);
+  }
+
+
+  /* -----------------------------------
+     LOGOUT WITH CONFIRMATION
+  ----------------------------------- */
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -197,10 +287,9 @@ if (data.isLoggedIn) {
         if (result.isConfirmed) {
           try {
             await fetch('/logout', { method: 'POST' });
-            window.location.href = "/"; 
+            window.location.href = "/";
           } catch (error) {
-            console.error("Logout failed:", error);
-            Swal.fire("Error", "Logout failed. Try again.", "error");
+            Swal.fire("Error", "Logout failed", "error");
           }
         }
       });
@@ -208,74 +297,66 @@ if (data.isLoggedIn) {
   }
 
 
+  /* -----------------------------------
+     WISHLIST & CART COUNT
+  ----------------------------------- */
+  async function updateCounts() {
+    try {
+      const response = await fetch("/get-counts");
+      const data = await response.json();
 
-  ////////////////////////whishlist / cart count //////////////////////////////
-
-async function updateCounts() {
-  try {
-    const response = await fetch("/get-counts");
-    const data = await response.json();
-
-    const wishlistBadge = document.getElementById("wishlistCount");
-    const cartBadge = document.getElementById("cartCount"); 
-
-    // Wishlist count update
-    if (data.wishlistCount > 0) {
-      wishlistBadge.textContent = data.wishlistCount;
-      wishlistBadge.classList.remove("hidden");
-    } else {
-      wishlistBadge.classList.add("hidden");
-    }
-
-    // Cart count update
-    if (data.cartCount > 0) {
-      cartBadge.textContent = data.cartCount;
-      cartBadge.classList.remove("hidden");
-    } else {
-      cartBadge.classList.add("hidden");
-    }
-
-  } catch (error) {
-    console.error("Error fetching counts:", error);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", updateCounts);
-
-///////////////////////////////////image //////////////////////////////////
-
-async function loadUserProfile() {
-  try {
-    const res = await fetch("/get-user-profile");
-    const data = await res.json();
-
-    const img = document.getElementById("userProfileImage");
-    const nameSpan = document.getElementById("userName");
-
-    if (data.loggedIn) {
-      // Show user image or default
-      img.src = data.profileImage || "/images/pf.jpg";
-
-      // Show name
-      if (data.name) {
-        nameSpan.textContent = data.name;
-        nameSpan.classList.remove("hidden");
+      if (wishlistBadge) {
+        if (data.wishlistCount > 0) {
+          wishlistBadge.textContent = data.wishlistCount;
+          wishlistBadge.classList.remove("hidden");
+        } else {
+          wishlistBadge.classList.add("hidden");
+        }
       }
-    } else {
-      // User not logged in — default image only
-      img.src = "/images/pf.jpg";
-      nameSpan.classList.add("hidden");
+
+      if (cartBadge) {
+        if (data.cartCount > 0) {
+          cartBadge.textContent = data.cartCount;
+          cartBadge.classList.remove("hidden");
+        } else {
+          cartBadge.classList.add("hidden");
+        }
+      }
+
+    } catch (err) {
+      console.error("Error updating counts:", err);
     }
-  } catch (err) {
-    console.error("Error loading profile:", err);
   }
-}
 
-document.addEventListener("DOMContentLoaded", loadUserProfile);
-
+  updateCounts();
 
 
+  /* -----------------------------------
+     USER PROFILE IMAGE
+  ----------------------------------- */
+  async function loadUserProfile() {
+    try {
+      const res = await fetch("/get-user-profile");
+      const data = await res.json();
+
+      if (profileImage) {
+        profileImage.src = data.profileImage || "/images/pf.jpg";
+      }
+
+      if (!data.loggedIn) {
+        nameEl?.classList.add("hidden");
+      }
+
+    } catch (err) {
+      console.error("Profile load failed:", err);
+    }
+  }
+
+  loadUserProfile();
+
+});
 </script>
+
 
 </body>
 
