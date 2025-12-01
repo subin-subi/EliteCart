@@ -45,106 +45,128 @@
     </ol>
   </nav>
 
-  <!-- Product Section -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start p-4 sm:p-6">
 
-   <!-- Left Side --> 
-    <div class="flex flex-col md:w-[90%] lg:w-[85%] mx-auto"> <!-- Main Image --> <div class="bg-white rounded-lg shadow overflow-hidden relative"> <img id="mainImage" src="<%= product.variants[0].mainImage || '/images/placeholder.png' %>"
-       alt="<%= product.name %>" class="w-full h-[350px] sm:h-[450px] md:h-[550px] object-cover rounded-xl transition-transform duration-300 ease-in-out">
-     </div> <!-- Thumbnails --> <div id="thumbnails" class="mt-6 grid grid-cols-3 gap-4"> <% (product.variants[0].subImages || []).forEach(function(img, idx) { %> <button type="button" class="thumbnail w-full h-20 sm:h-28 md:h-32 rounded-lg overflow-hidden border-2 border-transparent focus:outline-none" data-src="<%= img %>"> 
-      <img src="<%= img %>" alt="thumb <%= idx+1 %>" class="w-full h-full object-cover"> </button> <% }) %> </div> </div>
+  <div class="flex flex-col mx-auto w-full"> 
+    
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden relative border border-gray-200"> 
+      <img id="mainImage" 
+           src="<%= product.variants[0].mainImage || '/images/placeholder.png' %>"
+           alt="<%= product.name %>" 
+           class="w-full h-[350px] sm:h-[450px] md:h-[550px] object-cover transition-transform duration-300 ease-in-out">
+    </div> 
 
-    <!-- Right: Product Details -->
-  <div class="relative bg-white rounded-2xl shadow-md p-6 sm:p-8 border border-gray-100 flex flex-col justify-between md:h-[550px] md:w-[85%] lg:w-[80%] mx-auto">
+    <div id="thumbnails" class="mt-4 grid grid-cols-3 gap-3 sm:gap-4"> 
+      <% (product.variants[0].subImages || []).forEach(function(img, idx) { %> 
+      <button type="button" 
+              class="thumbnail w-full h-20 sm:h-24 rounded-lg overflow-hidden border-2 border-transparent focus:outline-none hover:border-black transition" 
+              data-src="<%= img %>"> 
+        <img src="<%= img %>" alt="thumb <%= idx+1 %>" class="w-full h-full object-cover"> 
+      </button> 
+      <% }) %> 
+    </div> 
+  </div>
 
-  <!-- Wishlist Icon -->
-  <button 
-    id="wishlistBtn"
-    data-product="<%= product._id %>"
-    class="absolute top-4 right-4 text-3xl transition transform hover:scale-110 z-10">
-      <i id="heartIcon" 
-        class="fa fa-heart <%= product.isInWishlist ? 'text-red-500' : 'text-gray-600' %>"></i>
-  </button>
+  <div class="relative bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100 flex flex-col justify-between w-full">
 
-  <div class="flex flex-col justify-between h-full">
-    <div>
-      <!-- Product Name -->
-      <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-        <%= product.name %>
-      </h1>
+    <button 
+      id="wishlistBtn"
+      data-product="<%= product._id %>"
+      class="absolute top-4 right-4 text-3xl transition transform hover:scale-110 z-10 text-gray-400 hover:text-red-500">
+        <i id="heartIcon" 
+           class="fa fa-heart <%= product.isInWishlist ? 'text-red-500' : 'text-gray-400' %>"></i>
+    </button>
 
-      <!-- Price Section -->
-      <%
-        const mainVariant = product.variants[0];
-        const hasDiscount = mainVariant.discountPrice !== null && mainVariant.discountPrice < mainVariant.price;
-        const finalPrice = hasDiscount ? mainVariant.discountPrice : mainVariant.price;
-      %>
+    <div class="flex flex-col justify-between h-full">
+      <div>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 pr-10">
+          <%= product.name %>
+        </h1>
 
-      <div id="priceSection" class="mb-4 flex items-center space-x-3">
-        <% if (hasDiscount) { %>
-          <span id="discountedPrice" class="text-2xl sm:text-3xl font-semibold text-red-600">
-            ₹<%= finalPrice.toLocaleString() %>
-          </span>
-          <span id="originalPrice" class="text-gray-500 line-through text-lg">
-            ₹<%= mainVariant.price.toLocaleString() %>
-          </span>
-          <span id="discountPercent" class="text-green-600 font-medium text-sm">
-            (<%= Math.round(((mainVariant.price - finalPrice) / mainVariant.price) * 100) %>% OFF)
-          </span>
-        <% } else { %>
-          <span id="finalPrice" class="text-2xl sm:text-3xl font-semibold text-gray-900">
-            ₹<%= finalPrice.toLocaleString() %>
-          </span>
-        <% } %>
+        <%
+          const mainVariant = product.variants[0];
+          const hasDiscount = mainVariant.discountPrice !== null && mainVariant.discountPrice < mainVariant.price;
+          const finalPrice = hasDiscount ? mainVariant.discountPrice : mainVariant.price;
+        %>
+
+        <div id="priceSection" class="mb-6 flex items-baseline space-x-3">
+          <% if (hasDiscount) { %>
+            <span id="discountedPrice" class="text-3xl sm:text-4xl font-bold text-red-600">
+              ₹<%= finalPrice.toLocaleString() %>
+            </span>
+            <span id="originalPrice" class="text-gray-500 line-through text-lg sm:text-xl">
+              ₹<%= mainVariant.price.toLocaleString() %>
+            </span>
+            <span id="discountPercent" class="text-green-600 font-medium text-base">
+              (<%= Math.round(((mainVariant.price - finalPrice) / mainVariant.price) * 100) %>% OFF)
+            </span>
+          <% } else { %>
+            <span id="finalPrice" class="text-3xl sm:text-4xl font-bold text-gray-900">
+              ₹<%= finalPrice.toLocaleString() %>
+            </span>
+          <% } %>
+        </div>
+
+        <p id="productDescription" class="text-gray-700 text-base sm:text-lg leading-relaxed mb-4 line-clamp-3">
+          <%= product.description %>
+        </p>
+
+        <button id="toggleDescription" class="text-blue-600 font-semibold hover:underline mb-6">
+          Read more
+        </button>
+<% if (product.variants && product.variants.length > 1) { %>
+  <div class="mt-4">
+    <label for="variantSelect" class="block text-gray-700 font-medium mb-2">
+      Choose Volume:
+    </label>
+
+    <!-- Wrapper -->
+    <div class="relative">
+
+      <!-- Select box -->
+      <select 
+        id="variantSelect" 
+        class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white 
+               appearance-none focus:ring-2 focus:ring-black focus:outline-none transition">
+
+        <% product.variants.forEach((variant, index) => { %>
+          <option 
+            value="<%= variant._id %>"
+            data-price="<%= variant.price %>"
+            data-discount="<%= variant.discountPrice ? variant.discountPrice : '' %>"
+            data-stock="<%= variant.stock %>"
+            <%= index === 0 ? 'selected' : '' %>>
+            <%= variant.volume ? variant.volume + ' ml' : 'Default' %>
+          </option>
+        <% }) %>
+
+      </select>
+
+      <!-- Dropdown Arrow -->
+      <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+        ▼
+      </span>
+
+    </div>
+  </div>
+<% } %> 
+
       </div>
 
-      <!-- Description -->
-      <p id="productDescription" class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 line-clamp-3">
-        <%= product.description %>
-      </p>
-
-      <button id="toggleDescription" class="text-blue-600 font-semibold hover:underline">
-        Read more
-      </button>
-
-      <!-- Variant Dropdown -->
-      <% if (product.variants && product.variants.length > 1) { %>
-        <div class="mt-4">
-          <label for="variantSelect" class="block text-gray-700 font-medium mb-2">
-            Choose Volume:
-          </label>
-          <select 
-            id="variantSelect" 
-            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none">
-            <% product.variants.forEach((variant, index) => { %>
-              <option 
-                value="<%= variant._id %>"
-                data-price="<%= variant.price %>"
-                data-discount="<%= variant.discountPrice ? variant.discountPrice : '' %>"
-                data-stock="<%= variant.stock %>"
-                <%= index === 0 ? 'selected' : '' %>>
-                <%= variant.volume ? variant.volume + ' ml' : 'Default' %>
-              </option>
-            <% }) %>
-          </select>
-        </div>
-      <% } %>
-
-      <!-- Add to Cart / Out of Stock -->
       <div class="mt-8">
         <% if (mainVariant.stock > 0) { %>
           <button 
             id="addToCartBtn"
             data-product="<%= product._id %>"
             data-variant="<%= mainVariant._id %>"
-            class="w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+            class="w-full inline-flex justify-center items-center gap-2 px-6 py-4 bg-black text-white text-xl font-bold rounded-xl shadow-lg hover:bg-gray-800 transition transform hover:scale-[1.01]">
             <i class="fa fa-shopping-cart"></i> Add To Cart
           </button>
 
           <button 
             id="outOfStockBtn"
             disabled
-            class="hidden w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+            class="hidden w-full px-6 py-4 bg-gray-300 text-gray-600 text-xl font-bold rounded-xl cursor-not-allowed">
             Out of Stock
           </button>
         <% } else { %>
@@ -152,23 +174,22 @@
             id="addToCartBtn"
             data-product="<%= product._id %>"
             data-variant="<%= mainVariant._id %>"
-            class="hidden w-full inline-flex justify-center items-center gap-2 px-6 py-3 bg-black text-white text-lg rounded-xl shadow hover:shadow-lg transition">
+            class="hidden w-full inline-flex justify-center items-center gap-2 px-6 py-4 bg-black text-white text-xl font-bold rounded-xl shadow-lg hover:bg-gray-800 transition transform hover:scale-[1.01]">
             <i class="fa fa-shopping-cart"></i> Add To Cart
           </button>
 
           <button 
             id="outOfStockBtn"
             disabled
-            class="w-full px-6 py-3 bg-gray-300 text-gray-600 text-lg rounded-xl cursor-not-allowed">
+            class="w-full px-6 py-4 bg-gray-300 text-gray-600 text-xl font-bold rounded-xl cursor-not-allowed">
             Out of Stock
           </button>
         <% } %>
       </div>
     </div>
   </div>
-</div>
 
-  </div>
+ </div>
 
   <!--   Related Products -->
 <div class="mt-24 w-full">
