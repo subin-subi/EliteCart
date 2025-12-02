@@ -1,231 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Collapsible Admin Dashboard</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Material Icons for dashboard icons and the chevron toggle -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        /* Custom Font for Logo */
-        @import url('https://fonts.googleapis.com/css2?family=Joan&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collapsible Admin Dashboard</title>
 
-        /* Transition utility for smooth collapse/expand */
-        .sidebar {
-            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
-        }
-        /* Since there is no main content to push, we can remove .main-content transition */
-        
-        /* Style for link text when hidden */
-        .sidebar-text.hidden {
-            display: none;
-        }
-        /* Style adjustments for the collapsed nav items */
-        .nav-item.collapsed-mode {
-            justify-content: center;
-            /* Overriding horizontal padding for vertical centering of icons */
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            /* Making the item look like a square button */
-            width: 100%; 
-            padding-top: 0.75rem !important; /* py-3 */
-            padding-bottom: 0.75rem !important; /* py-3 */
-        }
-    </style>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Custom Styles -->
+  <style>
+    /* Custom Font for Logo */
+    @import url('https://fonts.googleapis.com/css2?family=Joan&display=swap');
+
+    /* Smooth sidebar transition */
+    .sidebar {
+      transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+    }
+
+    /* Hidden text in sidebar */
+    .sidebar-text.hidden {
+      display: none;
+    }
+
+    /* Collapsed nav item styles */
+    .nav-item.collapsed-mode {
+      justify-content: center;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      width: 100%;
+      padding-top: 0.75rem !important; 
+      padding-bottom: 0.75rem !important;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <!-- Sidebar Container -->
-    <aside id="sidebar" class="fixed top-0 left-0 h-full bg-zinc-900 shadow-xl sidebar w-64 z-50 p-5">
-        <div class="flex flex-col h-full">
+  <!-- Sidebar Container -->
+  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-zinc-900 shadow-xl sidebar w-64 z-50 p-5">
+    <div class="flex flex-col h-full">
 
-            <!-- Logo -->
-            <div class="flex items-center justify-center mb-8 h-10 overflow-hidden">
-                <h1 id="logo-text" class="admin-logo text-white font-bold text-2xl whitespace-nowrap transition-opacity duration-300"
-                    style="font-family: 'Joan', serif;">
-                    ELITEKART
-                </h1>
-            </div>
+      <!-- Logo -->
+      <div class="flex items-center justify-center mb-8 h-10 overflow-hidden">
+        <h1 id="logo-text" class="admin-logo text-white font-bold text-2xl whitespace-nowrap transition-opacity duration-300"
+            style="font-family: 'Joan', serif;">
+          ELITEKART
+        </h1>
+      </div>
 
-            <!-- Navigation Links -->
-            <nav id="nav-links" class="flex-grow space-y-2">
-                <!-- Links will be populated by JS for demonstration -->
-            </nav>
+      <!-- Navigation Links -->
+      <nav id="nav-links" class="flex-grow space-y-2"></nav>
 
-            <!-- Logout Button -->
-            <form action="/admin/logout" method="GET" class="mt-8" id="logout-form">
-                <button type="submit"
-                    class="flex items-center justify-center space-x-2 px-4 py-3 w-full bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-400 transition group">
-                    <span class="material-icons">logout</span>
-                    <span id="logout-text" class="sidebar-text">Logout</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- Toggle Button (Chevron) -->
-        <button id="sidebar-toggle"
-            class="absolute top-1/4 -right-3 transform -translate-y-1/2 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg focus:outline-none z-50">
-            <span class="material-icons text-xl" id="toggle-icon">chevron_left"></span>
+      <!-- Logout Button -->
+      <form action="/admin/logout" method="GET" class="mt-8" id="logout-form">
+        <button type="submit"
+          class="flex items-center justify-center space-x-2 px-4 py-3 w-full bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-400 transition group">
+          <span class="material-icons">logout</span>
+          <span id="logout-text" class="sidebar-text">Logout</span>
         </button>
-    </aside>
+      </form>
+    </div>
 
-    <!-- The Main Content Area has been removed as requested -->
+    <!-- Toggle Button (Chevron) -->
+    <button id="sidebar-toggle"
+      class="absolute top-1/4 -right-3 transform -translate-y-1/2 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg focus:outline-none z-50">
+      <span class="material-icons text-xl" id="toggle-icon">chevron_left</span>
+    </button>
+  </aside>
 
-    <script>
-        // Data structure simulating your EJS navigation links
-        const navItems = [
-            { href: "/admin/dashboard", icon: "dashboard", text: "Dashboard" },
-            { href: "/admin/products", icon: "inventory_2", text: "Products" },
-            { href: "/admin/userlist", icon: "people", text: "Customers" },
-            { href: "/admin/Orders", icon: "shopping_cart", text: "Orders" },
-            { href: "/admin/category", icon: "category", text: "Category" },
-            { href: "/admin/brand", icon: "business", text: "Brand" },
-            { href: "/admin/offer", icon: "local_offer", text: "Offers" },
-            { href: "/admin/coupon", icon: "card_giftcard", text: "Coupon" },
-            { href: "/admin/salesreport", icon: "assessment", text: "Sales Report" }
-        ];
+  <!-- Script Section -->
+  <script>
+    // Navigation items
+    const navItems = [
+      { href: "/admin/dashboard", icon: "dashboard", text: "Dashboard" },
+      { href: "/admin/products", icon: "inventory_2", text: "Products" },
+      { href: "/admin/userlist", icon: "people", text: "Customers" },
+      { href: "/admin/Orders", icon: "shopping_cart", text: "Orders" },
+      { href: "/admin/category", icon: "category", text: "Category" },
+      { href: "/admin/brand", icon: "business", text: "Brand" },
+      { href: "/admin/offer", icon: "local_offer", text: "Offers" },
+      { href: "/admin/coupon", icon: "card_giftcard", text: "Coupon" },
+      { href: "/admin/salesreport", icon: "assessment", text: "Sales Report" },
+      { href: "/admin/chat", icon: "chat", text: "Chat" }
+    ];
 
-        // Constants for DOM elements and widths
-        const sidebar = document.getElementById('sidebar');
-        // mainContent and related margin variables removed
-        const toggleButton = document.getElementById('sidebar-toggle');
-        const toggleIcon = document.getElementById('toggle-icon');
-        const navContainer = document.getElementById('nav-links');
-        const logoText = document.getElementById('logo-text');
-        const logoutText = document.getElementById('logout-text');
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleButton = document.getElementById('sidebar-toggle');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const navContainer = document.getElementById('nav-links');
+    const logoText = document.getElementById('logo-text');
+    const logoutText = document.getElementById('logout-text');
 
-        const W_EXPANDED = 'w-64';
-        const W_COLLAPSED = 'w-20';
-        
-        // This variable should be dynamically set by your server (like EJS) in a real app.
-        // We simulate it here by reading the URL path.
-        const currentPath = window.location.pathname.startsWith('/admin/') 
-            ? window.location.pathname : '/admin/dashboard';
+    const W_EXPANDED = 'w-64';
+    const W_COLLAPSED = 'w-20';
 
+    const currentPath = window.location.pathname.startsWith('/admin/') 
+      ? window.location.pathname : '/admin/dashboard';
 
-        // --- Core Functions ---
+    // --- Core Functions ---
 
-        /**
-         * Renders the navigation links into the sidebar.
-         */
-        function renderNavLinks() {
-            navContainer.innerHTML = ''; // Clear previous links
+    function renderNavLinks() {
+      navContainer.innerHTML = ''; 
 
-            navItems.forEach(item => {
-                // Use the global 'currentPath' which simulates the EJS 'currentPath' variable
-                const isActive = item.href === currentPath;
-                
-                // Base classes for navigation item
-                let linkClasses = `nav-item flex items-center text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group `;
-                
-                // Add active state classes
-                if (isActive) {
-                    linkClasses += 'bg-zinc-800 text-white';
-                }
+      navItems.forEach(item => {
+        const isActive = item.href === currentPath;
 
-                const activeBar = isActive ? '<div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>' : '';
+        let linkClasses = `nav-item flex items-center text-gray-400 hover:text-white hover:bg-zinc-800 px-4 py-3 rounded-lg transition relative group`;
+        if (isActive) linkClasses += ' bg-zinc-800 text-white';
 
-                const linkElement = document.createElement('a');
-                linkElement.href = item.href;
-                linkElement.className = linkClasses;
-                
-                // NO e.preventDefault() HERE to allow native page routing
-                linkElement.innerHTML = `
-                    <span class="material-icons">${item.icon}</span>
-                    <span class="sidebar-text whitespace-nowrap">${item.text}</span>
-                    ${activeBar}
-                `;
-                navContainer.appendChild(linkElement);
-            });
-            // Apply collapsed state styling immediately after rendering
-            applyCollapsedStyles(localStorage.getItem('sidebarExpanded') !== 'true');
-        }
+        const activeBar = isActive ? '<div class="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded-r"></div>' : '';
 
+        const linkElement = document.createElement('a');
+        linkElement.href = item.href;
+        linkElement.className = linkClasses;
+        linkElement.innerHTML = `
+          <span class="material-icons">${item.icon}</span>
+          <span class="sidebar-text whitespace-nowrap">${item.text}</span>
+          ${activeBar}
+        `;
+        navContainer.appendChild(linkElement);
+      });
 
-        /**
-         * Toggles the sidebar between expanded and collapsed states.
-         * @param {boolean} shouldExpand - If true, expands; otherwise, collapses.
-         */
-        function toggleSidebar(shouldExpand) {
-            const isExpanded = shouldExpand;
+      applyCollapsedStyles(localStorage.getItem('sidebarExpanded') !== 'true');
+    }
 
-            // 1. Toggle Sidebar Width
-            sidebar.classList.toggle(W_EXPANDED, isExpanded);
-            sidebar.classList.toggle(W_COLLAPSED, !isExpanded);
+    function toggleSidebar(shouldExpand) {
+      const isExpanded = shouldExpand;
 
-            // 2. Toggle Sidebar Content Visibility and Icon
-            logoText.classList.toggle('hidden', !isExpanded);
-            logoutText.classList.toggle('hidden', !isExpanded);
-            toggleIcon.textContent = isExpanded ? 'chevron_left' : 'chevron_right';
+      sidebar.classList.toggle(W_EXPANDED, isExpanded);
+      sidebar.classList.toggle(W_COLLAPSED, !isExpanded);
 
-            // 3. Adjust Nav Item Style
-            applyCollapsedStyles(!isExpanded);
+      logoText.classList.toggle('hidden', !isExpanded);
+      logoutText.classList.toggle('hidden', !isExpanded);
+      toggleIcon.textContent = isExpanded ? 'chevron_left' : 'chevron_right';
 
-            // 4. Save state to localStorage
-            localStorage.setItem('sidebarExpanded', isExpanded);
-        }
-        
-        /**
-         * Applies the specific collapsed CSS utility classes to elements.
-         * This is called by both initialization and the main toggle function.
-         * @param {boolean} isCollapsed - True if the sidebar should be in collapsed mode.
-         */
-        function applyCollapsedStyles(isCollapsed) {
-            const textElements = document.querySelectorAll('.sidebar-text');
-            const navItems = navContainer.querySelectorAll('.nav-item');
-            
-            // Hide/Show text labels
-            textElements.forEach(el => {
-                el.classList.toggle('hidden', isCollapsed);
-            });
-            
-            // Adjust nav item layout for collapsed state
-            navItems.forEach(item => {
-                item.classList.toggle('collapsed-mode', isCollapsed);
-                item.classList.toggle('space-x-3', !isCollapsed);
-                item.classList.toggle('space-x-0', isCollapsed);
-            });
-        }
+      applyCollapsedStyles(!isExpanded);
 
+      localStorage.setItem('sidebarExpanded', isExpanded);
+    }
 
-        /**
-         * Initializes the sidebar state from localStorage or defaults to expanded.
-         */
-        function initializeSidebar() {
-            // Load state from localStorage. Default to 'true' (expanded) if not found.
-            const storedState = localStorage.getItem('sidebarExpanded');
-            const isExpanded = storedState === 'true' || storedState === null;
+    function applyCollapsedStyles(isCollapsed) {
+      const textElements = document.querySelectorAll('.sidebar-text');
+      const navItems = navContainer.querySelectorAll('.nav-item');
 
-            // Initial render of links, which handles the active state
-            renderNavLinks();
+      textElements.forEach(el => el.classList.toggle('hidden', isCollapsed));
+      navItems.forEach(item => {
+        item.classList.toggle('collapsed-mode', isCollapsed);
+        item.classList.toggle('space-x-3', !isCollapsed);
+        item.classList.toggle('space-x-0', isCollapsed);
+      });
+    }
 
-            // Apply initial state (which also calls applyCollapsedStyles)
-            // We set the initial classes here.
-            sidebar.classList.add(isExpanded ? W_EXPANDED : W_COLLAPSED);
-            // mainContent margin application removed
+    function initializeSidebar() {
+      const storedState = localStorage.getItem('sidebarExpanded');
+      const isExpanded = storedState === 'true' || storedState === null;
 
-            // Hide/Show content based on initial state
-            logoText.classList.toggle('hidden', !isExpanded);
-            logoutText.classList.toggle('hidden', !isExpanded);
-            toggleIcon.textContent = isExpanded ? 'chevron_left' : 'chevron_right';
-            
-            // Ensure collapsed styles are applied correctly on load
-            applyCollapsedStyles(!isExpanded);
-        }
+      renderNavLinks();
 
+      sidebar.classList.add(isExpanded ? W_EXPANDED : W_COLLAPSED);
+      logoText.classList.toggle('hidden', !isExpanded);
+      logoutText.classList.toggle('hidden', !isExpanded);
+      toggleIcon.textContent = isExpanded ? 'chevron_left' : 'chevron_right';
 
-        // --- Event Listeners ---
+      applyCollapsedStyles(!isExpanded);
+    }
 
-        toggleButton.addEventListener('click', () => {
-            // Check the current state by looking at the toggle icon content
-            const currentlyExpanded = toggleIcon.textContent === 'chevron_left';
-            toggleSidebar(!currentlyExpanded);
-        });
+    // --- Event Listeners ---
+    toggleButton.addEventListener('click', () => {
+      const currentlyExpanded = toggleIcon.textContent === 'chevron_left';
+      toggleSidebar(!currentlyExpanded);
+    });
 
-        // Initialize the app on page load
-        window.onload = initializeSidebar;
-    </script>
+    window.onload = initializeSidebar;
+
+  </script>
 </body>
 </html>
