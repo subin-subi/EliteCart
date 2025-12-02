@@ -150,7 +150,11 @@ document.getElementById('addCouponForm').addEventListener('submit', async (e) =>
 
 async function toggleCouponStatus(couponId, isActive) {
   try {
-    const response = await axios.put(`/admin/coupons/toggle-status`, { couponId, isActive });
+    const response = await axios.put(`/admin/coupons/toggle-status`, {
+      couponId,
+      isActive
+    });
+
     if (response.data.success) {
       Swal.fire({
         icon: 'success',
@@ -160,10 +164,24 @@ async function toggleCouponStatus(couponId, isActive) {
       });
       setTimeout(() => window.location.reload(), 1000);
     } else {
-      Swal.fire('Error', response.data.message, 'error');
+      // ✅ Shows error returned from backend
+      Swal.fire({
+        icon: 'error',
+        title: 'Action Failed',
+        text: response.data.message
+      });
     }
   } catch (err) {
-    Swal.fire('Error', 'Something went wrong', 'error');
+    // ✅ READ ACTUAL SERVER ERROR MESSAGE
+    const msg =
+      err.response?.data?.message ||
+      'Server error. Please try again.';
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed',
+      text: msg
+    });
   }
 }
 

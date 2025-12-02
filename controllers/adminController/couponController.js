@@ -220,7 +220,8 @@ const toggleCouponStatus = async (req, res) => {
 
     // Check if trying to activate an expired coupon
     const currentDate = new Date();
-    if (isActive && coupon.endAt < currentDate) {
+    if (isActive && coupon.expiryDate < currentDate) {
+
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Cannot activate — this coupon has already expired.",

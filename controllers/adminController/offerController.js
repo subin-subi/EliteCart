@@ -144,7 +144,7 @@ const applyBestOffer = async (productId) => {
 const toggleOffer = async (req, res) => {
   try {
     const { offerId, isActive } = req.body;
-    console.log(offerId, isActive);
+    
 
     if (!offerId)
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Offer ID required" });
