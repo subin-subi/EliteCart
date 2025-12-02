@@ -181,7 +181,8 @@
               <td class="p-3"><%= o.orderStatus %></td>
               <td class="p-3 text-sm">
                 <% o.items.forEach(item => { %>
-                  <div><%= item.productId.name %> (Qty: <%= item.quantity %>)</div>
+                  <div><%= item.productId ? item.productId.name : "Deleted Product" %>
+                (Qty: <%= item.quantity %>)</div>
                 <% }) %>
               </td>
               <td class="p-3">₹<%= o.subtotal %></td>
