@@ -103,8 +103,8 @@
     <% } %>
 
     <!-- Wishlist Heart -->
-    <button class="absolute top-2 right-2"
-      onclick="toggleWishlist('<%= product._id %>')">
+  <button class="absolute top-2 right-2 z-20"
+  onclick="toggleWishlist('<%= product._id %>')">
 
       <% if (wishlistItems.includes(product._id.toString())) { %>
         <i id="heart-<%= product._id %>" class="fa-solid fa-heart text-red-600 text-lg sm:text-xl"></i>

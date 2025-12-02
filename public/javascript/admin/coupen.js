@@ -164,7 +164,7 @@ async function toggleCouponStatus(couponId, isActive) {
       });
       setTimeout(() => window.location.reload(), 1000);
     } else {
-      // ✅ Shows error returned from backend
+      
       Swal.fire({
         icon: 'error',
         title: 'Action Failed',
