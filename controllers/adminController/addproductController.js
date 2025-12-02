@@ -1,12 +1,8 @@
 import Category from "../../models/categoryModel.js";
 import Brand from "../../models/brandModel.js";
 import Product from "../../models/productModel.js";
-import upload from "../../utils/multer.js"
+import upload from "../../utils/multer.js";
 import HTTP_STATUS from "../../utils/responseHandler.js";
-
-
-
-
 
 const getaddProductPage = async (req, res) => {
   try {
@@ -15,7 +11,7 @@ const getaddProductPage = async (req, res) => {
 
     res.render("admin/addProduct", {
       brands,
-      categories
+      categories,
     });
   } catch (err) {
     console.error("Error:", err);
@@ -23,9 +19,8 @@ const getaddProductPage = async (req, res) => {
   }
 };
 
-
 const addProduct = [
-  upload.any(), 
+  upload.any(),
   async (req, res) => {
     try {
       const { name, brand, category, description, variantsData } = req.body;
@@ -40,17 +35,23 @@ const addProduct = [
 
       // Attach images to each variant
       const variantsWithFiles = parsedVariants.map((variant, i) => {
-        const mainImageFile = req.files.find(f => f.fieldname === `variantMainImage_${i}`);
-        const subImageFiles = req.files.filter(f => f.fieldname.startsWith(`variantSubImages_${i}_`));
+        const mainImageFile = req.files.find(
+          (f) => f.fieldname === `variantMainImage_${i}`
+        );
+        const subImageFiles = req.files.filter((f) =>
+          f.fieldname.startsWith(`variantSubImages_${i}_`)
+        );
 
         return {
           volume: Number(variant.volume) || 0,
           stock: Number(variant.stock) || 0,
           price: Number(variant.price) || 0,
-          discountPrice: variant.discountPrice ? Number(variant.discountPrice) : null,
+          discountPrice: variant.discountPrice
+            ? Number(variant.discountPrice)
+            : null,
           isBlocked: variant.isBlocked || false,
           mainImage: mainImageFile?.path || null,
-          subImages: subImageFiles.map(f => f.path)
+          subImages: subImageFiles.map((f) => f.path),
         };
       });
 
@@ -64,17 +65,24 @@ const addProduct = [
 
       await product.save();
 
-      return res.json({ success: true, message: "Product added successfully!" });
+      return res.json({
+        success: true,
+        message: "Product added successfully!",
+      });
     } catch (error) {
       console.error("from add product", error);
-      return res.json({ success: false, message: "Error adding product", error });
+      return res.json({
+        success: false,
+        message: "Error adding product",
+        error,
+      });
     }
   },
 ];
 
 const getEditPage = async (req, res) => {
   try {
-    const productId = req.params.id; 
+    const productId = req.params.id;
     const product = await Product.findById(productId)
       .populate("brand")
       .populate("category")
@@ -90,18 +98,20 @@ const getEditPage = async (req, res) => {
   }
 };
 
-
 const editProduct = [
   upload.any(),
 
   async (req, res) => {
     try {
       const productId = req.params.id;
-      const { name, brand, category, description, variants, removeSubImages } = req.body;
+      const { name, brand, category, description, variants, removeSubImages } =
+        req.body;
 
       const existingProduct = await Product.findById(productId);
       if (!existingProduct) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Product not found" });
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json({ success: false, message: "Product not found" });
       }
 
       // ------------------ Parse incoming variants ------------------
@@ -110,62 +120,71 @@ const editProduct = [
 
       // ------------------ Handle removed sub-images ------------------
       if (removeSubImages) {
-        const removeArr = Array.isArray(removeSubImages) ? removeSubImages : [removeSubImages];
-        removeArr.forEach(url => {
-          existingProduct.variants.forEach(variant => {
-            variant.subImages = variant.subImages.filter(img => img !== url);
+        const removeArr = Array.isArray(removeSubImages)
+          ? removeSubImages
+          : [removeSubImages];
+        removeArr.forEach((url) => {
+          existingProduct.variants.forEach((variant) => {
+            variant.subImages = variant.subImages.filter((img) => img !== url);
           });
         });
       }
 
       // ------------------ Update variants ------------------
-      incomingVariants.forEach(v => {
+      incomingVariants.forEach((v) => {
         const index = parseInt(v.index);
         if (isNaN(index)) return;
 
         let existingVariant = existingProduct.variants[index] || {};
 
-        existingVariant.volume = v.volume || existingVariant.volume;
-        existingVariant.price = v.price || existingVariant.price;
-        existingVariant.stock = v.stock || existingVariant.stock;
+        if (v.volume !== undefined && v.volume !== "") {
+          existingVariant.volume = v.volume;
+        }
+
+        if (v.price !== undefined && v.price !== "") {
+          existingVariant.price = Number(v.price);
+        }
+
+        if (v.stock !== undefined && v.stock !== "") {
+          existingVariant.stock = Number(v.stock);
+        }
 
         // -------- Main image --------
-        const mainFile = req.files.find(f => f.fieldname === `variants[${index}][mainImage]`);
+        const mainFile = req.files.find(
+          (f) => f.fieldname === `variants[${index}][mainImage]`
+        );
         if (mainFile) existingVariant.mainImage = mainFile.path;
 
         // -------- Sub images --------
-        const subFiles = req.files.filter(f => f.fieldname === `variants[${index}][subImages]`);
+        const subFiles = req.files.filter(
+          (f) => f.fieldname === `variants[${index}][subImages]`
+        );
         if (subFiles.length > 0) {
           existingVariant.subImages = existingVariant.subImages || [];
-          existingVariant.subImages.push(...subFiles.map(f => f.path));
+          existingVariant.subImages.push(...subFiles.map((f) => f.path));
         }
 
         existingProduct.variants[index] = existingVariant;
       });
 
       // ------------------ Update product fields ------------------
-      existingProduct.name = name || existingProduct.name;
-      existingProduct.brand = brand || existingProduct.brand;
-      existingProduct.category = category || existingProduct.category;
-      existingProduct.description = description || existingProduct.description;
+      if (name && name.trim()) existingProduct.name = name.trim();
+      if (brand && brand.trim()) existingProduct.brand = brand.trim();
+      if (category && category.trim())
+        existingProduct.category = category.trim();
+      if (description && description.trim())
+        existingProduct.description = description.trim();
 
       const updatedProduct = await existingProduct.save();
       res.json({ success: true, product: updatedProduct });
-
     } catch (err) {
       console.error("Error updating product:", err);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: "Server error" });
     }
-  }
+  },
 ];
-
-
-
-
-
-
-
-
 
 const addNewVariants = [
   // Accept any file field
@@ -185,7 +204,10 @@ const addNewVariants = [
       }
 
       // Ensure variants exist
-      if (!Array.isArray(req.body.newVariants) || req.body.newVariants.length === 0) {
+      if (
+        !Array.isArray(req.body.newVariants) ||
+        req.body.newVariants.length === 0
+      ) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "No variants provided",
@@ -221,7 +243,6 @@ const addNewVariants = [
           });
         }
 
-       
         const mainImageFile = req.files.find(
           (file) => file.fieldname === `newVariants[${i}][mainImage]`
         );
@@ -276,17 +297,10 @@ const addNewVariants = [
   },
 ];
 
-
-
-
-
-
-
 export default {
-               getaddProductPage ,
-                addProduct,
-                getEditPage,
-                editProduct,
-                addNewVariants
-               
+  getaddProductPage,
+  addProduct,
+  getEditPage,
+  editProduct,
+  addNewVariants,
 };
