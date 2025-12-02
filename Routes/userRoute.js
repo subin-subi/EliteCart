@@ -17,7 +17,6 @@ import razorpayController from "../controllers/userController/razorpayController
 import paymentController from "../controllers/userController/paymentController.js";
 import signupController from "../controllers/userController/signupController.js";
 import pincodeController from "../controllers/userController/pincodeController.js"
-import chatController from "../controllers/userController/chatController.js";
 const route = Router();
 
 route.get("/check-session",authController.checkSession)
@@ -141,6 +140,6 @@ route.get("/invoice/:orderId", pdfController.generateInvoice);
 route.get("/redeem", redeemController.getRedeem)
 
 
-route.get("/chat",chatController.getChat)
+
 
 export default route;

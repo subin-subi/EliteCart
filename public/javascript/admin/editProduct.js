@@ -356,7 +356,7 @@ formData.append("name", productName);
       }
     });
 
-    // ❗ STOP SUBMISSION IF ANY ERROR
+    
     if (hasErrors) {
       return;
     }
