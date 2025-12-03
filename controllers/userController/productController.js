@@ -171,7 +171,7 @@ const getProductsPage = async (req, res) => {
       products: paginatedProducts,
       categories,
       brands,
-      wishlistItems, // ⭐ Send wishlist to EJS
+      wishlistItems, 
       filters: { category, brand, minPrice, maxPrice, stock, search, sort },
       pagination: {
         currentPage,

@@ -189,7 +189,34 @@
 
 
           <!-- Pagination Controls -->
-          <div id="paginationControls" class="mt-6"></div>
+<div class="mt-4 flex justify-center gap-2">
+
+  <% if (pagination.currentPage > 1) { %>
+    <a href="?page=<%= pagination.currentPage - 1 %>"
+       class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+      Previous
+    </a>
+  <% } %>
+
+  <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+    <a href="?page=<%= i %>"
+       class="px-3 py-1 rounded 
+       <%= i === pagination.currentPage 
+            ? 'bg-black text-white' 
+            : 'bg-gray-200 hover:bg-gray-300' %>">
+      <%= i %>
+    </a>
+  <% } %>
+
+  <% if (pagination.currentPage < pagination.totalPages) { %>
+    <a href="?page=<%= pagination.currentPage + 1 %>"
+       class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+      Next
+    </a>
+  <% } %>
+
+</div>
+
         </section>
       </div>
     </div>
