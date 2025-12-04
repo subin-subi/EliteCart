@@ -333,16 +333,7 @@ const walletPayment = async (req, res) => {
       await item.productId.save();
     }
 
-    //Deduct wallet amount
-    wallet.balance -= grandTotal;
-    wallet.transactions.push({
-      type: "Debit",
-      amount: grandTotal,
-      description: "Payment for order",
-      date: new Date(),
-    });
-    await wallet.save();
-
+   
     //  Create order
     const order = new Order({
       userId,
@@ -368,6 +359,20 @@ const walletPayment = async (req, res) => {
     });
 
     await order.save();
+
+
+     //Deduct wallet amount
+
+wallet.balance -= grandTotal;
+wallet.transactions.push({
+  type: "Debit",
+  amount: grandTotal,
+  description: `Payment for Order ${order.orderId || order._id}`,
+  orderId: order._id,                                            
+  date: new Date()
+});
+await wallet.save();
+
 
     //  Mark coupon usage
     if (appliedCoupon) {

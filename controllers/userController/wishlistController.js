@@ -154,6 +154,25 @@ const addToCartFromWishlist = async (req, res) => {
     }
 
     const variant = product.variants[variantIndex];
+
+
+   
+if (variant.isBlocked) {
+  return res.status(HTTP_STATUS.BAD_REQUEST).json({
+    success: false,
+    message: "This product variant is currently unavailable."
+  });
+}
+
+
+if (variant.stock <= 0) {
+  return res.status(HTTP_STATUS.BAD_REQUEST).json({
+    success: false,
+    message: "Out of stock"
+  });
+}
+
+
     const quantity = 1;
     const price = Number(variant.discountPrice || variant.price || 0);
     const total = price * quantity;
